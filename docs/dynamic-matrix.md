@@ -196,3 +196,121 @@ Cette section centralise la bibliothèque numérique disponible pour les membres
 - `image_path` (VARCHAR, NULLABLE) -> Miniature de couverture (les Workbooks peuvent ne pas en avoir).
 - `file_path` (VARCHAR, NULLABLE) -> Chemin physique du PDF téléchargeable.
 - `order_index` (INT) -> Ordre de tri par défaut.
+
+---
+
+## 4. Système Core & Tables Métiers (Core System & Business Tables)
+Cette section définit le moteur de sécurité, de facturation et d'engagement utilisateur de Dona Magazine.
+
+### A. Couche d'Authentification (Authentication Layer - NextAuth.js)
+Ces tables sont modélisées pour s'intégrer directement avec NextAuth.js pour la gestion des sessions locales (Email/Mot de passe) et des connexions tierces (OAuth via Apple et Google).
+
+#### Table : `users`
+Utilisateurs inscrits sur la plateforme.
+- `id` (VARCHAR, PK) -> Identifiant UUID généré.
+- `name` (VARCHAR) -> Nom complet de l'utilisateur.
+- `email` (VARCHAR, UNIQUE) -> Adresse email de connexion.
+- `email_verified` (TIMESTAMP, NULLABLE) -> Date de vérification de l'email.
+- `password_hash` (VARCHAR, NULLABLE) -> Empreinte du mot de passe (haché avec bcrypt/argon2, nul si inscription via OAuth).
+- `image` (VARCHAR, NULLABLE) -> Chemin/URL de l'avatar.
+- `role` (ENUM) -> Rôle de sécurité de l'utilisateur :
+  - `ADMIN` : Accès complet au Back-End et gestion de la plateforme.
+  - `VIP_SUBSCRIBER` : Membre abonné avec accès total à tous les contenus payants.
+  - `FREE_USER` : Membre inscrit gratuitement, accès limité.
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+#### Table : `accounts`
+Comptes de fournisseurs OAuth liés aux utilisateurs (ex: Google, Apple).
+- `id` (VARCHAR, PK) -> UUID.
+- `user_id` (VARCHAR, FK) -> Référence vers `users(id)` avec suppression en cascade.
+- `type` (VARCHAR) -> Type de compte (ex: `oauth`).
+- `provider` (VARCHAR) -> Fournisseur d'identité (ex: `google`, `apple`).
+- `provider_account_id` (VARCHAR) -> Identifiant unique renvoyé par le fournisseur.
+- `refresh_token` (TEXT, NULLABLE) -> Jeton de rafraîchissement OAuth.
+- `access_token` (TEXT, NULLABLE) -> Jeton d'accès OAuth.
+- `expires_at` (INT, NULLABLE) -> Date d'expiration du jeton d'accès.
+- `token_type` (VARCHAR, NULLABLE) -> Type de jeton (ex: `Bearer`).
+- `scope` (VARCHAR, NULLABLE) -> Portée des autorisations accordées.
+- `id_token` (TEXT, NULLABLE) -> Jeton d'identité OpenID.
+- `session_state` (VARCHAR, NULLABLE) -> État de la session.
+
+#### Table : `sessions`
+Sessions actives des utilisateurs (pour la persistance de connexion).
+- `id` (VARCHAR, PK) -> UUID.
+- `session_token` (VARCHAR, UNIQUE) -> Jeton de session unique.
+- `user_id` (VARCHAR, FK) -> Référence vers `users(id)` avec suppression en cascade.
+- `expires` (TIMESTAMP) -> Date d'expiration de la session.
+
+#### Table : `verification_tokens`
+Jetons de vérification (pour les connexions par lien magique ou réinitialisations).
+- `identifier` (VARCHAR) -> e.g. l'email.
+- `token` (VARCHAR, UNIQUE) -> Jeton de vérification unique.
+- `expires` (TIMESTAMP) -> Date d'expiration.
+*Clé primaire composite sur (identifier, token).*
+
+---
+
+### B. Couche de Monétisation & Contrôle d'Accès (Monetization & Access Control)
+Modélisation de la gestion des offres d'abonnements, de l'état de souscription des membres et des reçus de passerelles de paiement.
+
+#### Table : `subscription_plans`
+Grilles de tarifs paramétrables (ex: Essentiel, Premium, Élite).
+- `id` (INT, PK)
+- `name` (VARCHAR) -> Nom du forfait (ex: `Premium`).
+- `price_monthly` (DECIMAL(10,2)) -> Prix pour la facturation mensuelle (ex: `89.00`).
+- `price_yearly` (DECIMAL(10,2)) -> Prix pour la facturation annuelle (ex: `850.00`).
+- `features_json` (JSON) -> Liste structurée des avantages associés.
+- `is_active` (BOOLEAN) -> Statut d'activation de l'offre commerciale.
+
+#### Table : `user_subscriptions`
+Suivi des contrats d'abonnement actifs des utilisateurs.
+- `id` (INT, PK)
+- `user_id` (VARCHAR, FK) -> Référence vers `users(id)` avec suppression en cascade.
+- `plan_id` (INT, FK) -> Référence vers `subscription_plans(id)`.
+- `status` (ENUM) -> État de l'abonnement :
+  - `active` : Abonnement valide et payé, accès total accordé.
+  - `past_due` : Défaut de paiement détecté, relances en cours, accès temporairement maintenu.
+  - `canceled` : Annulé par l'utilisateur mais actif jusqu'à la fin de la période facturée.
+  - `expired` : Expiré, aucun droit d'accès VIP.
+- `start_date` (TIMESTAMP) -> Début de l'abonnement.
+- `end_date` (TIMESTAMP) -> Échéance de facturation / Fin des droits d'accès.
+- `cancel_at_period_end` (BOOLEAN) -> Indique si l'abonnement doit s'arrêter à la prochaine échéance.
+- `stripe_subscription_id` (VARCHAR, NULLABLE) -> Référence contrat Stripe.
+- `monetbil_subscription_id` (VARCHAR, NULLABLE) -> Référence contrat Monetbil (Paiement Mobile).
+- `cinpay_subscription_id` (VARCHAR, NULLABLE) -> Référence contrat Cinpay (Paiement Afrique centrale/ouest).
+
+#### Table : `payment_transactions`
+Historique et reçus des paiements pour la facturation et l'audit.
+- `id` (INT, PK)
+- `user_id` (VARCHAR, FK) -> Référence vers `users(id)` avec conservation d'historique (SET NULL sur suppression).
+- `subscription_id` (INT, FK, NULLABLE) -> Contrat d'abonnement lié.
+- `amount` (DECIMAL(10,2)) -> Montant facturé.
+- `currency` (VARCHAR(3)) -> Devise de transaction (ex: `EUR`, `XAF`, `USD`).
+- `status` (ENUM) -> État du paiement (`pending`, `succeeded`, `failed`).
+- `gateway` (ENUM) -> Passerelle de paiement utilisée (`stripe`, `monetbil`, `cinpay`).
+- `gateway_reference` (VARCHAR, UNIQUE) -> Numéro de reçu / ID de transaction unique renvoyé par la passerelle.
+- `created_at` (TIMESTAMP) -> Date de transaction.
+
+---
+
+### C. Couche d'Engagement & Expérience Utilisateur (User Engagement)
+Données comportementales et personnalisation de la lecture.
+
+#### Table : `user_favorites`
+Favoris et marque-pages (Espace Lecture & Articles).
+- `id` (INT, PK)
+- `user_id` (VARCHAR, FK) -> Référence vers `users(id)` avec suppression en cascade.
+- `document_id` (INT, FK, NULLABLE) -> Référence vers `library_documents(id)` si favori de bibliothèque.
+- `article_id` (VARCHAR, FK, NULLABLE) -> Référence vers `articles(id)` si favori d'article.
+- `created_at` (TIMESTAMP)
+*Note : Clé composite d'unicité sur (user_id, document_id) et (user_id, article_id) pour éviter les doublons.*
+
+#### Table : `audio_progress`
+Sauvegarde de l'état de lecture du lecteur audio persistant.
+- `id` (INT, PK)
+- `user_id` (VARCHAR, FK) -> Référence vers `users(id)` avec suppression en cascade.
+- `episode_id` (VARCHAR, FK) -> Référence vers `podcast_episodes(id)`.
+- `last_position_seconds` (INT) -> Seconde exacte à laquelle l'écoute a été suspendue (ex: `1240`).
+- `updated_at` (TIMESTAMP) -> Date de dernière synchronisation de position (mise à jour fréquente via API).
+
