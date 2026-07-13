@@ -1,8 +1,6 @@
 import '../styles/globals.css';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
-import PersistentPlayer from '../components/layout/PersistentPlayer';
 import { AudioPlayerProvider } from '../contexts/AudioPlayerContext';
+import ConditionalLayout from '../components/layout/ConditionalLayout';
 import Script from 'next/script';
 
 export const metadata = {
@@ -52,11 +50,9 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <AudioPlayerProvider>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          {/* Persistent audio player — lives outside route transitions */}
-          <PersistentPlayer />
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
         </AudioPlayerProvider>
       </body>
     </html>
