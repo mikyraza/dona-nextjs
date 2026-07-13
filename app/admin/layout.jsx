@@ -1,12 +1,14 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import '../../styles/admin.css';
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Bypasser le layout pour la page de connexion administrative
   if (pathname === '/admin/login') {
@@ -191,14 +193,40 @@ export default function AdminLayout({ children }) {
               <span className="notif-badge"></span>
             </button>
             
-            <div className="user-block">
-              <span className="user-name">Elena Moretti</span>
-              <img 
-                src="/assets/core/img/avatar-1.png" 
-                alt="Avatar Elena Moretti" 
-                className="user-avatar"
-              />
-              <span className="material-symbols-outlined">expand_more</span>
+            <div className="user-block-wrapper">
+              <div className="user-block" onClick={() => setShowDropdown(!showDropdown)}>
+                <span className="user-name">Elena Moretti</span>
+                <img 
+                  src="/assets/core/img/avatar-1.png" 
+                  alt="Avatar Elena Moretti" 
+                  className="user-avatar"
+                />
+                <span className="material-symbols-outlined">
+                  {showDropdown ? 'expand_less' : 'expand_more'}
+                </span>
+              </div>
+              
+              {showDropdown && (
+                <div className="user-dropdown">
+                  <Link 
+                    href="/admin/settings/brand" 
+                    className="user-dropdown-item"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings</span>
+                    Configuration
+                  </Link>
+                  <div className="user-dropdown-divider"></div>
+                  <button 
+                    className="user-dropdown-item" 
+                    onClick={() => signOut({ callbackUrl: '/admin/login' })}
+                    style={{ color: '#A30626' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
+                    Déconnexion
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>

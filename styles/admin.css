@@ -732,3 +732,52 @@
 .btn-studio-config:hover {
   color: var(--admin-accent-color);
 }
+
+/* User Profile Dropdown */
+.user-block-wrapper {
+  position: relative;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+  z-index: 120;
+}
+
+.user-dropdown-item {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #444444;
+  text-decoration: none;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+.user-dropdown-item:hover {
+  background-color: #FFF0F2;
+  color: var(--admin-accent-color);
+}
+
+.user-dropdown-divider {
+  height: 1px;
+  background-color: var(--admin-border-color);
+  margin: 6px 0;
+}
