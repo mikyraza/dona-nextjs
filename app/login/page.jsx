@@ -1,7 +1,186 @@
 "use client";
 
-import React from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl,
+      });
+
+      if (res?.error) {
+        setError("Adresse email ou mot de passe incorrect.");
+      } else {
+        router.push(res?.url || callbackUrl);
+        router.refresh();
+      }
+    } catch (err) {
+      setError("Une erreur de connexion est survenue.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "500px", width: "100%", borderRadius: "2px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center"}}>
+      
+      {/* Logo */}
+      <Link href="/" style={{marginBottom: "32px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
+          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" style={{height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease"}} />
+      </Link>
+
+      {/* Heading */}
+      <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "700", color: "var(--color-text)", marginBottom: "12px", textAlign: "center", letterSpacing: "-0.02em"}}>Bienvenue parmi l'Alliance</h1>
+      <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", textAlign: "center", marginBottom: "30px"}}>
+          Connectez-vous pour accéder à votre espace membre
+      </p>
+
+      {/* Error Message */}
+      {error && (
+        <div style={{width: "100%", background: "#FDF2F2", borderLeft: "4px solid #F05252", padding: "12px 16px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px", borderRadius: "2px"}}>
+          <span className="material-symbols-outlined" style={{color: "#F05252", fontSize: "20px"}}>error</span>
+          <span style={{fontFamily: "var(--font-primary)", fontSize: "13px", color: "#C81E1E", fontWeight: "500"}}>{error}</span>
+        </div>
+      )}
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} style={{width: "100%", display: "flex", flexDirection: "column", gap: "24px"}}>
+          
+          {/* Email */}
+          <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
+              <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Adresse Email</label>
+              <div className="login-input-container">
+                  <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)"}}>mail</span>
+                  <input 
+                    type="email" 
+                    placeholder="votre@email.com" 
+                    className="login-input" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required 
+                    disabled={loading}
+                  />
+              </div>
+          </div>
+
+          {/* Password */}
+          <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
+              <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Mot de passe</label>
+              <div className="login-input-container">
+                  <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)"}}>lock</span>
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="••••••••" 
+                    className="login-input" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required 
+                    disabled={loading}
+                  />
+                  <span 
+                    className="material-symbols-outlined" 
+                    style={{fontSize: "20px", color: "var(--color-text-muted)", cursor: "pointer", userSelect: "none"}}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? "visibility_off" : "visibility"}
+                  </span>
+              </div>
+          </div>
+
+          {/* Remember me & Forgot Password */}
+          <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: "var(--font-primary)", fontSize: "13px"}}>
+              <label style={{display: "flex", alignItems: "center", gap: "8px", color: "var(--color-text-muted)", cursor: "pointer"}}>
+                  <input type="checkbox" style={{width: "16px", height: "16px", accentColor: "var(--color-accent)", border: "1px solid var(--color-border)"}} /> Se souvenir de moi
+              </label>
+              <Link href="/forgot-password" className="login-link">Mot de passe oublié ?</Link>
+          </div>
+
+          {/* Submit */}
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{
+              width: "100%", 
+              background: loading ? "var(--color-text-muted)" : "var(--color-accent)", 
+              color: "#FFFFFF", 
+              border: "none", 
+              padding: "16px", 
+              borderRadius: "2px", 
+              fontFamily: "var(--font-primary)", 
+              fontSize: "14px", 
+              fontWeight: "600", 
+              letterSpacing: "0.15em", 
+              textTransform: "uppercase", 
+              cursor: loading ? "not-allowed" : "pointer", 
+              transition: "background 0.2s", 
+              marginTop: "8px"
+            }}
+          >
+              {loading ? "Connexion en cours..." : "Se connecter"}
+          </button>
+
+      </form>
+
+      {/* Divider */}
+      <div style={{width: "100%", display: "flex", alignItems: "center", gap: "16px", margin: "32px 0"}}>
+          <div style={{flexGrow: "1", height: "1px", background: "var(--color-border)"}}></div>
+          <span style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Ou continuer avec</span>
+          <div style={{flexGrow: "1", height: "1px", background: "var(--color-border)"}}></div>
+      </div>
+
+      {/* Social Auth */}
+      <div style={{width: "100%", display: "flex", gap: "16px"}}>
+          <button type="button" className="login-btn-social">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" className="login-apple-logo" style={{width: "16px", height: "16px"}} /> Apple
+          </button>
+          <button type="button" className="login-btn-social">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style={{width: "16px", height: "16px"}} /> Google
+          </button>
+      </div>
+
+      {/* Signup Link */}
+      <div style={{marginTop: "32px", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)"}}>
+          Pas encore membre ? <Link href="/signup" className="login-link" style={{fontWeight: "600"}}>Devenir membre</Link>
+      </div>
+
+      {/* Back to Home Link */}
+      <div style={{marginTop: "20px"}}>
+          <Link href="/" className="login-link" style={{fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "600"}}>
+              Retour à l'accueil
+          </Link>
+      </div>
+
+      {/* Security text */}
+      <div style={{marginTop: "40px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-primary)", fontSize: "11px", color: "var(--color-text-muted)"}}>
+          <span className="material-symbols-outlined" style={{fontSize: "14px"}}>security</span>
+          Connexion sécurisée par chiffrement SSL 256-bit
+      </div>
+
+    </div>
+  );
+}
 
 export default function Page() {
   return (
@@ -77,92 +256,13 @@ export default function Page() {
         }
       `}</style>
 
-      <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "500px", width: "100%", borderRadius: "2px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center"}}>
-        
-        {/* Logo */}
-        <Link href="/" style={{marginBottom: "32px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
-            <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" style={{height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease"}} />
-        </Link>
-
-        {/* Heading */}
-        <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "700", color: "var(--color-text)", marginBottom: "12px", textAlign: "center", letterSpacing: "-0.02em"}}>Bienvenue parmi l'Alliance</h1>
-        <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", textAlign: "center", marginBottom: "40px"}}>
-            Connectez-vous pour accéder à votre espace membre
-        </p>
-
-        {/* Form */}
-        <form style={{width: "100%", display: "flex", flexDirection: "column", gap: "24px"}} onSubmit={(e) => e.preventDefault()}>
-            
-            {/* Email */}
-            <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
-                <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Adresse Email</label>
-                <div className="login-input-container">
-                    <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)"}}>mail</span>
-                    <input type="email" placeholder="votre@email.com" className="login-input" required />
-                </div>
-            </div>
-
-            {/* Password */}
-            <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
-                <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Mot de passe</label>
-                <div className="login-input-container">
-                    <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)"}}>lock</span>
-                    <input type="password" placeholder="••••••••" className="login-input" required />
-                    <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)", cursor: "pointer"}}>visibility</span>
-                </div>
-            </div>
-
-            {/* Remember me & Forgot Password */}
-            <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: "var(--font-primary)", fontSize: "13px"}}>
-                <label style={{display: "flex", alignItems: "center", gap: "8px", color: "var(--color-text-muted)", cursor: "pointer"}}>
-                    <input type="checkbox" style={{width: "16px", height: "16px", accentColor: "var(--color-accent)", border: "1px solid var(--color-border)"}} /> Se souvenir de moi
-                </label>
-                <Link href="/forgot-password" className="login-link">Mot de passe oublié ?</Link>
-            </div>
-
-            {/* Submit */}
-            <button type="submit" style={{width: "100%", background: "var(--color-accent)", color: "#FFFFFF", border: "none", padding: "16px", borderRadius: "2px", fontFamily: "var(--font-primary)", fontSize: "14px", fontWeight: "600", letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s", marginTop: "8px"}}>
-                Se connecter
-            </button>
-
-        </form>
-
-        {/* Divider */}
-        <div style={{width: "100%", display: "flex", alignItems: "center", gap: "16px", margin: "32px 0"}}>
-            <div style={{flexGrow: "1", height: "1px", background: "var(--color-border)"}}></div>
-            <span style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Ou continuer avec</span>
-            <div style={{flexGrow: "1", height: "1px", background: "var(--color-border)"}}></div>
+      <Suspense fallback={
+        <div style={{fontFamily: "var(--font-primary)", color: "var(--color-text-muted)"}}>
+          Chargement de l'Alliance...
         </div>
-
-        {/* Social Auth */}
-        <div style={{width: "100%", display: "flex", gap: "16px"}}>
-            <button type="button" className="login-btn-social">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" className="login-apple-logo" style={{width: "16px", height: "16px"}} /> Apple
-            </button>
-            <button type="button" className="login-btn-social">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style={{width: "16px", height: "16px"}} /> Google
-            </button>
-        </div>
-
-        {/* Signup Link */}
-        <div style={{marginTop: "32px", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)"}}>
-            Pas encore membre ? <Link href="/signup" className="login-link" style={{fontWeight: "600"}}>Devenir membre</Link>
-        </div>
-
-        {/* Back to Home Link */}
-        <div style={{marginTop: "20px"}}>
-            <Link href="/" className="login-link" style={{fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "600"}}>
-                Retour à l'accueil
-            </Link>
-        </div>
-
-        {/* Security text */}
-        <div style={{marginTop: "40px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-primary)", fontSize: "11px", color: "var(--color-text-muted)"}}>
-            <span className="material-symbols-outlined" style={{fontSize: "14px"}}>security</span>
-            Connexion sécurisée par chiffrement SSL 256-bit
-        </div>
-
-      </div>
+      }>
+        <LoginForm />
+      </Suspense>
     </main>
   );
 }
