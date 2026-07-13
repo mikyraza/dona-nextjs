@@ -10,7 +10,7 @@ export default function Home() {
             <span className="home-hero-overline">ÉDITORIAL • PRINTEMPS 2024</span>
             <h1 className="home-hero-title">DONA :<br />L'Aube de la<br />Femme Solaire</h1>
             <p className="home-hero-subtitle">"Incarnation la puissance sans compromettre la<br />grâce, diriger avec l'évidence de la lumière."</p>
-            <Link  href="#" className="btn btn-primary">DÉCOUVRIR LE MANIFESTE</Link>
+            <Link href="/manifeste" className="btn btn-primary">DÉCOUVRIR LE MANIFESTE</Link>
         </div>
     </section>
 
@@ -21,7 +21,7 @@ export default function Home() {
                 <p className="section-desc">L'encyclopédie de la souveraineté moderne, déclinée en<br />douze dimensions fondamentales.</p>
             </div>
             <div className="sh-right">
-                <Link  href="#" className="link-arrow">Voir tous les magazines</Link>
+                <Link href="/magazines" className="link-arrow">Voir tous les magazines</Link>
             </div>
         </div>
         <div className="magazines-grid">
@@ -191,7 +191,7 @@ export default function Home() {
                 <p className="phil-desc">Nous croyons que la puissance féminine n'est pas une conquête, mais une reconnaissance. Une force tranquille qui n'a pas besoin de bruit pour exister.</p>
                 <blockquote className="phil-quote">"Le manifeste DONA est un appel à toutes celles qui souhaitent réconcilier ambition radicale et élégance intérieure."</blockquote>
                 <p className="phil-desc">Plus qu'un magazine, une académie de l'être. Une alliance de visionnaires prêtes à redéfinir les codes de la réussite.</p>
-                <Link  href="#" className="btn btn-primary btn-large">REJOINDRE L'ALLIANCE</Link>
+                <Link href="/abonnement" className="btn btn-primary btn-large">REJOINDRE L'ALLIANCE</Link>
             </div>
             <div className="philosophy-image">
                 <img src="assets/core/img/home_philosophy_woman_1782125677007.png" alt="Femme DONA" />
@@ -219,7 +219,7 @@ export default function Home() {
                         <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Newsletter Intelligence</li>
                         <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Archives complètes</li>
                     </ul>
-                    <Link  href="#" className="btn btn-outline-red">S'ABONNER</Link>
+                    <Link href="/abonnement" className="btn btn-outline-red">S'ABONNER</Link>
                 </div>
                 
                 {/* Intégrale */}
@@ -233,7 +233,7 @@ export default function Home() {
                         <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Invitations aux Webinaires Académie</li>
                         <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Cadeau de bienvenue exclusif</li>
                     </ul>
-                    <Link  href="#" className="btn btn-primary">DÉVENIR MEMBRE</Link>
+                    <Link href="/abonnement" className="btn btn-primary">DEVENIR MEMBRE</Link>
                 </div>
                 
                 {/* Cercle */}
@@ -245,7 +245,7 @@ export default function Home() {
                         <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Networking Haute-Performance</li>
                         <li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Conciergerie DONA</li>
                     </ul>
-                    <Link  href="#" className="btn btn-outline-red">POSTULER AU CERCLE</Link>
+                    <Link href="/club" className="btn btn-outline-red">POSTULER AU CERCLE</Link>
                 </div>
             </div>
         </div>
