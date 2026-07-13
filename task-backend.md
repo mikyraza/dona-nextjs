@@ -20,6 +20,9 @@ Mettre en place et configurer l'instance WordPress locale pour servir de base de
   - CPT `document` + Champs ACF (Type de fichier, lien de téléchargement PDF, couverture).
 - [ ] **Développement des Endpoints REST Custom** :
   - Enregistrer des routes personnalisées d'API WordPress (ex: `/wp-json/dona/v1/homepage`, `/wp-json/dona/v1/jeux/rankings`) pour regrouper les données nécessaires en une seule requête HTTP et optimiser le temps de chargement du Front-End Next.js.
+- [x] **Déploiement du squelette des Route Handlers Next.js (Mock API)** :
+  - Créer les 5 endpoints locaux `/api/*` mappant la structure ACF/CPT pour simuler la base de données.
+
 
 ---
 
