@@ -8,6 +8,11 @@ import '../../styles/admin.css';
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
 
+  // Bypasser le layout pour la page de connexion administrative
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
   // Helper function to check if a navigation route is currently active
   const isActiveRoute = (route) => {
     if (route === '/admin') {
