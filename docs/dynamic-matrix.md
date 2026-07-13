@@ -314,3 +314,70 @@ Sauvegarde de l'état de lecture du lecteur audio persistant.
 - `last_position_seconds` (INT) -> Seconde exacte à laquelle l'écoute a été suspendue (ex: `1240`).
 - `updated_at` (TIMESTAMP) -> Date de dernière synchronisation de position (mise à jour fréquente via API).
 
+---
+
+## 5. Architecture de Sécurité & Flux d'Authentification JWT (Headless WordPress REST API)
+Puisque WordPress fait office de moteur de base de données asynchrone sans thème visible, l'accès à notre interface d'administration Next.js (`/admin/*`) doit être protégé par un système de jetons JWT (JSON Web Tokens) interfacé avec l'API REST de WordPress.
+
+### Processus d'Authentification et Flux de Données
+
+```mermaid
+sequenceDiagram
+    participant Navigateur as Client Admin (Next.js App)
+    participant NextJS as Serveur Next.js (Middleware)
+    participant WP as WordPress REST API (Headless Core)
+
+    Navigateur->>NextJS: 1. Soumet Login / MDP (/admin/login)
+    NextJS->>WP: 2. POST /wp-json/jwt-auth/v1/token (avec identifiants)
+    Note over WP: Validation des droits & Rôle (Administrator)
+    WP-->>NextJS: 3. Retourne le Token JWT + Rôle + Métadonnées
+    Note over NextJS: Chiffrement et stockage du JWT dans un cookie HTTP-Only sécurisé
+    NextJS-->>Navigateur: 4. Connexion réussie, redirection vers /admin/dashboard
+    
+    Navigateur->>NextJS: 5. Requête vers route protégée (/admin/articles)
+    Note over NextJS: Le Middleware Next.js intercepte et lit le cookie JWT
+    NextJS->>WP: 6. Requête API REST + Header Authorization: Bearer {JWT}
+    WP-->>NextJS: 7. Données renvoyées
+    NextJS-->>Navigateur: 8. Rendu HTML de la page d'administration
+```
+
+### Détail des Points de Terminaison (Endpoints API)
+
+1. **Génération du Jeton JWT (Login)** :
+   * **Endpoint** : `POST /wp-json/jwt-auth/v1/token`
+   * **Corps de la requête** :
+     ```json
+     {
+       "username": "admin_dona",
+       "password": "mot_de_passe_securise"
+     }
+     ```
+   * **Réponse de succès (200 OK)** :
+     ```json
+     {
+       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+       "user_email": "admin@dona-magazine.com",
+       "user_nicename": "admin_dona",
+       "user_display_name": "Direction DONA"
+     }
+     ```
+
+2. **Validation du Jeton** :
+   * **Endpoint** : `POST /wp-json/jwt-auth/v1/token/validate`
+   * **Header** : `Authorization: Bearer <token_jwt>`
+   * **Réponse de succès (200 OK)** :
+     ```json
+     {
+       "code": "jwt_auth_valid_token",
+       "data": {
+         "status": 200
+       }
+     }
+     ```
+
+### Sécurisation de l'Interface Next.js Custom Admin
+- **Cookie HTTP-Only** : Le jeton JWT renvoyé par WordPress est stocké par le serveur Next.js dans un cookie chiffré HTTP-Only (ex: `dona_admin_session`). Cela élimine les risques de vol de jetons par des scripts malveillants XSS.
+- **Middleware Next.js** : Un fichier `middleware.js` ou une logique de routage dans `app/admin/layout.jsx` vérifie la présence du jeton à chaque chargement de route `/admin/*`. Si le jeton est manquant ou invalide (après requête de validation à l'API WordPress), l'utilisateur est immédiatement redirigé vers `/login`.
+- **Rôles applicatifs** : Seuls les utilisateurs WordPress possédant la capacité `manage_options` (Rôle `Administrator`) peuvent obtenir un jeton valide pour les routes `/admin/*`. Les utilisateurs ayant le rôle `Subscriber` (liés à `VIP_SUBSCRIBER` en Front-End) sont systématiquement rejetés des routes d'administration.
+
+
