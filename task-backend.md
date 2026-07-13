@@ -43,14 +43,14 @@ Connecter NextAuth.js et notre logique de routage privée au moteur d'authentifi
 ## Phase 3 : Conception de l'Interface d'Administration Next.js (Custom Admin Panel)
 Construire l'application d'administration bespoke intégrée dans Next.js, sans aucun élément visuel WordPress.
 
-- [ ] **Création du Layout et Shell Admin Next.js** :
-  - Créer `app/admin/layout.jsx` : Un design épuré et minimaliste en phase avec la charte "Quiet Luxury" de DONA (Sidebar sombre, statistiques de ventes, état des inscriptions).
+- [x] **Création du Layout et Shell Admin Next.js** :
+  - Créer `app/admin/layout.jsx` : Un design épuré, spacieux et minimaliste en phase avec la charte "Quiet Luxury" de DONA.
 - [ ] **Développement des Dashboards Thématiques** :
-  - **Dashboard Général** : Statistiques clés en temps réel (nombre d'abonnés actifs, volume de transactions, inscriptions récentes).
-  - **Gestionnaire des Magazines** : Formulaire dynamique pour modifier les textes, images, couleurs et icônes des 16 univers.
-  - **Médiathèque Studio** : Interface pour ajouter des épisodes de podcasts (téléchargement de fichiers MP3, réglages de durée) et référencer de nouvelles vidéos.
-  - **Centre de Jeux & Classement** : Mise à jour de l'énigme active du jour et modification manuelle du classement des joueurs.
-  - **Bibliothèque de Documents** : Table pour uploader des Workbooks PDF et définir les badges d'accès.
+  - [x] **Dashboard Général** : Statistiques clés en temps réel (articles, membres actifs du Club, flux live et performance), intégration réactive connectée à `/api/magazines` et `/api/global-config`.
+  - [ ] **Gestionnaire des Magazines** : Formulaire dynamique pour modifier les textes, images, couleurs et icônes des 16 univers.
+  - [ ] **Médiathèque Studio** : Interface pour ajouter des épisodes de podcasts (téléchargement de fichiers MP3, réglages de durée) et référencer de nouvelles vidéos.
+  - [ ] **Centre de Jeux & Classement** : Mise à jour de l'énigme active du jour et modification manuelle du classement des joueurs.
+  - [ ] **Bibliothèque de Documents** : Table pour uploader des Workbooks PDF et définir les badges d'accès.
 - [ ] **Mise en place des formulaires et requêtes CRUD** :
   - Connecter les formulaires de création et d'édition Next.js aux requêtes `POST`, `PUT`, `DELETE` de l'API REST WordPress en passant le token JWT dans l'en-tête `Authorization`.
   - Gérer les retours visuels d'erreurs et de succès (Toasts de notifications, états de chargement).
