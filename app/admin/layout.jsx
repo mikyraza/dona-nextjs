@@ -27,9 +27,13 @@ export default function AdminLayout({ children }) {
     <div className="admin-layout-wrapper">
       {/* Sidebar Navigation */}
       <aside className="admin-sidebar">
-        <div className="admin-sidebar-logo">
-          <span className="logo-box">D</span>
-          <span className="logo-text">DONA ADMIN</span>
+        <div className="admin-sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img 
+            src="/assets/core/img/logo.png" 
+            alt="DONA Logo" 
+            style={{ height: '30px', width: 'auto', objectFit: 'contain' }}
+          />
+          <span className="logo-text" style={{ fontSize: '11px', letterSpacing: '0.15em', fontWeight: '700', color: '#111111' }}>ADMIN</span>
         </div>
 
         <nav className="admin-sidebar-nav">

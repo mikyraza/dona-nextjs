@@ -57,26 +57,19 @@ function AdminLoginForm() {
       flexDirection: "column"
     }}>
       {/* Brand Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "center", marginBottom: "32px" }}>
-        <span style={{
-          background: "#111111",
-          color: "#FFFFFF",
-          fontSize: "15px",
-          fontWeight: "700",
-          width: "28px",
-          height: "28px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: "2px"
-        }}>D</span>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "center", marginBottom: "32px" }}>
+        <img 
+          src="/assets/core/img/logo.png" 
+          alt="DONA Logo" 
+          style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
+        />
         <span style={{
           fontFamily: "'Inter', sans-serif",
-          fontWeight: "600",
-          fontSize: "15px",
-          letterSpacing: "0.1em",
+          fontWeight: "700",
+          fontSize: "12px",
+          letterSpacing: "0.15em",
           color: "#111111"
-        }}>DONA ADMIN</span>
+        }}>ADMIN</span>
       </div>
 
       <h1 style={{
