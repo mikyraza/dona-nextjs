@@ -32,13 +32,11 @@ Connecter NextAuth.js et notre logique de routage privée au moteur d'authentifi
 - [ ] **Configuration de l'extension JWT dans WordPress** :
   - Configurer les clés de chiffrement de jetons JWT dans le fichier `wp-config.php` (`JWT_AUTH_SECRET_KEY`).
   - Tester la génération de jetons via Postman/curl sur `/wp-json/jwt-auth/v1/token`.
-- [ ] **Mise en place de NextAuth.js (ou Middleware Custom) côté Next.js** :
-  - Configurer les routes d'API Next.js pour capter les requêtes d'authentification et les relayer à WordPress.
-  - Enregistrer le token JWT reçu dans un cookie HTTP-Only hautement sécurisé.
-- [ ] **Création du Middleware de Sécurisation des Routes Admin** :
-  - Implémenter le fichier `middleware.js` dans Next.js interceptant les accès à `/admin/*`.
-  - Décoder et valider le jeton JWT auprès de WordPress.
-  - Bloquer les utilisateurs n'ayant pas le rôle `Administrator` (redirection vers `/login`).
+- [x] **Mise en place de NextAuth.js (ou Middleware Custom) côté Next.js** :
+  - Configurer les routes d'API Next.js pour capter les requêtes d'authentification (CredentialsProvider) et propager le rôle/token dans la session.
+- [x] **Création du Middleware de Sécurisation des Routes Admin & Espace Lecture** :
+  - Implémenter le fichier `middleware.js` interceptant les accès à `/admin/*` (rôle ADMIN requis) et `/espace-lecture/*` (rôles VIP_SUBSCRIBER ou ADMIN requis).
+
 
 ---
 
