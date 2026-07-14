@@ -51,6 +51,8 @@ Construire l'application d'administration bespoke intégrée dans Next.js, sans 
   - [ ] **Médiathèque Studio** : Interface pour ajouter des épisodes de podcasts (téléchargement de fichiers MP3, réglages de durée) et référencer de nouvelles vidéos.
   - [ ] **Centre de Jeux & Classement** : Mise à jour de l'énigme active du jour et modification manuelle du classement des joueurs.
   - [ ] **Bibliothèque de Documents** : Table pour uploader des Workbooks PDF et définir les badges d'accès.
-- [ ] **Mise en place des formulaires et requêtes CRUD** :
-  - Connecter les formulaires de création et d'édition Next.js aux requêtes `POST`, `PUT`, `DELETE` de l'API REST WordPress en passant le token JWT dans l'en-tête `Authorization`.
-  - Gérer les retours visuels d'erreurs et de succès (Toasts de notifications, états de chargement).
+- [/] **Mise en place des formulaires et requêtes CRUD (Phase 3.2 - Interactivité locale)** :
+  - [x] Création du tiroir d'édition glissant (`ArticleDrawer.jsx`) avec formulaire éditorial complet (Auteur, Univers, VIP).
+  - [x] Raccordement des événements aux actions d'ajout et modification du state React local dans le Dashboard.
+  - [x] Synchronisation du compteur dynamique des articles publiés.
+  - [ ] Connexion finale aux requêtes réelles (POST, PUT, DELETE) vers l'API REST WordPress Headless.

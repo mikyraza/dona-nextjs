@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import ArticleDrawer from '../components/ArticleDrawer';
 
 export default function DashboardPage() {
   const [activities, setActivities] = useState([
@@ -33,6 +34,60 @@ export default function DashboardPage() {
   const [globalConfig, setGlobalConfig] = useState(null);
   const [timeRange, setTimeRange] = useState("7D"); // 7 days selected by default
   const [loading, setLoading] = useState(true);
+
+  // Phase 3.2: Drawer & CRUD State Management
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [publishedCount, setPublishedCount] = useState(24);
+
+  // Triggered when clicking + NOUVEL ARTICLE
+  const handleOpenCreateDrawer = () => {
+    setSelectedArticle(null);
+    setIsDrawerOpen(true);
+  };
+
+  // Triggered when clicking Edit on a table row
+  const handleOpenEditDrawer = (article) => {
+    setSelectedArticle(article);
+    setIsDrawerOpen(true);
+  };
+
+  // Handles adding or updating article in local state
+  const handleSaveArticle = (savedArticle) => {
+    const isEdit = activities.some(act => act.id === savedArticle.id);
+
+    // API INTEGRATION BLUEPRINT:
+    // This is where real database updates will hook into our Phase 1 API contracts:
+    /*
+    const endpoint = '/api/magazines';
+    const method = isEdit ? 'PUT' : 'POST';
+    try {
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savedArticle)
+      });
+      if (!response.ok) throw new Error("Failed to sync with DB");
+      const dbArticle = await response.json();
+      // then proceed to update state with dbArticle...
+    } catch (err) {
+      console.error("API sync error:", err);
+    }
+    */
+
+    if (isEdit) {
+      // Edit action: Update the specific article row in the local state array
+      setActivities(prev => prev.map(act => act.id === savedArticle.id ? { ...act, ...savedArticle } : act));
+    } else {
+      // Add action: Append the new article to the local state array
+      setActivities(prev => [savedArticle, ...prev]);
+      
+      // If the new article is published/VIP, dynamically increment the counter
+      if (savedArticle.status === "Published") {
+        setPublishedCount(prev => prev + 1);
+      }
+    }
+  };
 
   useEffect(() => {
     // Fetch mock data from our local endpoints to simulate database integration
@@ -133,7 +188,7 @@ export default function DashboardPage() {
         {/* Metric 1 */}
         <div className="metric-card">
           <div className="metric-card-title">Articles Published (7d)</div>
-          <div className="metric-card-value">24</div>
+          <div className="metric-card-value">{publishedCount}</div>
           <div className="metric-card-sub" style={{ color: '#03543F' }}>
             <span style={{ fontWeight: '600' }}>+2</span> vs last week
           </div>
@@ -172,7 +227,10 @@ export default function DashboardPage() {
 
       {/* Primary Action Buttons Row */}
       <section className="action-buttons-row">
-        <button className="btn-admin-action primary">
+        <button 
+          className="btn-admin-action primary"
+          onClick={handleOpenCreateDrawer}
+        >
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
           Nouvel Article
         </button>
@@ -226,7 +284,17 @@ export default function DashboardPage() {
                     <td style={{ color: '#888888' }}>{act.updated}</td>
                     <td style={{ textAlign: 'right' }}>
                       <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
-                        <a href={`/admin/edit/${act.id}`} className="table-action-btn">Edit</a>
+                        {act.type === "Article" ? (
+                          <button 
+                            onClick={() => handleOpenEditDrawer(act)} 
+                            className="table-action-btn"
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
+                          >
+                            Edit
+                          </button>
+                        ) : (
+                          <span style={{ color: '#CCCCCC', fontSize: '12px' }}>Edit</span>
+                        )}
                         <span className="table-action-divider">|</span>
                         <a href={`/admin/view/${act.id}`} className="table-action-btn secondary">View</a>
                       </div>
@@ -310,6 +378,14 @@ export default function DashboardPage() {
 
         </div>
       </div>
+
+      {/* Slide-over Edit/Create Article Drawer */}
+      <ArticleDrawer 
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        onSave={handleSaveArticle}
+        article={selectedArticle}
+      />
     </>
   );
 }
