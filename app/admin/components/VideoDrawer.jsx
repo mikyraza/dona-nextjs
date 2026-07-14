@@ -48,24 +48,46 @@ export default function VideoDrawer({ isOpen, onClose, onSave, video }) {
 
   if (!isOpen) return null;
 
-  // Simulate file upload progress
-  const handleFileChange = (e) => {
+  // Handle video upload via /api/media
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setFileName(file.name);
       setIsUploading(true);
-      setUploadProgress(0);
+      setUploadProgress(10);
       
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Simulate progress up to 90%
       const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setIsUploading(false);
-            return 100;
-          }
-          return prev + 20;
+        setUploadProgress((prev) => (prev < 90 ? prev + 10 : 90));
+      }, 150);
+
+      try {
+        const res = await fetch("/api/media", {
+          method: "POST",
+          body: formData,
         });
-      }, 300);
+        const data = await res.json();
+        clearInterval(interval);
+        
+        if (data.success && data.url) {
+          setUploadProgress(100);
+          // Set videoUrl to the uploaded file's URL
+          setVideoUrl(data.url);
+        } else {
+          alert(`Erreur: ${data.error || "Téléversement échoué"}`);
+          setUploadProgress(0);
+        }
+      } catch (err) {
+        clearInterval(interval);
+        console.error("Upload error:", err);
+        alert("Erreur de connexion lors du téléversement");
+        setUploadProgress(0);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 

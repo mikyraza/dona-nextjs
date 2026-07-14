@@ -28,6 +28,21 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   const [category, setCategory] = useState('intelligence');
   const [content, setContent] = useState('');
   const [isVipOnly, setIsVipOnly] = useState(false);
+  
+  // Dynamic Format Selection
+  const [format, setFormat] = useState('text'); // 'text' | 'video' | 'audio'
+
+  // Video Upload States
+  const [videoSourceType, setVideoSourceType] = useState('url');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoFileName, setVideoFileName] = useState('');
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoIsUploading, setVideoIsUploading] = useState(false);
+
+  // Audio Upload States
+  const [audioFileName, setAudioFileName] = useState('');
+  const [audioUploadProgress, setAudioUploadProgress] = useState(0);
+  const [audioIsUploading, setAudioIsUploading] = useState(false);
 
   const editorRef = useRef(null);
 
@@ -47,6 +62,20 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       
       initialContent = article.content || '';
       setIsVipOnly(article.status === 'Published' || article.isVipOnly || false);
+      
+      // Detect Format from initial values
+      if (article.format) {
+        setFormat(article.format);
+      } else if (article.videoUrl || (article.url && article.type === "Vidéo")) {
+        setFormat('video');
+        setVideoUrl(article.videoUrl || article.url || '');
+        setVideoSourceType('url');
+      } else if (article.audioFile || (article.url && article.type === "Podcast")) {
+        setFormat('audio');
+        setAudioFileName(article.audioFile || article.url || '');
+      } else {
+        setFormat('text');
+      }
     } else {
       // Reset form for new article
       setTitle('');
@@ -54,6 +83,13 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       setCategory('intelligence');
       initialContent = '';
       setIsVipOnly(false);
+      setFormat('text');
+      setVideoSourceType('url');
+      setVideoUrl('');
+      setVideoFileName('');
+      setAudioFileName('');
+      setVideoUploadProgress(0);
+      setAudioUploadProgress(0);
     }
 
     setContent(initialContent);
@@ -65,6 +101,90 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   }, [article, isOpen]);
 
   if (!isOpen) return null;
+
+  // Handle video upload via /api/media
+  const handleVideoFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setVideoFileName(file.name);
+      setVideoIsUploading(true);
+      setVideoUploadProgress(10);
+      
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Simulate progress up to 90%
+      const interval = setInterval(() => {
+        setVideoUploadProgress((prev) => (prev < 90 ? prev + 10 : 90));
+      }, 150);
+
+      try {
+        const res = await fetch("/api/media", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        clearInterval(interval);
+        
+        if (data.success && data.url) {
+          setVideoUploadProgress(100);
+          setVideoUrl(data.url);
+        } else {
+          alert(`Erreur: ${data.error || "Téléversement échoué"}`);
+          setVideoUploadProgress(0);
+        }
+      } catch (err) {
+        clearInterval(interval);
+        console.error("Upload error:", err);
+        alert("Erreur de connexion lors du téléversement");
+        setVideoUploadProgress(0);
+      } finally {
+        setVideoIsUploading(false);
+      }
+    }
+  };
+
+  // Handle audio upload via /api/media
+  const handleAudioFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAudioFileName(file.name);
+      setAudioIsUploading(true);
+      setAudioUploadProgress(10);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Simulate progress up to 90%
+      const interval = setInterval(() => {
+        setAudioUploadProgress((prev) => (prev < 90 ? prev + 15 : 90));
+      }, 120);
+
+      try {
+        const res = await fetch("/api/media", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        clearInterval(interval);
+
+        if (data.success && data.url) {
+          setAudioUploadProgress(100);
+          setAudioFileName(data.url);
+        } else {
+          alert(`Erreur: ${data.error || "Téléversement échoué"}`);
+          setAudioUploadProgress(0);
+        }
+      } catch (err) {
+        clearInterval(interval);
+        console.error("Upload error:", err);
+        alert("Erreur de connexion lors du téléversement");
+        setAudioUploadProgress(0);
+      } finally {
+        setAudioIsUploading(false);
+      }
+    }
+  };
 
   // Handle rich text editor command
   const execEditorCommand = (command, value = null) => {
@@ -90,43 +210,23 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
     e.preventDefault();
     if (!title.trim()) return;
 
-    // Call API Integration Blueprint Action
-    // In production, this would trigger a real POST or PUT request:
-    /*
-    const apiEndpoint = article ? `/api/magazines` : `/api/magazines`;
-    const apiMethod = article ? 'PUT' : 'POST';
-    try {
-      const response = await fetch(apiEndpoint, {
-        method: apiMethod,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.user?.jwt_token}`
-        },
-        body: JSON.stringify({
-          id: article?.id,
-          title,
-          author,
-          category,
-          content,
-          isVipOnly
-        })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        onSave(data);
-      }
-    } catch (err) {
-      console.error("API update error:", err);
+    // Gather format details
+    const formatMeta = {};
+    if (format === 'video') {
+      formatMeta.videoUrl = videoSourceType === 'url' ? videoUrl : `Fichier : ${videoFileName}`;
+      formatMeta.videoSourceType = videoSourceType;
+    } else if (format === 'audio') {
+      formatMeta.audioFile = audioFileName;
     }
-    */
 
-    // Pass data back to parent state
     onSave({
       id: article?.id || `art-${Date.now()}`,
       title,
       author,
       category: UNIVERSES.find(u => u.id === category)?.name || category,
       content,
+      format,
+      ...formatMeta,
       status: isVipOnly ? "Published" : "Draft",
       isVipOnly,
       updated: "À l'instant"
@@ -149,6 +249,34 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
         </div>
 
         <form onSubmit={handleSubmit} className="drawer-form">
+          {/* Format selector */}
+          <div className="drawer-input-group">
+            <label>Format de l'article</label>
+            <div className="media-segmented-control">
+              <button
+                type="button"
+                className={`segmented-btn ${format === 'text' ? 'active' : ''}`}
+                onClick={() => setFormat('text')}
+              >
+                Texte
+              </button>
+              <button
+                type="button"
+                className={`segmented-btn ${format === 'video' ? 'active' : ''}`}
+                onClick={() => setFormat('video')}
+              >
+                Vidéo
+              </button>
+              <button
+                type="button"
+                className={`segmented-btn ${format === 'audio' ? 'active' : ''}`}
+                onClick={() => setFormat('audio')}
+              >
+                Audio
+              </button>
+            </div>
+          </div>
+
           {/* Title input */}
           <div className="drawer-input-group">
             <label htmlFor="drawer-title">Titre de l'article</label>
@@ -163,6 +291,117 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
               autoFocus
             />
           </div>
+
+          {/* Conditional Video Fields */}
+          {format === 'video' && (
+            <div className="drawer-input-group media-field-section">
+              <label>Source de la Vidéo</label>
+              <div className="media-segmented-control" style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={`segmented-btn ${videoSourceType === 'url' ? 'active' : ''}`}
+                  onClick={() => setVideoSourceType('url')}
+                >
+                  Lien Externe
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-btn ${videoSourceType === 'upload' ? 'active' : ''}`}
+                  onClick={() => setVideoSourceType('upload')}
+                >
+                  Uploader
+                </button>
+              </div>
+
+              {videoSourceType === 'url' ? (
+                <input
+                  type="url"
+                  required={format === 'video' && videoSourceType === 'url'}
+                  className="drawer-text-input"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+              ) : (
+                <>
+                  <div className="media-drag-drop-zone">
+                    <input
+                      type="file"
+                      id="drawer-video-file"
+                      accept="video/mp4"
+                      style={{ display: 'none' }}
+                      onChange={handleVideoFileChange}
+                    />
+                    <label htmlFor="drawer-video-file" className="drag-drop-label">
+                      <span className="material-symbols-outlined drag-drop-icon">videocam</span>
+                      <span>Glissez-déposez votre vidéo MP4 ici ou <strong>parcourez</strong></span>
+                    </label>
+                  </div>
+                  {videoFileName && (
+                    <div className="file-upload-status-card">
+                      <div className="file-info">
+                        <div className="video-thumbnail-placeholder">
+                          <span className="material-symbols-outlined">movie</span>
+                        </div>
+                        <div className="file-details">
+                          <span className="file-name">{videoFileName}</span>
+                          <span className="file-progress-percent">{videoUploadProgress}%</span>
+                        </div>
+                      </div>
+                      <div className="progress-bar-container">
+                        <div className="progress-bar-fill" style={{ width: `${videoUploadProgress}%` }} />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Conditional Audio Fields */}
+          {format === 'audio' && (
+            <div className="drawer-input-group media-field-section">
+              <label>Piste Audio</label>
+              <div className="media-drag-drop-zone">
+                <input
+                  type="file"
+                  id="drawer-audio-file"
+                  accept="audio/mpeg,audio/wav"
+                  style={{ display: 'none' }}
+                  onChange={handleAudioFileChange}
+                />
+                <label htmlFor="drawer-audio-file" className="drag-drop-label">
+                  <span className="material-symbols-outlined drag-drop-icon">mic</span>
+                  <span>Glissez-déposez votre fichier audio (.mp3, .wav) ou <strong>parcourez</strong></span>
+                </label>
+              </div>
+              {audioFileName && (
+                <div className="file-upload-status-card">
+                  <div className="file-info" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
+                    <div className="file-details">
+                      <span className="file-name">{audioFileName}</span>
+                      <span className="file-progress-percent">{audioUploadProgress}%</span>
+                    </div>
+                    {/* Visual Audio Wave */}
+                    <div className="audio-wave-preview">
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '14px' }}></div>
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '24px' }}></div>
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '18px' }}></div>
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '28px' }}></div>
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '32px' }}></div>
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '20px' }}></div>
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '10px' }}></div>
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '26px' }}></div>
+                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '16px' }}></div>
+                    </div>
+                  </div>
+                  <div className="progress-bar-container">
+                    <div className="progress-bar-fill" style={{ width: `${audioUploadProgress}%` }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Author input (Pre-populated) */}
           <div className="drawer-input-group">
@@ -280,7 +519,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                 contentEditable={true}
                 onInput={handleEditorInput}
                 placeholder="Écrivez le corps de l'article ici..."
-                style={{ minHeight: '200px' }}
+                style={{ minHeight: '180px' }}
               />
             </div>
           </div>
@@ -313,6 +552,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
             <button 
               type="submit" 
               className="btn-drawer primary"
+              disabled={videoIsUploading || audioIsUploading}
             >
               {article ? "Enregistrer" : "Publier"}
             </button>

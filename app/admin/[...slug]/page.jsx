@@ -5,6 +5,8 @@ import Link from 'next/link';
 import ArticleDrawer from '../components/ArticleDrawer';
 import VideoDrawer from '../components/VideoDrawer';
 import PodcastDrawer from '../components/PodcastDrawer';
+import PlayoutDrawer from '../components/PlayoutDrawer';
+import DossierDrawer from '../components/DossierDrawer';
 
 // The 16 official magazine universes for category matching
 const UNIVERSES = [
@@ -134,6 +136,95 @@ export default function AdminCatchAllPage({ params }) {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [isPodcastDrawerOpen, setIsPodcastDrawerOpen] = useState(false);
   const [selectedPodcast, setSelectedPodcast] = useState(null);
+
+  // Playout Queue & Now Playing States (Phase 3.3)
+  const [radioQueue, setRadioQueue] = useState([
+    { id: "q-r-1", title: "The Brief: L'Analyse Hebdomadaire (Épisode 12)", format: "Audio", duration: "45:00" },
+    { id: "q-r-2", title: "L'Architecture du Silence (Épisode 3)", format: "Audio", duration: "32:15" },
+    { id: "q-r-3", title: "Discussion : Tech et Éthique du 12 Juillet", format: "Audio", duration: "24:10" }
+  ]);
+
+  const [tvQueue, setTvQueue] = useState([
+    { id: "q-t-1", title: "Reportage: Les coulisses de DONA", format: "Vidéo", duration: "14:20" },
+    { id: "q-t-2", title: "Le Pouvoir du Design Intemporel", format: "Vidéo", duration: "08:45" }
+  ]);
+
+  const [radioNowPlaying, setRadioNowPlaying] = useState({
+    title: "Intro Édito DONA Radio",
+    duration: "02:30",
+    remaining: "01:15",
+    progress: 50
+  });
+
+  const [tvNowPlaying, setTvNowPlaying] = useState({
+    title: "Loop Visuelle DONA TV v2",
+    duration: "05:00",
+    remaining: "03:45",
+    progress: 25
+  });
+
+  const [radioOverride, setRadioOverride] = useState(false);
+  const [tvOverride, setTvOverride] = useState(false);
+
+  const [isPlayoutDrawerOpen, setIsPlayoutDrawerOpen] = useState(false);
+  const [playoutTarget, setPlayoutTarget] = useState('radio'); // 'radio' | 'tv'
+
+  // Queue Reordering logic (Up/Down)
+  const handleMoveQueueItem = (target, index, direction) => {
+    const queue = target === 'radio' ? [...radioQueue] : [...tvQueue];
+    const setQueue = target === 'radio' ? setRadioQueue : setTvQueue;
+
+    if (direction === 'up' && index > 0) {
+      const temp = queue[index];
+      queue[index] = queue[index - 1];
+      queue[index - 1] = temp;
+    } else if (direction === 'down' && index < queue.length - 1) {
+      const temp = queue[index];
+      queue[index] = queue[index + 1];
+      queue[index + 1] = temp;
+    }
+    setQueue(queue);
+  };
+
+  // Queue Remove logic
+  const handleRemoveQueueItem = (target, id) => {
+    const setQueue = target === 'radio' ? setRadioQueue : setTvQueue;
+    setQueue(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Add to Playout Queue from drawer
+  const handleAddToPlayoutQueue = (newItem) => {
+    const setQueue = playoutTarget === 'radio' ? setRadioQueue : setTvQueue;
+    setQueue(prev => [...prev, newItem]);
+  };
+
+  // 6. Dossiers State (Phase 4.2)
+  const [dossiers, setDossiers] = useState([
+    {
+      id: "dos-1",
+      title: "L'Empire du Silicium : Les Dessous de la Révolution Tech",
+      description: "Une enquête exclusive sur la géopolitique des semi-conducteurs et le rôle de l'Europe dans la course mondiale.",
+      coverImage: "/assets/core/img/vault-1.png",
+      articles: ["art-1", "art-2"],
+      isVipOnly: true,
+      updated: "1d ago"
+    }
+  ]);
+  const [isDossierDrawerOpen, setIsDossierDrawerOpen] = useState(false);
+  const [selectedDossier, setSelectedDossier] = useState(null);
+
+  const handleSaveDossier = (savedDossier) => {
+    const isEdit = dossiers.some(dos => dos.id === savedDossier.id);
+    if (isEdit) {
+      setDossiers(prev => prev.map(dos => dos.id === savedDossier.id ? savedDossier : dos));
+    } else {
+      setDossiers(prev => [...prev, savedDossier]);
+    }
+  };
+
+  const handleDeleteDossier = (id) => {
+    setDossiers(prev => prev.filter(dos => dos.id !== id));
+  };
 
   // Handle article save
   const handleSaveArticle = (savedArticle) => {
@@ -400,22 +491,89 @@ export default function AdminCatchAllPage({ params }) {
         return (
           <>
             <div className="dashboard-title-row">
-              <h1>Dossiers</h1>
-              <button className="btn-admin-action primary" onClick={() => alert("Nouveau dossier local")}>
+              <h1>Dossiers d'Enquête</h1>
+              <button 
+                className="btn-admin-action primary" 
+                onClick={() => { setSelectedDossier(null); setIsDossierDrawerOpen(true); }}
+              >
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
                 Nouveau Dossier
               </button>
             </div>
 
-            <div className="table-card" style={{ marginTop: '20px', padding: '40px', textAlign: 'center' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#CCCCCC' }}>folder_open</span>
-              <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '24px', fontStyle: 'italic', marginTop: '16px' }}>
-                Aucun dossier VIP structuré en local
-              </h3>
-              <p style={{ color: '#777777', fontSize: '14px', maxWidth: '400px', margin: '8px auto 0' }}>
-                Utilisez l'espace d'administration pour organiser les archives et workbooks à télécharger.
-              </p>
-            </div>
+            {dossiers.length === 0 ? (
+              <div className="table-card" style={{ marginTop: '20px', padding: '40px', textAlign: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#CCCCCC' }}>folder_open</span>
+                <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '24px', fontStyle: 'italic', marginTop: '16px' }}>
+                  Aucun dossier d'enquête créé pour le moment.
+                </h3>
+                <p style={{ color: '#777777', fontSize: '14px', maxWidth: '450px', margin: '8px auto 0' }}>
+                  Utilisez cet espace pour regrouper vos grands formats et analyses thématiques.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', marginTop: '20px' }}>
+                {dossiers.map((dos) => (
+                  <div key={dos.id} className="table-card" style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ 
+                      height: '160px', 
+                      backgroundColor: '#FFF0F2', 
+                      backgroundImage: dos.coverImage ? `url(${dos.coverImage})` : 'none',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--admin-accent-color)'
+                    }}>
+                      {!dos.coverImage && (
+                        <span className="material-symbols-outlined" style={{ fontSize: '48px' }}>folder</span>
+                      )}
+                      {dos.isVipOnly && (
+                        <span className="badge vip" style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--admin-accent-color)', color: '#FFFFFF', fontSize: '9px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '1px' }}>
+                          VIP
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', fontWeight: '700', color: 'var(--admin-text-color)', margin: 0 }}>
+                        {dos.title}
+                      </h3>
+                      <p style={{ fontSize: '12px', color: 'var(--admin-text-muted)', margin: 0, lineBreak: 'anywhere', WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden', height: '36px' }}>
+                        {dos.description}
+                      </p>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', borderTop: '1px solid var(--admin-border-color)', paddingTop: '12px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>
+                          {dos.articles?.length || 0} Article(s) associé(s)
+                        </span>
+                        
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button 
+                            type="button" 
+                            className="btn-admin-action"
+                            onClick={() => { setSelectedDossier(dos); setIsDossierDrawerOpen(true); }}
+                            style={{ padding: '4px 8px', fontSize: '11px', border: '1px solid var(--admin-border-color)', background: '#FFFFFF', cursor: 'pointer' }}
+                          >
+                            Éditer
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn-admin-action"
+                            onClick={() => handleDeleteDossier(dos.id)}
+                            style={{ padding: '4px 8px', fontSize: '11px', border: '1px solid #FFF0F2', background: '#FFF0F2', color: 'var(--admin-accent-color)', cursor: 'pointer' }}
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         );
 
@@ -576,34 +734,355 @@ export default function AdminCatchAllPage({ params }) {
         );
 
       case 'radio-live':
+        return (
+          <>
+            <div className="dashboard-title-row">
+              <h1>Studio Radio Live</h1>
+            </div>
+
+            <div className="playout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '30px' }}>
+              {/* Column 1: Now Playing & Override */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="now-playing-card">
+                  <span className="now-playing-badge">ON AIR</span>
+                  <label className="group-title" style={{ padding: 0 }}>En Cours de Lecture</label>
+                  <h3 className="now-playing-title">{radioNowPlaying.title}</h3>
+                  <div className="now-playing-meta">
+                    <span>Durée : {radioNowPlaying.duration}</span>
+                    <span>Restant : {radioNowPlaying.remaining}</span>
+                  </div>
+                  <div className="progress-bar-container" style={{ height: '6px' }}>
+                    <div className="progress-bar-fill" style={{ width: `${radioNowPlaying.progress}%` }} />
+                  </div>
+                  
+                  <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+                    <button 
+                      type="button" 
+                      className="btn-drawer secondary" 
+                      onClick={() => setRadioNowPlaying({ title: "Edito DONA Spécial Musique", duration: "05:00", remaining: "05:00", progress: 0 })}
+                      style={{ padding: '8px 16px' }}
+                    >
+                      Sauter le média
+                    </button>
+                  </div>
+                </div>
+
+                {/* Override switch block */}
+                <div className="playout-override-block">
+                  <div className="override-header">
+                    <div>
+                      <span className="override-title">Bypass Auto-Playlist</span>
+                      <p className="override-desc">Forcer le flux de diffusion externe RTMP en direct.</p>
+                    </div>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={radioOverride}
+                        onChange={(e) => setRadioOverride(e.target.checked)}
+                      />
+                      <span className="slider round"></span>
+                    </label>
+                  </div>
+
+                  {radioOverride && (
+                    <div className="rtmp-keys-box">
+                      <div className="rtmp-key-row">
+                        <label>URL du Serveur RTMP</label>
+                        <div className="rtmp-key-input-group">
+                          <input 
+                            type="text" 
+                            readOnly 
+                            className="rtmp-input" 
+                            value="rtmp://live.dona-magazine.com/radio" 
+                          />
+                          <button 
+                            type="button" 
+                            className="btn-rtmp-copy"
+                            onClick={() => { navigator.clipboard.writeText("rtmp://live.dona-magazine.com/radio"); alert("URL copiée !"); }}
+                          >
+                            Copier
+                          </button>
+                        </div>
+                      </div>
+                      <div className="rtmp-key-row">
+                        <label>Clé de stream (Stream Key)</label>
+                        <div className="rtmp-key-input-group">
+                          <input 
+                            type="password" 
+                            readOnly 
+                            className="rtmp-input" 
+                            value="dona_radio_key_prod_849a29" 
+                          />
+                          <button 
+                            type="button" 
+                            className="btn-rtmp-copy"
+                            onClick={() => { navigator.clipboard.writeText("dona_radio_key_prod_849a29"); alert("Clé copiée !"); }}
+                          >
+                            Copier
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Column 2: Playout Queue */}
+              <div className="table-card" style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 className="table-title" style={{ margin: 0 }}>File d'attente (Playlist Auto)</h3>
+                  <button 
+                    type="button" 
+                    className="btn-admin-action primary"
+                    onClick={() => { setPlayoutTarget('radio'); setIsPlayoutDrawerOpen(true); }}
+                    style={{ padding: '8px 16px' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
+                    Ajouter
+                  </button>
+                </div>
+
+                <div className="playout-queue-list">
+                  {radioQueue.map((item, index) => (
+                    <div key={item.id} className="playout-queue-item">
+                      <span className="material-symbols-outlined drag-handle">drag_indicator</span>
+                      
+                      <div className="queue-item-details">
+                        <span className="queue-item-title">{item.title}</span>
+                        <div className="queue-item-meta">
+                          <span>Format : {item.format}</span>
+                          <span>Durée : {item.duration}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button 
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => handleMoveQueueItem('radio', index, 'up')}
+                          style={{ border: 'none', background: 'none', cursor: index === 0 ? 'not-allowed' : 'pointer', color: index === 0 ? '#CCC' : '#555' }}
+                          title="Monter"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_upward</span>
+                        </button>
+                        <button 
+                          type="button"
+                          disabled={index === radioQueue.length - 1}
+                          onClick={() => handleMoveQueueItem('radio', index, 'down')}
+                          style={{ border: 'none', background: 'none', cursor: index === radioQueue.length - 1 ? 'not-allowed' : 'pointer', color: index === radioQueue.length - 1 ? '#CCC' : '#555' }}
+                          title="Descendre"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_downward</span>
+                        </button>
+                      </div>
+
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveQueueItem('radio', item.id)}
+                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--admin-accent-color)', marginLeft: '10px' }}
+                        title="Retirer"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                      </button>
+                    </div>
+                  ))}
+
+                  {radioQueue.length === 0 && (
+                    <p style={{ textAlign: 'center', color: '#88', padding: '20px' }}>La file d'attente est vide.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        );
+
       case 'tv-live':
+        return (
+          <>
+            <div className="dashboard-title-row">
+              <h1>Studio TV Live</h1>
+            </div>
+
+            <div className="playout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '30px' }}>
+              {/* Column 1: Now Playing & Override */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="now-playing-card">
+                  <span className="now-playing-badge">ON AIR</span>
+                  <label className="group-title" style={{ padding: 0 }}>En Cours de Lecture</label>
+                  <h3 className="now-playing-title">{tvNowPlaying.title}</h3>
+                  <div className="now-playing-meta">
+                    <span>Durée : {tvNowPlaying.duration}</span>
+                    <span>Restant : {tvNowPlaying.remaining}</span>
+                  </div>
+                  <div className="progress-bar-container" style={{ height: '6px' }}>
+                    <div className="progress-bar-fill" style={{ width: `${tvNowPlaying.progress}%` }} />
+                  </div>
+                  
+                  <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+                    <button 
+                      type="button" 
+                      className="btn-drawer secondary" 
+                      onClick={() => setTvNowPlaying({ title: "Loop Visuelle Spéciale Mode", duration: "10:00", remaining: "10:00", progress: 0 })}
+                      style={{ padding: '8px 16px' }}
+                    >
+                      Sauter le média
+                    </button>
+                  </div>
+                </div>
+
+                {/* Override switch block */}
+                <div className="playout-override-block">
+                  <div className="override-header">
+                    <div>
+                      <span className="override-title">Bypass Auto-Playlist</span>
+                      <p className="override-desc">Forcer le flux de diffusion externe RTMP en direct.</p>
+                    </div>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={tvOverride}
+                        onChange={(e) => setTvOverride(e.target.checked)}
+                      />
+                      <span className="slider round"></span>
+                    </label>
+                  </div>
+
+                  {tvOverride && (
+                    <div className="rtmp-keys-box">
+                      <div className="rtmp-key-row">
+                        <label>URL du Serveur RTMP</label>
+                        <div className="rtmp-key-input-group">
+                          <input 
+                            type="text" 
+                            readOnly 
+                            className="rtmp-input" 
+                            value="rtmp://live.dona-magazine.com/tv" 
+                          />
+                          <button 
+                            type="button" 
+                            className="btn-rtmp-copy"
+                            onClick={() => { navigator.clipboard.writeText("rtmp://live.dona-magazine.com/tv"); alert("URL copiée !"); }}
+                          >
+                            Copier
+                          </button>
+                        </div>
+                      </div>
+                      <div className="rtmp-key-row">
+                        <label>Clé de stream (Stream Key)</label>
+                        <div className="rtmp-key-input-group">
+                          <input 
+                            type="password" 
+                            readOnly 
+                            className="rtmp-input" 
+                            value="dona_tv_key_prod_3728f1" 
+                          />
+                          <button 
+                            type="button" 
+                            className="btn-rtmp-copy"
+                            onClick={() => { navigator.clipboard.writeText("dona_tv_key_prod_3728f1"); alert("Clé copiée !"); }}
+                          >
+                            Copier
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Column 2: Playout Queue */}
+              <div className="table-card" style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 className="table-title" style={{ margin: 0 }}>File d'attente (Playlist Auto)</h3>
+                  <button 
+                    type="button" 
+                    className="btn-admin-action primary"
+                    onClick={() => { setPlayoutTarget('tv'); setIsPlayoutDrawerOpen(true); }}
+                    style={{ padding: '8px 16px' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
+                    Ajouter
+                  </button>
+                </div>
+
+                <div className="playout-queue-list">
+                  {tvQueue.map((item, index) => (
+                    <div key={item.id} className="playout-queue-item">
+                      <span className="material-symbols-outlined drag-handle">drag_indicator</span>
+                      
+                      <div className="queue-item-details">
+                        <span className="queue-item-title">{item.title}</span>
+                        <div className="queue-item-meta">
+                          <span>Format : {item.format}</span>
+                          <span>Durée : {item.duration}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button 
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => handleMoveQueueItem('tv', index, 'up')}
+                          style={{ border: 'none', background: 'none', cursor: index === 0 ? 'not-allowed' : 'pointer', color: index === 0 ? '#CCC' : '#555' }}
+                          title="Monter"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_upward</span>
+                        </button>
+                        <button 
+                          type="button"
+                          disabled={index === tvQueue.length - 1}
+                          onClick={() => handleMoveQueueItem('tv', index, 'down')}
+                          style={{ border: 'none', background: 'none', cursor: index === tvQueue.length - 1 ? 'not-allowed' : 'pointer', color: index === tvQueue.length - 1 ? '#CCC' : '#555' }}
+                          title="Descendre"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_downward</span>
+                        </button>
+                      </div>
+
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveQueueItem('tv', item.id)}
+                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--admin-accent-color)', marginLeft: '10px' }}
+                        title="Retirer"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                      </button>
+                    </div>
+                  ))}
+
+                  {tvQueue.length === 0 && (
+                    <p style={{ textAlign: 'center', color: '#88', padding: '20px' }}>La file d'attente est vide.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        );
+
       case 'replays':
         return (
           <>
             <div className="dashboard-title-row">
-              <h1>Studio & Direct ({section.toUpperCase()})</h1>
+              <h1>Studio & Direct (REPLAYS)</h1>
             </div>
 
             <div className="table-card" style={{ marginTop: '20px', padding: '30px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--admin-border-color)' }}>
                 <span className="status-indicator-dot green" style={{ width: '12px', height: '12px' }}></span>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '18px' }}>Le studio de diffusion est actif</h3>
-                  <p style={{ margin: '4px 0 0', color: '#888888', fontSize: '12px' }}>Type : {section === 'radio-live' ? 'Radio Audio Stream' : 'TV Video Stream'}</p>
+                  <h3 style={{ margin: 0, fontSize: '18px' }}>Archives de Replays Actifs</h3>
+                  <p style={{ margin: '4px 0 0', color: '#888888', fontSize: '12px' }}>Type : Archives de direct sauvegardées</p>
                 </div>
-                <button className="btn-drawer primary" style={{ marginLeft: 'auto', background: '#D11A2A' }} onClick={() => alert("Flux arrêté !")}>
-                  Couper le flux
-                </button>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginTop: '20px' }}>
                 <div className="drawer-input-group">
-                  <label>Titre de l'émission courante</label>
-                  <input type="text" className="drawer-text-input" defaultValue="Le Brief de Dona" />
+                  <label>Nombre de replays disponibles</label>
+                  <input type="text" className="drawer-text-input" readOnly value="14 replays archivés" />
                 </div>
                 <div className="drawer-input-group">
-                  <label>Lien de streaming source (RTMP / HLS)</label>
-                  <input type="text" className="drawer-text-input" defaultValue="rtmp://live.dona-magazine.com/studio" />
+                  <label>Dossier de stockage cloud</label>
+                  <input type="text" className="drawer-text-input" readOnly value="s3://dona-magazine-replays/archive/" />
                 </div>
               </div>
             </div>
@@ -690,6 +1169,24 @@ export default function AdminCatchAllPage({ params }) {
         onClose={() => setIsPodcastDrawerOpen(false)}
         onSave={handleSavePodcast}
         podcast={selectedPodcast}
+      />
+
+      {/* Playout Queue Scheduler Drawer */}
+      <PlayoutDrawer
+        isOpen={isPlayoutDrawerOpen}
+        onClose={() => setIsPlayoutDrawerOpen(false)}
+        onAdd={handleAddToPlayoutQueue}
+        targetType={playoutTarget}
+        dbArticles={articles}
+      />
+
+      {/* Slide-over Dossier Drawer */}
+      <DossierDrawer
+        isOpen={isDossierDrawerOpen}
+        onClose={() => setIsDossierDrawerOpen(false)}
+        onSave={handleSaveDossier}
+        articles={articles}
+        dossier={selectedDossier}
       />
     </>
   );
