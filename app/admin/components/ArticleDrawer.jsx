@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // The 16 official magazine universes
 const UNIVERSES = [
@@ -29,8 +29,11 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   const [content, setContent] = useState('');
   const [isVipOnly, setIsVipOnly] = useState(false);
 
+  const editorRef = useRef(null);
+
   // Sync state when article prop changes (Edit vs Create mode)
   useEffect(() => {
+    let initialContent = '';
     if (article) {
       setTitle(article.title || '');
       setAuthor(article.author || 'Elena Moretti');
@@ -42,19 +45,46 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       );
       setCategory(matchedUniverse ? matchedUniverse.id : 'intelligence');
       
-      setContent(article.content || '');
+      initialContent = article.content || '';
       setIsVipOnly(article.status === 'Published' || article.isVipOnly || false);
     } else {
       // Reset form for new article
       setTitle('');
       setAuthor('Elena Moretti');
       setCategory('intelligence');
-      setContent('');
+      initialContent = '';
       setIsVipOnly(false);
+    }
+
+    setContent(initialContent);
+    
+    // Sync the contentEditable div content manually to avoid cursor jumps
+    if (editorRef.current) {
+      editorRef.current.innerHTML = initialContent;
     }
   }, [article, isOpen]);
 
   if (!isOpen) return null;
+
+  // Handle rich text editor command
+  const execEditorCommand = (command, value = null) => {
+    document.execCommand(command, false, value);
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+    }
+  };
+
+  // Prompts for adding dynamic hyperlinks
+  const handleAddLink = () => {
+    const url = prompt("Entrez l'adresse URL du lien :");
+    if (url) {
+      execEditorCommand('createLink', url);
+    }
+  };
+
+  const handleEditorInput = (e) => {
+    setContent(e.target.innerHTML);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -167,16 +197,92 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
             </div>
           </div>
 
-          {/* Rich Content Textarea */}
+          {/* Rich Content Editor (Editorial WYSIWYG) */}
           <div className="drawer-input-group" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-            <label htmlFor="drawer-content">Contenu éditorial (HTML / Texte)</label>
-            <textarea
-              id="drawer-content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Écrivez le corps de l'article ici..."
-              className="drawer-textarea"
-            />
+            <label>Contenu éditorial (Texte Enrichi)</label>
+            <div className="rich-editor-container">
+              <div className="rich-editor-toolbar">
+                <button 
+                  type="button" 
+                  onClick={() => execEditorCommand('bold')}
+                  className="toolbar-btn" 
+                  title="Gras"
+                >
+                  <span className="material-symbols-outlined">format_bold</span>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => execEditorCommand('italic')}
+                  className="toolbar-btn" 
+                  title="Italique"
+                >
+                  <span className="material-symbols-outlined">format_italic</span>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => execEditorCommand('underline')}
+                  className="toolbar-btn" 
+                  title="Souligné"
+                >
+                  <span className="material-symbols-outlined">format_underlined</span>
+                </button>
+                
+                <span className="toolbar-divider"></span>
+                
+                <button 
+                  type="button" 
+                  onClick={() => execEditorCommand('formatBlock', '<h2>')}
+                  className="toolbar-btn" 
+                  title="Titre H2"
+                >
+                  <span className="material-symbols-outlined">title</span>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => execEditorCommand('formatBlock', '<blockquote>')}
+                  className="toolbar-btn" 
+                  title="Citation"
+                >
+                  <span className="material-symbols-outlined">format_quote</span>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => execEditorCommand('insertUnorderedList')}
+                  className="toolbar-btn" 
+                  title="Liste à puces"
+                >
+                  <span className="material-symbols-outlined">format_list_bulleted</span>
+                </button>
+                
+                <span className="toolbar-divider"></span>
+                
+                <button 
+                  type="button" 
+                  onClick={handleAddLink}
+                  className="toolbar-btn" 
+                  title="Insérer un lien"
+                >
+                  <span className="material-symbols-outlined">link</span>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => execEditorCommand('removeFormat')}
+                  className="toolbar-btn" 
+                  title="Effacer les styles"
+                >
+                  <span className="material-symbols-outlined">format_clear</span>
+                </button>
+              </div>
+
+              <div 
+                ref={editorRef}
+                className="rich-editor-area"
+                contentEditable={true}
+                onInput={handleEditorInput}
+                placeholder="Écrivez le corps de l'article ici..."
+                style={{ minHeight: '200px' }}
+              />
+            </div>
           </div>
 
           {/* VIP Toggle Switch */}

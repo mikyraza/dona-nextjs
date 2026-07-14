@@ -1082,3 +1082,78 @@ input:checked + .slider:before {
   background-color: #FAF9F6;
   border-color: #111111;
 }
+
+/* ==========================================================================
+   Rich Text Editor Styles
+   ========================================================================== */
+.rich-editor-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--admin-border-color);
+  border-radius: 2px;
+  overflow: hidden;
+  background-color: #FFFFFF;
+  margin-top: 4px;
+}
+
+.rich-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: #FAF9F6;
+  border-bottom: 1px solid var(--admin-border-color);
+}
+
+.toolbar-btn {
+  background: none;
+  border: none;
+  color: var(--admin-text-color);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background-color: #FFF0F2;
+  color: var(--admin-accent-color);
+}
+
+.toolbar-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background-color: var(--admin-border-color);
+  margin: 0 4px;
+}
+
+.rich-editor-area {
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+  color: #333333;
+  overflow-y: auto;
+  min-height: 250px;
+  max-height: 400px;
+  background-color: #FFFFFF;
+  box-sizing: border-box;
+}
+
+.rich-editor-area:focus {
+  background-color: #FFFFFF;
+}
+
+/* Placeholder support for contenteditable */
+.rich-editor-area[contenteditable="true"]:empty:before {
+  content: attr(placeholder);
+  color: #888888;
+  cursor: text;
+}
