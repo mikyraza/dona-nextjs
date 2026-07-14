@@ -7,6 +7,7 @@ import VideoDrawer from '../components/VideoDrawer';
 import PodcastDrawer from '../components/PodcastDrawer';
 import PlayoutDrawer from '../components/PlayoutDrawer';
 import DossierDrawer from '../components/DossierDrawer';
+import ReplayDrawer from '../components/ReplayDrawer';
 
 // The 16 official magazine universes for category matching
 const UNIVERSES = [
@@ -224,6 +225,60 @@ export default function AdminCatchAllPage({ params }) {
 
   const handleDeleteDossier = (id) => {
     setDossiers(prev => prev.filter(dos => dos.id !== id));
+  };
+
+  // 7. Replays State (Phase 4.3)
+  const [replays, setReplays] = useState([
+    {
+      id: "rep-1",
+      title: "DONA Talks - Table Ronde Art & Rigueur (12 Juillet)",
+      date: "12/07/2026",
+      duration: "58:45",
+      format: "Vidéo",
+      accessLevel: "VIP",
+      mediaUrl: "/uploads/replays/art_rigueur.mp4"
+    },
+    {
+      id: "rep-2",
+      title: "Chronique Hebdo : L'Éditorialisme Moderne (10 Juillet)",
+      date: "10/07/2026",
+      duration: "32:10",
+      format: "Audio",
+      accessLevel: "Public",
+      mediaUrl: "/uploads/replays/chronique_hebdo.mp3"
+    }
+  ]);
+  const [isReplayDrawerOpen, setIsReplayDrawerOpen] = useState(false);
+  const [selectedReplay, setSelectedReplay] = useState(null);
+
+  const handleSaveReplay = (savedReplay) => {
+    const isEdit = replays.some(r => r.id === savedReplay.id);
+    if (isEdit) {
+      setReplays(prev => prev.map(r => r.id === savedReplay.id ? savedReplay : r));
+    } else {
+      setReplays(prev => [savedReplay, ...prev]);
+    }
+  };
+
+  const handleDeleteReplay = (id) => {
+    setReplays(prev => prev.filter(r => r.id !== id));
+  };
+
+  const handlePublishReplayAsArticle = (replayItem) => {
+    const newArticle = {
+      id: `art-${Date.now()}`,
+      type: "Article",
+      title: `Rediffusion : ${replayItem.title}`,
+      author: "Elena Moretti",
+      category: replayItem.format === 'Audio' ? "11. Culture & Médias" : "02. Power Lab",
+      status: "Draft",
+      updated: "À l'instant",
+      content: `<p>Retrouvez la rediffusion complète de notre émission du ${replayItem.date}.</p><p>Durée : ${replayItem.duration}</p>`,
+      format: replayItem.format.toLowerCase() === 'audio' ? 'audio' : 'video',
+      url: replayItem.mediaUrl || ''
+    };
+    setArticles(prev => [newArticle, ...prev]);
+    alert(`Article de type ${replayItem.format} généré en brouillon (Draft) avec succès ! Retrouvez-le dans la section Articles.`);
   };
 
   // Handle article save
@@ -1063,28 +1118,85 @@ export default function AdminCatchAllPage({ params }) {
         return (
           <>
             <div className="dashboard-title-row">
-              <h1>Studio & Direct (REPLAYS)</h1>
+              <h1>Archives & Rediffusions (Replays)</h1>
+              <button 
+                className="btn-admin-action primary" 
+                onClick={() => { setSelectedReplay(null); setIsReplayDrawerOpen(true); }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload_file</span>
+                + Importer un Replay
+              </button>
             </div>
 
-            <div className="table-card" style={{ marginTop: '20px', padding: '30px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--admin-border-color)' }}>
-                <span className="status-indicator-dot green" style={{ width: '12px', height: '12px' }}></span>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '18px' }}>Archives de Replays Actifs</h3>
-                  <p style={{ margin: '4px 0 0', color: '#888888', fontSize: '12px' }}>Type : Archives de direct sauvegardées</p>
-                </div>
+            <div className="table-card" style={{ marginTop: '20px' }}>
+              <div className="table-header">
+                <h2 className="table-title">Répertoire des Enregistrements Live</h2>
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginTop: '20px' }}>
-                <div className="drawer-input-group">
-                  <label>Nombre de replays disponibles</label>
-                  <input type="text" className="drawer-text-input" readOnly value="14 replays archivés" />
-                </div>
-                <div className="drawer-input-group">
-                  <label>Dossier de stockage cloud</label>
-                  <input type="text" className="drawer-text-input" readOnly value="s3://dona-magazine-replays/archive/" />
-                </div>
-              </div>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Titre du Replay</th>
+                    <th>Date de diffusion</th>
+                    <th>Durée</th>
+                    <th>Format</th>
+                    <th>Niveau d'accès</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {replays.map((rep) => (
+                    <tr key={rep.id}>
+                      <td className="cell-bold">{rep.title}</td>
+                      <td>{rep.date}</td>
+                      <td style={{ fontFamily: 'monospace' }}>{rep.duration}</td>
+                      <td>
+                        <span className={`badge ${rep.format === 'Audio' ? 'draft' : 'published'}`} style={{ color: rep.format === 'Audio' ? '#A30626' : '#1E3A8A', backgroundColor: rep.format === 'Audio' ? '#FFF0F2' : '#EFF6FF' }}>
+                          {rep.format}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${rep.accessLevel === 'VIP' ? 'vip' : 'published'}`} style={{ background: rep.accessLevel === 'VIP' ? 'var(--admin-accent-color)' : '#E1F8EB', color: rep.accessLevel === 'VIP' ? '#FFFFFF' : '#03543F' }}>
+                          {rep.accessLevel}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div className="table-actions" style={{ justifyContent: 'flex-end', gap: '8px' }}>
+                          <button 
+                            onClick={() => { setSelectedReplay(rep); setIsReplayDrawerOpen(true); }} 
+                            className="table-action-btn"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                          >
+                            Éditer
+                          </button>
+                          <span className="table-action-divider">|</span>
+                          <button 
+                            onClick={() => handlePublishReplayAsArticle(rep)} 
+                            className="table-action-btn"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'green', fontWeight: '600' }}
+                          >
+                            Publier l'Article
+                          </button>
+                          <span className="table-action-divider">|</span>
+                          <button 
+                            onClick={() => handleDeleteReplay(rep.id)} 
+                            className="table-action-btn secondary"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {replays.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#888888', fontStyle: 'italic' }}>
+                        Aucune rediffusion enregistrée.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </>
         );
@@ -1187,6 +1299,14 @@ export default function AdminCatchAllPage({ params }) {
         onSave={handleSaveDossier}
         articles={articles}
         dossier={selectedDossier}
+      />
+
+      {/* Slide-over Replay Drawer */}
+      <ReplayDrawer
+        isOpen={isReplayDrawerOpen}
+        onClose={() => setIsReplayDrawerOpen(false)}
+        onSave={handleSaveReplay}
+        replay={selectedReplay}
       />
     </>
   );
