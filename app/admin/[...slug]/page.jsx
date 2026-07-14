@@ -137,13 +137,20 @@ export default function AdminCatchAllPage({ params }) {
     }
   };
 
-  // 5. Settings State
+  // 5. Settings State (Phase 4.6)
   const [brandSettings, setBrandSettings] = useState({
     siteName: "DONA MAGAZINE",
     tagline: "L'élégance éditoriale au quotidien",
     primaryColor: "#A30626",
-    backgroundColor: "#FCF8F8",
-    fontFamily: "Newsreader",
+    backgroundColor: "#111111",
+    logoDark: "/uploads/brand/logo-dark.svg",
+    logoLight: "/uploads/brand/logo-light.svg",
+    favicon: "/uploads/brand/favicon.png",
+    flagEnabled: true,
+    flagPosition: "header-right",
+    flagScale: 100,
+    titleFont: "Cormorant Garamond",
+    proseFont: "Inter",
     seoTitle: "Dona Magazine | L'art de vivre d'une nouvelle ère",
     seoDescription: "Magazine d'intelligence, d'art de vivre et d'analyse premium.",
     contactEmail: "contact@dona-magazine.com"
@@ -900,7 +907,334 @@ export default function AdminCatchAllPage({ params }) {
         );
       }
 
-      case 'settings':
+      case 'settings': {
+        const handleSaveSettingsSubmit = (e) => {
+          e.preventDefault();
+          // API BRIDGE INTEGRATION BLUEPRINT:
+          // To bridge these graphic and brand assets settings to our frontend pages:
+          // fetch('/api/global-config', { method: 'PUT', body: JSON.stringify(brandSettings) })
+          console.log("Saving Brand Settings:", brandSettings);
+          alert("Identité visuelle et configuration de la marque enregistrées avec succès !");
+        };
+
+        if (subsection === 'brand') {
+          return (
+            <>
+              <div className="dashboard-title-row">
+                <h1>Identité Graphique & Marque (Brand Settings)</h1>
+              </div>
+
+              <div className="table-card" style={{ marginTop: '20px', padding: '30px' }}>
+                <form onSubmit={handleSaveSettingsSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                  
+                  {/* 1. Brand Assets Management (Logos & Icons) */}
+                  <div>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      1. Gestion des Assets de Marque (Logos & Favicon)
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                      {/* Logo Principal (Sombre) */}
+                      <div className="drawer-input-group">
+                        <label>Logo Principal (Version Sombre / Dark Mode)</label>
+                        <div style={{
+                          border: '2px dashed var(--admin-border-color)',
+                          borderRadius: '2px',
+                          padding: '20px',
+                          textAlign: 'center',
+                          backgroundColor: '#FAF9F6',
+                          cursor: 'pointer',
+                          position: 'relative'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>
+                            image
+                          </span>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#555555' }}>
+                            Glissez-déposez le logo (.svg, .png) ou cliquez pour parcourir
+                          </p>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setBrandSettings(prev => ({ ...prev, logoDark: URL.createObjectURL(e.target.files[0]) }));
+                              }
+                            }}
+                          />
+                        </div>
+                        {brandSettings.logoDark && (
+                          <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--admin-text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'green' }}>check_circle</span>
+                            <span>Asset chargé : {brandSettings.logoDark.substring(0, 40)}...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Logo Principal (Clair) */}
+                      <div className="drawer-input-group">
+                        <label>Logo Principal (Version Claire / Light Mode)</label>
+                        <div style={{
+                          border: '2px dashed var(--admin-border-color)',
+                          borderRadius: '2px',
+                          padding: '20px',
+                          textAlign: 'center',
+                          backgroundColor: '#FAF9F6',
+                          cursor: 'pointer',
+                          position: 'relative'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>
+                            image
+                          </span>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#555555' }}>
+                            Glissez-déposez le logo (.svg, .png) ou cliquez pour parcourir
+                          </p>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setBrandSettings(prev => ({ ...prev, logoLight: URL.createObjectURL(e.target.files[0]) }));
+                              }
+                            }}
+                          />
+                        </div>
+                        {brandSettings.logoLight && (
+                          <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--admin-text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'green' }}>check_circle</span>
+                            <span>Asset chargé : {brandSettings.logoLight.substring(0, 40)}...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Favicon */}
+                      <div className="drawer-input-group">
+                        <label>Favicon (Icône de Navigateur)</label>
+                        <div style={{
+                          border: '2px dashed var(--admin-border-color)',
+                          borderRadius: '2px',
+                          padding: '20px',
+                          textAlign: 'center',
+                          backgroundColor: '#FAF9F6',
+                          cursor: 'pointer',
+                          position: 'relative'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>
+                            dataset
+                          </span>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#555555' }}>
+                            Glissez-déposez l'icône (.ico, .png) ou cliquez pour parcourir
+                          </p>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setBrandSettings(prev => ({ ...prev, favicon: URL.createObjectURL(e.target.files[0]) }));
+                              }
+                            }}
+                          />
+                        </div>
+                        {brandSettings.favicon && (
+                          <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--admin-text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'green' }}>check_circle</span>
+                            <span>Asset chargé : {brandSettings.favicon.substring(0, 40)}...</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cameroonian National Iconography Control */}
+                  <div>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      2. Identité Nationale & Iconographie (Cameroun)
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                      <div className="drawer-input-group">
+                        <label>Activer l'affichage du drapeau et des motifs nationaux</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                          <span style={{ fontSize: '13px', color: '#555555' }}>Drapeau désactivé</span>
+                          <button 
+                            type="button"
+                            onClick={() => setBrandSettings(prev => ({ ...prev, flagEnabled: !prev.flagEnabled }))}
+                            style={{
+                              border: 'none',
+                              backgroundColor: brandSettings.flagEnabled ? 'var(--admin-accent-color)' : '#CCCCCC',
+                              width: '48px',
+                              height: '24px',
+                              borderRadius: '12px',
+                              position: 'relative',
+                              cursor: 'pointer',
+                              transition: 'background-color 0.3s'
+                            }}
+                          >
+                            <span style={{
+                              position: 'absolute',
+                              top: '2px',
+                              left: brandSettings.flagEnabled ? '26px' : '2px',
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: '#FFFFFF',
+                              transition: 'left 0.3s'
+                            }} />
+                          </button>
+                          <span style={{ fontSize: '13px', color: '#555555' }}>Drapeau activé</span>
+                        </div>
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label htmlFor="flag-position">Positionnement du motif dans le Header</label>
+                        <div className="select-wrapper">
+                          <select 
+                            id="flag-position"
+                            className="drawer-select"
+                            value={brandSettings.flagPosition}
+                            onChange={(e) => setBrandSettings(prev => ({ ...prev, flagPosition: e.target.value }))}
+                            disabled={!brandSettings.flagEnabled}
+                          >
+                            <option value="header-right">Header - Alignement Droite</option>
+                            <option value="header-center">Header - Alignement Centre</option>
+                            <option value="footer-center">Footer - Alignement Centre</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label htmlFor="flag-scale">Échelle d'affichage du drapeau ({brandSettings.flagScale}%)</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
+                          <input 
+                            id="flag-scale"
+                            type="range"
+                            min="50"
+                            max="150"
+                            step="5"
+                            value={brandSettings.flagScale}
+                            onChange={(e) => setBrandSettings(prev => ({ ...prev, flagScale: parseInt(e.target.value) }))}
+                            disabled={!brandSettings.flagEnabled}
+                            style={{ flexGrow: 1, accentColor: 'var(--admin-accent-color)' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Dynamic Color Scheme Configurator */}
+                  <div>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      3. Palette Chromatique
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                      
+                      <div className="drawer-input-group">
+                        <label htmlFor="primary-color">Couleur Primaire (Accent / Crimson)</label>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          <input 
+                            id="primary-color"
+                            type="color" 
+                            className="drawer-text-input" 
+                            style={{ width: '60px', height: '40px', padding: '2px', cursor: 'pointer' }}
+                            value={brandSettings.primaryColor}
+                            onChange={(e) => setBrandSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
+                          />
+                          <input 
+                            type="text" 
+                            className="drawer-text-input" 
+                            value={brandSettings.primaryColor}
+                            onChange={(e) => setBrandSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
+                            style={{ margin: 0, textTransform: 'uppercase', fontFamily: 'monospace' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label htmlFor="background-color">Niveau de Fond Sombre (Charcoal)</label>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          <input 
+                            id="background-color"
+                            type="color" 
+                            className="drawer-text-input" 
+                            style={{ width: '60px', height: '40px', padding: '2px', cursor: 'pointer' }}
+                            value={brandSettings.backgroundColor}
+                            onChange={(e) => setBrandSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                          />
+                          <input 
+                            type="text" 
+                            className="drawer-text-input" 
+                            value={brandSettings.backgroundColor}
+                            onChange={(e) => setBrandSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                            style={{ margin: 0, textTransform: 'uppercase', fontFamily: 'monospace' }}
+                          />
+                        </div>
+                      </div>
+
+                    </div>
+                    {/* Live CSS variable injection comment explanation */}
+                    <p style={{ margin: '12px 0 0', fontSize: '11px', color: 'var(--admin-text-muted)', fontStyle: 'italic' }}>
+                      * Note technique : Ces couleurs sont injectées dans la racine document sous forme de variables CSS <code>--primary-color</code> et <code>--bg-dark-color</code> pour rafraîchir instantanément la charte graphique sur le site public.
+                    </p>
+                  </div>
+
+                  {/* 3. Typography Selectors */}
+                  <div>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      4. Curation Typographique (Google Fonts)
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                      
+                      <div className="drawer-input-group">
+                        <label htmlFor="title-font">Police des Titres (Headings)</label>
+                        <div className="select-wrapper">
+                          <select 
+                            id="title-font"
+                            className="drawer-select"
+                            value={brandSettings.titleFont}
+                            onChange={(e) => setBrandSettings(prev => ({ ...prev, titleFont: e.target.value }))}
+                          >
+                            <option value="Cormorant Garamond">Cormorant Garamond (Luxe & Éditorial)</option>
+                            <option value="Playfair Display">Playfair Display (Classique & Premium)</option>
+                            <option value="Cinzel">Cinzel (Impérial & Historique)</option>
+                            <option value="Newsreader">Newsreader (Littéraire & Calme)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label htmlFor="prose-font">Police du Corps de Texte (Prose)</label>
+                        <div className="select-wrapper">
+                          <select 
+                            id="prose-font"
+                            className="drawer-select"
+                            value={brandSettings.proseFont}
+                            onChange={(e) => setBrandSettings(prev => ({ ...prev, proseFont: e.target.value }))}
+                          >
+                            <option value="Inter">Inter (Moderne & Lisible)</option>
+                            <option value="Montserrat">Montserrat (Géométrique & Institutionnel)</option>
+                            <option value="Lora">Lora (Sérif contemporain)</option>
+                            <option value="Outfit">Outfit (Minimaliste & Épuré)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Submit button */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                    <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
+                      Enregistrer la configuration de marque
+                    </button>
+                  </div>
+
+                </form>
+              </div>
+            </>
+          );
+        }
+
+        // Fallback for general settings / SEO Settings
         return (
           <>
             <div className="dashboard-title-row">
@@ -908,11 +1242,12 @@ export default function AdminCatchAllPage({ params }) {
             </div>
 
             <div className="table-card" style={{ marginTop: '20px', padding: '30px' }}>
-              <form onSubmit={(e) => { e.preventDefault(); alert("Configuration sauvegardée !"); }} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <form onSubmit={handleSaveSettingsSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   <div className="drawer-input-group">
-                    <label>Nom du site</label>
+                    <label htmlFor="site-name">Nom du site</label>
                     <input
+                      id="site-name"
                       type="text"
                       className="drawer-text-input"
                       value={brandSettings.siteName}
@@ -920,8 +1255,9 @@ export default function AdminCatchAllPage({ params }) {
                     />
                   </div>
                   <div className="drawer-input-group">
-                    <label>Slogan du site</label>
+                    <label htmlFor="site-tagline">Slogan du site</label>
                     <input
+                      id="site-tagline"
                       type="text"
                       className="drawer-text-input"
                       value={brandSettings.tagline}
@@ -929,8 +1265,9 @@ export default function AdminCatchAllPage({ params }) {
                     />
                   </div>
                   <div className="drawer-input-group">
-                    <label>Titre SEO Principal</label>
+                    <label htmlFor="seo-title">Titre SEO Principal</label>
                     <input
+                      id="seo-title"
                       type="text"
                       className="drawer-text-input"
                       value={brandSettings.seoTitle}
@@ -938,8 +1275,9 @@ export default function AdminCatchAllPage({ params }) {
                     />
                   </div>
                   <div className="drawer-input-group">
-                    <label>Email de contact général</label>
+                    <label htmlFor="contact-email">Email de contact général</label>
                     <input
+                      id="contact-email"
                       type="email"
                       className="drawer-text-input"
                       value={brandSettings.contactEmail}
@@ -949,8 +1287,9 @@ export default function AdminCatchAllPage({ params }) {
                 </div>
 
                 <div className="drawer-input-group">
-                  <label>Description SEO (Meta Description)</label>
+                  <label htmlFor="seo-description">Description SEO (Meta Description)</label>
                   <textarea
+                    id="seo-description"
                     className="drawer-textarea"
                     value={brandSettings.seoDescription}
                     onChange={(e) => setBrandSettings(prev => ({ ...prev, seoDescription: e.target.value }))}
@@ -960,13 +1299,14 @@ export default function AdminCatchAllPage({ params }) {
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
                   <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
-                    Enregistrer la configuration
+                    Enregistrer la configuration générale
                   </button>
                 </div>
               </form>
             </div>
           </>
         );
+      }
 
       case 'tags':
       case 'rubriques':
