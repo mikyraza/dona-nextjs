@@ -9,6 +9,7 @@ import PlayoutDrawer from '../components/PlayoutDrawer';
 import DossierDrawer from '../components/DossierDrawer';
 import ReplayDrawer from '../components/ReplayDrawer';
 import PlanDrawer from '../components/PlanDrawer';
+import MemberDrawer from '../components/MemberDrawer';
 
 // The 16 official magazine universes for category matching
 const UNIVERSES = [
@@ -110,12 +111,31 @@ export default function AdminCatchAllPage({ params }) {
     }
   ]);
 
-  // 4. Members State
+  // 4. Members State (Phase 4.5)
   const [members, setMembers] = useState([
-    { id: "mem-1", name: "Marc Aubry", email: "marc@aubry.com", plan: "Club Annuel", status: "Active", joined: "12/03/2026" },
-    { id: "mem-2", name: "Hélène de Ségur", email: "vip@dona.com", plan: "Club Premium", status: "Active", joined: "01/05/2026" },
-    { id: "mem-3", name: "Claire Martin", email: "free@dona.com", plan: "Free Account", status: "Inactive", joined: "10/06/2026" }
+    { id: "mem-1", name: "Marc Aubry", email: "marc@aubry.com", plan: "Premium", status: "Active", joined: "12/03/2026" },
+    { id: "mem-2", name: "Hélène de Ségur", email: "vip@dona.com", plan: "Élite", status: "Active", joined: "01/05/2026" },
+    { id: "mem-3", name: "Claire Martin", email: "free@dona.com", plan: "Essentiel", status: "Inactive", joined: "10/06/2026" }
   ]);
+  const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+
+  // Search & Filter State for Members Directory
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [memberPlanFilter, setMemberPlanFilter] = useState('all');
+  const [memberStatusFilter, setMemberStatusFilter] = useState('all');
+
+  const handleSaveMember = (savedMember) => {
+    // API BRIDGE INTEGRATION BLUEPRINT:
+    // To bridge these member profiles to MongoDB / custom Node APIs:
+    // fetch('/api/members', { method: savedMember.id.startsWith('mem-') ? 'PUT' : 'POST', body: JSON.stringify(savedMember) })
+    const isEdit = members.some(m => m.id === savedMember.id);
+    if (isEdit) {
+      setMembers(prev => prev.map(m => m.id === savedMember.id ? savedMember : m));
+    } else {
+      setMembers(prev => [savedMember, ...prev]);
+    }
+  };
 
   // 5. Settings State
   const [brandSettings, setBrandSettings] = useState({
@@ -704,20 +724,104 @@ export default function AdminCatchAllPage({ params }) {
           </>
         );
 
-      case 'membres':
+      case 'membres': {
+        // Filter the members list dynamically
+        const filteredMembers = members.filter(mem => {
+          const matchesSearch = mem.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) || 
+                                mem.email.toLowerCase().includes(memberSearchQuery.toLowerCase());
+          const matchesPlan = memberPlanFilter === 'all' || mem.plan === memberPlanFilter;
+          const matchesStatus = memberStatusFilter === 'all' || mem.status === memberStatusFilter;
+          return matchesSearch && matchesPlan && matchesStatus;
+        });
+
+        // Compute luxury stats reflecting the local state additions/mutations
+        const totalCount = 1281 + members.length;
+        const premiumCount = 841 + members.filter(m => m.status === 'Active' && m.plan === 'Premium').length;
+        const eliteCount = 42 + members.filter(m => m.plan === 'Élite').length;
+
         return (
           <>
             <div className="dashboard-title-row">
               <h1>Membres Club</h1>
-              <button className="btn-admin-action primary" onClick={() => alert("Ajout membre local")}>
+              <button 
+                className="btn-admin-action primary" 
+                onClick={() => { setSelectedMember(null); setIsMemberDrawerOpen(true); }}
+              >
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
                 Ajouter Membre
               </button>
             </div>
 
-            <div className="table-card" style={{ marginTop: '20px' }}>
+            {/* KPI Header Cards */}
+            <div className="metrics-grid" style={{ marginTop: '20px', marginBottom: '24px' }}>
+              <div className="metric-card">
+                <div className="metric-card-title">Total Membres</div>
+                <div className="metric-card-value">{totalCount.toLocaleString('fr-FR')}</div>
+                <div className="metric-card-sub">Base d'abonnés globale</div>
+              </div>
+              <div className="metric-card">
+                <div className="metric-card-title">Abonnés Premium</div>
+                <div className="metric-card-value">{premiumCount.toLocaleString('fr-FR')}</div>
+                <div className="metric-card-sub">Accès payant actif</div>
+              </div>
+              <div className="metric-card">
+                <div className="metric-card-title">Membres Élite</div>
+                <div className="metric-card-value">{eliteCount.toLocaleString('fr-FR')}</div>
+                <div className="metric-card-sub">Offre prestige curation</div>
+              </div>
+            </div>
+
+            {/* Search & Filter Row */}
+            <div className="table-card" style={{ padding: '16px 24px', marginBottom: '20px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flexGrow: 1, minWidth: '240px' }}>
+                <span className="material-symbols-outlined" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)', fontSize: '20px' }}>
+                  search
+                </span>
+                <input 
+                  type="text" 
+                  className="drawer-text-input" 
+                  value={memberSearchQuery}
+                  onChange={(e) => setMemberSearchQuery(e.target.value)}
+                  placeholder="Rechercher par nom ou email..." 
+                  style={{ paddingLeft: '40px', margin: 0 }}
+                />
+              </div>
+
+              <div style={{ width: '180px' }}>
+                <div className="select-wrapper">
+                  <select 
+                    className="drawer-select" 
+                    value={memberPlanFilter}
+                    onChange={(e) => setMemberPlanFilter(e.target.value)}
+                    style={{ margin: 0 }}
+                  >
+                    <option value="all">Tous les Plans</option>
+                    <option value="Essentiel">Essentiel</option>
+                    <option value="Premium">Premium</option>
+                    <option value="Élite">Élite</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ width: '180px' }}>
+                <div className="select-wrapper">
+                  <select 
+                    className="drawer-select" 
+                    value={memberStatusFilter}
+                    onChange={(e) => setMemberStatusFilter(e.target.value)}
+                    style={{ margin: 0 }}
+                  >
+                    <option value="all">Tous les Statuts</option>
+                    <option value="Active">Actif</option>
+                    <option value="Inactive">Inactif</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="table-card">
               <div className="table-header">
-                <h2 className="table-title">Membres du Club DONA</h2>
+                <h2 className="table-title">Annuaire des Membres Club</h2>
               </div>
               <table className="admin-table">
                 <thead>
@@ -731,35 +835,70 @@ export default function AdminCatchAllPage({ params }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {members.map((mem) => (
+                  {filteredMembers.map((mem) => (
                     <tr key={mem.id}>
                       <td className="cell-bold">{mem.name}</td>
                       <td>{mem.email}</td>
-                      <td style={{ color: '#555555' }}>{mem.plan}</td>
+                      <td>
+                        <span className={`badge ${mem.plan === 'Élite' ? 'vip' : mem.plan === 'Premium' ? 'published' : 'draft'}`} style={{ 
+                          backgroundColor: mem.plan === 'Élite' ? 'var(--admin-accent-color)' : mem.plan === 'Premium' ? '#EFF6FF' : '#F3F4F6',
+                          color: mem.plan === 'Élite' ? '#FFFFFF' : mem.plan === 'Premium' ? '#1E3A8A' : '#374151'
+                        }}>
+                          {mem.plan}
+                        </span>
+                      </td>
                       <td>
                         <span className={`badge ${mem.status === 'Active' ? 'published' : 'draft'}`}>
-                          {mem.status}
+                          {mem.status === 'Active' ? 'Actif' : 'Inactif'}
                         </span>
                       </td>
                       <td style={{ color: '#888888' }}>{mem.joined}</td>
                       <td style={{ textAlign: 'right' }}>
-                        <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
-                          <button onClick={() => setMembers(prev => prev.map(m => m.id === mem.id ? { ...m, status: m.status === 'Active' ? 'Inactive' : 'Active' } : m))} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
-                            Toggle Access
+                        <div className="table-actions" style={{ justifyContent: 'flex-end', gap: '8px' }}>
+                          <button 
+                            onClick={() => { setSelectedMember(mem); setIsMemberDrawerOpen(true); }} 
+                            className="table-action-btn" 
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                          >
+                            Éditer
                           </button>
                           <span className="table-action-divider">|</span>
-                          <button onClick={() => setMembers(prev => prev.filter(m => m.id !== mem.id))} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>
-                            Remove
+                          <button 
+                            onClick={() => setMembers(prev => prev.map(m => m.id === mem.id ? { ...m, status: m.status === 'Active' ? 'Inactive' : 'Active' } : m))} 
+                            className="table-action-btn" 
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                          >
+                            Basculer Accès
+                          </button>
+                          <span className="table-action-divider">|</span>
+                          <button 
+                            onClick={() => {
+                              if (confirm(`Supprimer le membre ${mem.name} ?`)) {
+                                setMembers(prev => prev.filter(m => m.id !== mem.id));
+                              }
+                            }} 
+                            className="table-action-btn secondary" 
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}
+                          >
+                            Supprimer
                           </button>
                         </div>
                       </td>
                     </tr>
                   ))}
+                  {filteredMembers.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#888888', fontStyle: 'italic' }}>
+                        Aucun membre trouvé pour les critères sélectionnés.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </>
         );
+      }
 
       case 'settings':
         return (
@@ -1506,6 +1645,14 @@ export default function AdminCatchAllPage({ params }) {
         onClose={() => setIsPlanDrawerOpen(false)}
         onSave={handleSavePlan}
         plan={selectedPlan}
+      />
+
+      {/* Slide-over Member Drawer */}
+      <MemberDrawer
+        isOpen={isMemberDrawerOpen}
+        onClose={() => setIsMemberDrawerOpen(false)}
+        onSave={handleSaveMember}
+        member={selectedMember}
       />
     </>
   );
