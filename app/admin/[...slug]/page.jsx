@@ -3,6 +3,8 @@
 import React, { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import ArticleDrawer from '../components/ArticleDrawer';
+import VideoDrawer from '../components/VideoDrawer';
+import PodcastDrawer from '../components/PodcastDrawer';
 
 // The 16 official magazine universes for category matching
 const UNIVERSES = [
@@ -127,13 +129,11 @@ export default function AdminCatchAllPage({ params }) {
   const [isArticleDrawerOpen, setIsArticleDrawerOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
 
-  // Generic Media Modal States
-  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
-  const [mediaType, setMediaType] = useState('video'); // video or podcast
-  const [selectedMedia, setSelectedMedia] = useState(null);
-  const [mediaTitle, setMediaTitle] = useState('');
-  const [mediaDuration, setMediaDuration] = useState('');
-  const [mediaStatus, setMediaStatus] = useState('Draft');
+  // Video & Podcast Drawer States
+  const [isVideoDrawerOpen, setIsVideoDrawerOpen] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [isPodcastDrawerOpen, setIsPodcastDrawerOpen] = useState(false);
+  const [selectedPodcast, setSelectedPodcast] = useState(null);
 
   // Handle article save
   const handleSaveArticle = (savedArticle) => {
@@ -148,44 +148,80 @@ export default function AdminCatchAllPage({ params }) {
     }
   };
 
-  // Handle media save
-  const handleSaveMedia = (e) => {
-    e.preventDefault();
-    if (!mediaTitle.trim()) return;
+  // Video Handlers
+  const handleOpenVideoCreate = () => {
+    setSelectedVideo(null);
+    setIsVideoDrawerOpen(true);
+  };
 
-    if (mediaType === 'video') {
-      if (selectedMedia) {
-        setVideos(prev => prev.map(v => v.id === selectedMedia.id ? { ...v, title: mediaTitle, duration: mediaDuration, status: mediaStatus } : v));
-      } else {
-        setVideos(prev => [{ id: `vid-${Date.now()}`, title: mediaTitle, duration: mediaDuration, status: mediaStatus, updated: "À l'instant" }, ...prev]);
-      }
-    } else {
-      if (selectedMedia) {
-        setPodcasts(prev => prev.map(p => p.id === selectedMedia.id ? { ...p, title: mediaTitle, duration: mediaDuration, status: mediaStatus } : p));
-      } else {
-        setPodcasts(prev => [{ id: `pod-${Date.now()}`, title: mediaTitle, duration: mediaDuration, status: mediaStatus, updated: "À l'instant" }, ...prev]);
-      }
+  const handleOpenVideoEdit = (videoItem) => {
+    setSelectedVideo(videoItem);
+    setIsVideoDrawerOpen(true);
+  };
+
+  const handleSaveVideo = (savedVideo) => {
+    const isEdit = videos.some(v => v.id === savedVideo.id);
+
+    // API INTEGRATION BLUEPRINT:
+    // This is where real database updates will hook into our Phase 1 API contracts:
+    /*
+    const endpoint = '/api/studio';
+    const method = isEdit ? 'PUT' : 'POST';
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savedVideo)
+      });
+      if (!response.ok) throw new Error("Failed to sync video with DB");
+    } catch (err) {
+      console.error("API sync error:", err);
     }
+    */
 
-    setIsMediaModalOpen(false);
+    if (isEdit) {
+      setVideos(prev => prev.map(v => v.id === savedVideo.id ? { ...v, ...savedVideo } : v));
+    } else {
+      setVideos(prev => [savedVideo, ...prev]);
+    }
   };
 
-  const handleOpenMediaCreate = (type) => {
-    setMediaType(type);
-    setSelectedMedia(null);
-    setMediaTitle('');
-    setMediaDuration('');
-    setMediaStatus('Draft');
-    setIsMediaModalOpen(true);
+  // Podcast Handlers
+  const handleOpenPodcastCreate = () => {
+    setSelectedPodcast(null);
+    setIsPodcastDrawerOpen(true);
   };
 
-  const handleOpenMediaEdit = (type, item) => {
-    setMediaType(type);
-    setSelectedMedia(item);
-    setMediaTitle(item.title);
-    setMediaDuration(item.duration);
-    setMediaStatus(item.status);
-    setIsMediaModalOpen(true);
+  const handleOpenPodcastEdit = (podcastItem) => {
+    setSelectedPodcast(podcastItem);
+    setIsPodcastDrawerOpen(true);
+  };
+
+  const handleSavePodcast = (savedPodcast) => {
+    const isEdit = podcasts.some(p => p.id === savedPodcast.id);
+
+    // API INTEGRATION BLUEPRINT:
+    // This is where real database updates will hook into our Phase 1 API contracts:
+    /*
+    const endpoint = '/api/studio';
+    const method = isEdit ? 'PUT' : 'POST';
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savedPodcast)
+      });
+      if (!response.ok) throw new Error("Failed to sync podcast with DB");
+    } catch (err) {
+      console.error("API sync error:", err);
+    }
+    */
+
+    if (isEdit) {
+      setPodcasts(prev => prev.map(p => p.id === savedPodcast.id ? { ...p, ...savedPodcast } : p));
+    } else {
+      setPodcasts(prev => [savedPodcast, ...prev]);
+    }
   };
 
   // Render Page Content based on route slug
@@ -253,7 +289,7 @@ export default function AdminCatchAllPage({ params }) {
           <>
             <div className="dashboard-title-row">
               <h1>Vidéos</h1>
-              <button className="btn-admin-action primary" onClick={() => handleOpenMediaCreate('video')}>
+              <button className="btn-admin-action primary" onClick={handleOpenVideoCreate}>
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
                 Nouvelle Vidéo
               </button>
@@ -286,7 +322,7 @@ export default function AdminCatchAllPage({ params }) {
                       <td style={{ color: '#888888' }}>{vid.updated}</td>
                       <td style={{ textAlign: 'right' }}>
                         <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
-                          <button onClick={() => handleOpenMediaEdit('video', vid)} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                          <button onClick={() => handleOpenVideoEdit(vid)} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
                             Edit
                           </button>
                           <span className="table-action-divider">|</span>
@@ -308,7 +344,7 @@ export default function AdminCatchAllPage({ params }) {
           <>
             <div className="dashboard-title-row">
               <h1>Podcasts</h1>
-              <button className="btn-admin-action primary" onClick={() => handleOpenMediaCreate('podcast')}>
+              <button className="btn-admin-action primary" onClick={handleOpenPodcastCreate}>
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
                 Nouvel Épisode
               </button>
@@ -343,7 +379,7 @@ export default function AdminCatchAllPage({ params }) {
                       <td style={{ color: '#888888' }}>{pod.updated}</td>
                       <td style={{ textAlign: 'right' }}>
                         <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
-                          <button onClick={() => handleOpenMediaEdit('podcast', pod)} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                          <button onClick={() => handleOpenPodcastEdit(pod)} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
                             Edit
                           </button>
                           <span className="table-action-divider">|</span>
@@ -640,68 +676,21 @@ export default function AdminCatchAllPage({ params }) {
         article={selectedArticle}
       />
 
-      {/* Generic Media Modal for Video/Podcast Creation */}
-      {isMediaModalOpen && (
-        <div className="drawer-overlay" onClick={() => setIsMediaModalOpen(false)}>
-          <div className="drawer-panel" onClick={(e) => e.stopPropagation()} style={{ width: '450px' }}>
-            <div className="drawer-header">
-              <h2>{selectedMedia ? 'Modifier' : 'Ajouter'} {mediaType === 'video' ? 'une Vidéo' : 'un Épisode'}</h2>
-              <button className="drawer-close-btn" onClick={() => setIsMediaModalOpen(false)}>
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <form onSubmit={handleSaveMedia} className="drawer-form">
-              <div className="drawer-input-group">
-                <label>Titre</label>
-                <input
-                  type="text"
-                  required
-                  className="drawer-text-input"
-                  value={mediaTitle}
-                  onChange={(e) => setMediaTitle(e.target.value)}
-                  placeholder="Entrez le titre..."
-                />
-              </div>
+      {/* Slide-over Video Drawer */}
+      <VideoDrawer
+        isOpen={isVideoDrawerOpen}
+        onClose={() => setIsVideoDrawerOpen(false)}
+        onSave={handleSaveVideo}
+        video={selectedVideo}
+      />
 
-              <div className="drawer-input-group">
-                <label>Durée (ex: 12:45)</label>
-                <input
-                  type="text"
-                  required
-                  className="drawer-text-input"
-                  value={mediaDuration}
-                  onChange={(e) => setMediaDuration(e.target.value)}
-                  placeholder="00:00"
-                />
-              </div>
-
-              <div className="drawer-input-group">
-                <label>Status</label>
-                <div className="select-wrapper">
-                  <select
-                    className="drawer-select"
-                    value={mediaStatus}
-                    onChange={(e) => setMediaStatus(e.target.value)}
-                  >
-                    <option value="Published">Published</option>
-                    <option value="Scheduled">Scheduled</option>
-                    <option value="Draft">Draft</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="drawer-actions">
-                <button type="button" className="btn-drawer secondary" onClick={() => setIsMediaModalOpen(false)}>
-                  Annuler
-                </button>
-                <button type="submit" className="btn-drawer primary">
-                  Enregistrer
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Slide-over Podcast Drawer */}
+      <PodcastDrawer
+        isOpen={isPodcastDrawerOpen}
+        onClose={() => setIsPodcastDrawerOpen(false)}
+        onSave={handleSavePodcast}
+        podcast={selectedPodcast}
+      />
     </>
   );
 }
