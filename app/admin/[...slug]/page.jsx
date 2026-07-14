@@ -8,6 +8,7 @@ import PodcastDrawer from '../components/PodcastDrawer';
 import PlayoutDrawer from '../components/PlayoutDrawer';
 import DossierDrawer from '../components/DossierDrawer';
 import ReplayDrawer from '../components/ReplayDrawer';
+import PlanDrawer from '../components/PlanDrawer';
 
 // The 16 official magazine universes for category matching
 const UNIVERSES = [
@@ -279,6 +280,54 @@ export default function AdminCatchAllPage({ params }) {
     };
     setArticles(prev => [newArticle, ...prev]);
     alert(`Article de type ${replayItem.format} généré en brouillon (Draft) avec succès ! Retrouvez-le dans la section Articles.`);
+  };
+
+  // 8. Subscription Plans State (Phase 4.4)
+  const [subscriptionPlans, setSubscriptionPlans] = useState([
+    {
+      id: "plan-mensuel",
+      name: "Club DONA Mensuel",
+      price: 9.99,
+      currency: "€",
+      interval: "mois",
+      features: [
+        "Accès illimité aux 16 magazines",
+        "Lecture Premium sans publicité",
+        "Émissions de radio et TV en direct",
+        "Accès aux archives de rediffusions"
+      ]
+    },
+    {
+      id: "plan-annuel",
+      name: "Club DONA Annuel",
+      price: 95.00,
+      currency: "€",
+      interval: "an",
+      features: [
+        "Tous les avantages du plan Mensuel",
+        "2 mois d'abonnement offerts",
+        "Téléchargement des Workbooks VIP",
+        "Invitation aux tournois et événements"
+      ]
+    }
+  ]);
+  const [paywallText, setPaywallText] = useState("Rejoignez le Club DONA pour débloquer l'accès exclusif à nos magazines, articles premium et documentaires inédits.");
+  const [paywallDepth, setPaywallDepth] = useState(30); // 30% cutoff depth
+
+  const [isPlanDrawerOpen, setIsPlanDrawerOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  const handleSavePlan = (savedPlan) => {
+    setSubscriptionPlans(prev => prev.map(p => p.id === savedPlan.id ? savedPlan : p));
+  };
+
+  const handleSavePaywall = () => {
+    console.log("Saving Paywall Configuration:", {
+      paywallText,
+      paywallDepth,
+      plans: subscriptionPlans
+    });
+    alert("Configuration du paywall et des offres mise à jour avec succès !");
   };
 
   // Handle article save
@@ -1208,30 +1257,121 @@ export default function AdminCatchAllPage({ params }) {
               <h1>Gestion des Abonnements (Plans & Paywall)</h1>
             </div>
 
-            <div className="metrics-grid" style={{ marginTop: '20px' }}>
-              <div className="metric-card">
-                <div className="metric-card-title">Plan Actif Principal</div>
-                <div className="metric-card-value">950€</div>
-                <div className="metric-card-sub">Adhésion Annuelle</div>
-              </div>
-              <div className="metric-card">
-                <div className="metric-card-title">Taux de conversion VIP</div>
-                <div className="metric-card-value">12.4%</div>
-                <div className="metric-card-sub">Objectif : 15%</div>
+            {/* Pricing Tiers Manager Section */}
+            <div style={{ marginTop: '20px' }}>
+              <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: '22px', fontStyle: 'italic', marginBottom: '16px' }}>
+                Offres & Niveaux d'Adhésion
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+                {subscriptionPlans.map((plan) => (
+                  <div key={plan.id} className="table-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
+                    <span style={{ 
+                      position: 'absolute', 
+                      top: '16px', 
+                      right: '16px', 
+                      fontSize: '10px', 
+                      fontWeight: '700', 
+                      letterSpacing: '0.05em', 
+                      textTransform: 'uppercase',
+                      color: 'var(--admin-accent-color)',
+                      backgroundColor: '#FFF0F2',
+                      padding: '3px 8px',
+                      borderRadius: '1px'
+                    }}>
+                      {plan.interval === 'mois' ? 'Mensuel' : 'Annuel'}
+                    </span>
+
+                    <div>
+                      <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontWeight: '700', color: 'var(--admin-text-color)', margin: '0 0 4px' }}>
+                        {plan.name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                        <span style={{ fontSize: '32px', fontWeight: '800', fontFamily: 'Cormorant Garamond', fontStyle: 'italic', color: 'var(--admin-text-color)' }}>
+                          {plan.price.toFixed(2)}
+                        </span>
+                        <span style={{ fontSize: '16px', color: 'var(--admin-text-muted)', fontWeight: '600' }}>
+                          {plan.currency} / {plan.interval}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ flexGrow: 1 }}>
+                      <label style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--admin-text-muted)', display: 'block', marginBottom: '8px' }}>
+                        Avantages Inclus
+                      </label>
+                      <ul style={{ paddingLeft: '16px', margin: 0, fontSize: '13px', color: '#555555', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {plan.features.map((feat, index) => (
+                          <li key={index} style={{ listStyleType: 'square' }}>{feat}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <button 
+                      type="button" 
+                      className="btn-drawer secondary"
+                      onClick={() => { setSelectedPlan(plan); setIsPlanDrawerOpen(true); }}
+                      style={{ width: '100%', padding: '10px', marginTop: '12px' }}
+                    >
+                      Modifier le tarif
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="table-card" style={{ marginTop: '20px', padding: '30px' }}>
-              <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '22px', fontStyle: 'italic', marginBottom: '15px' }}>
-                Configuration du Paywall VIP
-              </h3>
-              <div className="drawer-input-group">
-                <label>Texte d'appel à l'action paywall</label>
-                <textarea className="drawer-textarea" defaultValue="Rejoignez le Club DONA pour débloquer l'accès exclusif à nos magazines, articles premium et documentaires inédits." />
+            {/* Advanced Paywall Settings Section */}
+            <div className="table-card" style={{ marginTop: '30px', padding: '30px' }}>
+              <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: '22px', fontStyle: 'italic', marginBottom: '16px' }}>
+                Configuration du Paywall Restrictif
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="drawer-input-group">
+                  <label htmlFor="paywall-text">Texte d'appel à l'action paywall</label>
+                  <textarea 
+                    id="paywall-text"
+                    className="drawer-textarea" 
+                    value={paywallText}
+                    onChange={(e) => setPaywallText(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="drawer-input-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label htmlFor="paywall-depth">Profondeur de déclenchement du Paywall</label>
+                    <span className="badge vip" style={{ backgroundColor: 'var(--admin-accent-color)', color: '#FFFFFF', padding: '3px 8px', borderRadius: '1px', fontSize: '11px', fontWeight: '600' }}>
+                      Couper à {paywallDepth}% du texte
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)', fontWeight: '600' }}>10% (Restreint)</span>
+                    <input 
+                      id="paywall-depth"
+                      type="range" 
+                      min="10" 
+                      max="90" 
+                      step="5"
+                      value={paywallDepth} 
+                      onChange={(e) => setPaywallDepth(parseInt(e.target.value))}
+                      style={{ flexGrow: 1, accentColor: 'var(--admin-accent-color)', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)', fontWeight: '600' }}>90% (Permissif)</span>
+                  </div>
+                  <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--admin-text-muted)' }}>
+                    Détermine l'endroit précis où le lettrage de l'article se floute et demande l'adhésion pour les lecteurs non VIP.
+                  </p>
+                </div>
+
+                <button 
+                  type="button" 
+                  className="btn-drawer primary" 
+                  style={{ alignSelf: 'flex-start', marginTop: '10px' }} 
+                  onClick={handleSavePaywall}
+                >
+                  Mettre à jour la configuration
+                </button>
               </div>
-              <button className="btn-drawer primary" style={{ marginTop: '15px' }} onClick={() => alert("Paywall sauvegardé !")}>
-                Mettre à jour le paywall
-              </button>
             </div>
           </>
         );
@@ -1307,6 +1447,14 @@ export default function AdminCatchAllPage({ params }) {
         onClose={() => setIsReplayDrawerOpen(false)}
         onSave={handleSaveReplay}
         replay={selectedReplay}
+      />
+
+      {/* Slide-over Plan Drawer */}
+      <PlanDrawer
+        isOpen={isPlanDrawerOpen}
+        onClose={() => setIsPlanDrawerOpen(false)}
+        onSave={handleSavePlan}
+        plan={selectedPlan}
       />
     </>
   );
