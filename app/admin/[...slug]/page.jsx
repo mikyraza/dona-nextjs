@@ -1046,85 +1046,10 @@ export default function AdminCatchAllPage({ params }) {
                     </div>
                   </div>
 
-                  {/* Cameroonian National Iconography Control */}
-                  <div>
-                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
-                      2. Identité Nationale & Iconographie (Cameroun)
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-                      <div className="drawer-input-group">
-                        <label>Activer l'affichage du drapeau et des motifs nationaux</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                          <span style={{ fontSize: '13px', color: '#555555' }}>Drapeau désactivé</span>
-                          <button 
-                            type="button"
-                            onClick={() => setBrandSettings(prev => ({ ...prev, flagEnabled: !prev.flagEnabled }))}
-                            style={{
-                              border: 'none',
-                              backgroundColor: brandSettings.flagEnabled ? 'var(--admin-accent-color)' : '#CCCCCC',
-                              width: '48px',
-                              height: '24px',
-                              borderRadius: '12px',
-                              position: 'relative',
-                              cursor: 'pointer',
-                              transition: 'background-color 0.3s'
-                            }}
-                          >
-                            <span style={{
-                              position: 'absolute',
-                              top: '2px',
-                              left: brandSettings.flagEnabled ? '26px' : '2px',
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              backgroundColor: '#FFFFFF',
-                              transition: 'left 0.3s'
-                            }} />
-                          </button>
-                          <span style={{ fontSize: '13px', color: '#555555' }}>Drapeau activé</span>
-                        </div>
-                      </div>
-
-                      <div className="drawer-input-group">
-                        <label htmlFor="flag-position">Positionnement du motif dans le Header</label>
-                        <div className="select-wrapper">
-                          <select 
-                            id="flag-position"
-                            className="drawer-select"
-                            value={brandSettings.flagPosition}
-                            onChange={(e) => setBrandSettings(prev => ({ ...prev, flagPosition: e.target.value }))}
-                            disabled={!brandSettings.flagEnabled}
-                          >
-                            <option value="header-right">Header - Alignement Droite</option>
-                            <option value="header-center">Header - Alignement Centre</option>
-                            <option value="footer-center">Footer - Alignement Centre</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="drawer-input-group">
-                        <label htmlFor="flag-scale">Échelle d'affichage du drapeau ({brandSettings.flagScale}%)</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
-                          <input 
-                            id="flag-scale"
-                            type="range"
-                            min="50"
-                            max="150"
-                            step="5"
-                            value={brandSettings.flagScale}
-                            onChange={(e) => setBrandSettings(prev => ({ ...prev, flagScale: parseInt(e.target.value) }))}
-                            disabled={!brandSettings.flagEnabled}
-                            style={{ flexGrow: 1, accentColor: 'var(--admin-accent-color)' }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* 2. Dynamic Color Scheme Configurator */}
                   <div>
                     <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
-                      3. Palette Chromatique
+                      2. Palette Chromatique
                     </h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                       
@@ -1180,7 +1105,7 @@ export default function AdminCatchAllPage({ params }) {
                   {/* 3. Typography Selectors */}
                   <div>
                     <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
-                      4. Curation Typographique (Google Fonts)
+                      3. Curation Typographique (Google Fonts)
                     </h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                       
