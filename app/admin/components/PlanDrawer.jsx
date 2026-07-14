@@ -4,25 +4,25 @@ import React, { useState, useEffect } from 'react';
 
 export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
   const [name, setName] = useState('');
-  const [price, setPrice] = useState(0);
+  const [priceMonthly, setPriceMonthly] = useState(0);
+  const [priceAnnually, setPriceAnnually] = useState(0);
   const [currency, setCurrency] = useState('€');
-  const [interval, setIntervalVal] = useState('mois');
   const [features, setFeatures] = useState([]);
   const [newFeatureText, setNewFeatureText] = useState('');
 
   useEffect(() => {
     if (plan) {
       setName(plan.name || '');
-      setPrice(plan.price || 0);
+      setPriceMonthly(plan.priceMonthly !== undefined ? plan.priceMonthly : plan.price || 0);
+      setPriceAnnually(plan.priceAnnually !== undefined ? plan.priceAnnually : (plan.price ? plan.price * 10 : 0));
       setCurrency(plan.currency || '€');
-      setIntervalVal(plan.interval || 'mois');
       setFeatures(plan.features ? [...plan.features] : []);
       setNewFeatureText('');
     } else {
       setName('');
-      setPrice(0);
+      setPriceMonthly(0);
+      setPriceAnnually(0);
       setCurrency('€');
-      setIntervalVal('mois');
       setFeatures([]);
       setNewFeatureText('');
     }
@@ -42,16 +42,24 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
     setFeatures(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleFeatureTextChange = (index, value) => {
+    setFeatures(prev => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     onSave({
-      id: plan?.id || `plan-${Date.now()}`,
+      ...plan,
       name,
-      price: parseFloat(price) || 0,
+      priceMonthly: parseFloat(priceMonthly) || 0,
+      priceAnnually: parseFloat(priceAnnually) || 0,
       currency,
-      interval,
       features
     });
 
@@ -62,7 +70,7 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
     <div className="drawer-overlay" onClick={onClose}>
       <div className="drawer-panel" onClick={(e) => e.stopPropagation()} style={{ width: '480px' }}>
         <div className="drawer-header">
-          <h2>Modifier le tarif de l'offre</h2>
+          <h2>Modifier le Plan : {name}</h2>
           <button className="drawer-close-btn" onClick={onClose} aria-label="Fermer">
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -78,68 +86,92 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
               className="drawer-text-input title-field"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Club DONA Mensuel..."
+              placeholder="Nom de l'offre..."
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div className="drawer-input-group">
-              <label htmlFor="plan-price">Tarif</label>
+              <label htmlFor="plan-price-monthly">Tarif Mensuel</label>
               <input
-                id="plan-price"
+                id="plan-price-monthly"
                 type="number"
                 step="0.01"
                 required
                 className="drawer-text-input"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                value={priceMonthly}
+                onChange={(e) => setPriceMonthly(e.target.value)}
                 placeholder="0.00"
               />
             </div>
 
             <div className="drawer-input-group">
-              <label htmlFor="plan-currency">Devise</label>
-              <div className="select-wrapper">
-                <select
-                  id="plan-currency"
-                  className="drawer-select"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                >
-                  <option value="€">EUR (€)</option>
-                  <option value="$">USD ($)</option>
-                  <option value="£">GBP (£)</option>
-                  <option value="FCFA">XAF (FCFA)</option>
-                </select>
-              </div>
+              <label htmlFor="plan-price-annually">Tarif Annuel</label>
+              <input
+                id="plan-price-annually"
+                type="number"
+                step="0.01"
+                required
+                className="drawer-text-input"
+                value={priceAnnually}
+                onChange={(e) => setPriceAnnually(e.target.value)}
+                placeholder="0.00"
+              />
             </div>
           </div>
 
           <div className="drawer-input-group">
-            <label htmlFor="plan-interval">Fréquence de facturation</label>
+            <label htmlFor="plan-currency">Devise</label>
             <div className="select-wrapper">
               <select
-                id="plan-interval"
+                id="plan-currency"
                 className="drawer-select"
-                value={interval}
-                onChange={(e) => setIntervalVal(e.target.value)}
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
               >
-                <option value="mois">Mensuel</option>
-                <option value="6 mois">Semestriel</option>
-                <option value="an">Annuel</option>
+                <option value="€">EUR (€)</option>
+                <option value="$">USD ($)</option>
+                <option value="£">GBP (£)</option>
+                <option value="FCFA">XAF (FCFA)</option>
               </select>
             </div>
           </div>
 
           <div className="drawer-input-group">
             <label>Avantages inclus (Features)</label>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            
+            {/* List Editor */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+              {features.map((feat, index) => (
+                <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    className="drawer-text-input"
+                    value={feat}
+                    onChange={(e) => handleFeatureTextChange(index, e.target.value)}
+                    placeholder={`Avantage #${index + 1}`}
+                    style={{ flexGrow: 1, fontSize: '13px', padding: '6px 10px' }}
+                    required
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => handleRemoveFeature(index)}
+                    style={{ border: 'none', background: 'none', color: 'var(--admin-accent-color)', cursor: 'pointer' }}
+                    title="Supprimer"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="text"
                 className="drawer-text-input"
                 value={newFeatureText}
                 onChange={(e) => setNewFeatureText(e.target.value)}
-                placeholder="Ajouter un avantage..."
+                placeholder="Ajouter un nouvel avantage..."
                 style={{ flexGrow: 1 }}
               />
               <button 
@@ -151,42 +183,6 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
                 Ajouter
               </button>
             </div>
-
-            <ul style={{ 
-              listStyleType: 'none', 
-              padding: 0, 
-              margin: 0,
-              border: '1px solid var(--admin-border-color)',
-              backgroundColor: '#FAF9F6',
-              borderRadius: '2px',
-              maxHeight: '180px',
-              overflowY: 'auto'
-            }}>
-              {features.map((feat, index) => (
-                <li key={index} style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
-                  borderBottom: index === features.length - 1 ? 'none' : '1px solid var(--admin-border-color)',
-                  fontSize: '13px'
-                }}>
-                  <span>{feat}</span>
-                  <button 
-                    type="button" 
-                    onClick={() => handleRemoveFeature(index)}
-                    style={{ border: 'none', background: 'none', color: 'var(--admin-accent-color)', cursor: 'pointer' }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                  </button>
-                </li>
-              ))}
-              {features.length === 0 && (
-                <li style={{ padding: '12px', color: '#888888', fontStyle: 'italic', textAlign: 'center', fontSize: '13px' }}>
-                  Aucun avantage configuré.
-                </li>
-              )}
-            </ul>
           </div>
 
           <div className="drawer-actions" style={{ marginTop: '30px' }}>
@@ -194,7 +190,7 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
               Annuler
             </button>
             <button type="submit" className="btn-drawer primary">
-              Mettre à jour
+              Enregistrer
             </button>
           </div>
         </form>

@@ -285,46 +285,69 @@ export default function AdminCatchAllPage({ params }) {
   // 8. Subscription Plans State (Phase 4.4)
   const [subscriptionPlans, setSubscriptionPlans] = useState([
     {
-      id: "plan-mensuel",
-      name: "Club DONA Mensuel",
-      price: 9.99,
+      id: "plan-essentiel",
+      name: "Essentiel",
+      priceMonthly: 0,
+      priceAnnually: 0,
       currency: "€",
-      interval: "mois",
       features: [
-        "Accès illimité aux 16 magazines",
-        "Lecture Premium sans publicité",
-        "Émissions de radio et TV en direct",
-        "Accès aux archives de rediffusions"
+        "Accès aux articles publics",
+        "Newsletter hebdomadaire",
+        "Profil membre basique"
       ]
     },
     {
-      id: "plan-annuel",
-      name: "Club DONA Annuel",
-      price: 95.00,
+      id: "plan-premium",
+      name: "Premium",
+      priceMonthly: 23,
+      priceAnnually: 278,
       currency: "€",
-      interval: "an",
       features: [
-        "Tous les avantages du plan Mensuel",
-        "2 mois d'abonnement offerts",
-        "Téléchargement des Workbooks VIP",
-        "Invitation aux tournois et événements"
+        "Tout de l'offre Essentiel",
+        "Articles et dossiers exclusifs",
+        "Accès au réseau privé (Slack)",
+        "Webinaires mensuels interactifs",
+        "Réductions sur les masterclasses"
+      ]
+    },
+    {
+      id: "plan-elite",
+      name: "Élite",
+      priceMonthly: 63,
+      priceAnnually: 758,
+      currency: "€",
+      features: [
+        "Tout de l'offre Premium",
+        "Mentorat individuel (1h/mois)",
+        "Événements physiques exclusifs",
+        "Mise en avant sur le réseau"
       ]
     }
   ]);
   const [paywallText, setPaywallText] = useState("Rejoignez le Club DONA pour débloquer l'accès exclusif à nos magazines, articles premium et documentaires inédits.");
   const [paywallDepth, setPaywallDepth] = useState(30); // 30% cutoff depth
+  const [paywallTargetTier, setPaywallTargetTier] = useState('Premium');
 
   const [isPlanDrawerOpen, setIsPlanDrawerOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
   const handleSavePlan = (savedPlan) => {
+    // API BRIDGE INTEGRATION BLUEPRINT:
+    // To bridge these pricing rate updates to our public facing /abonnement page,
+    // we would dispatch a PUT or POST request to:
+    // fetch('/api/global-config', { method: 'PUT', body: JSON.stringify(savedPlan) })
+    // which synchronizes the WordPress ACF options pages or MongoDB document.
     setSubscriptionPlans(prev => prev.map(p => p.id === savedPlan.id ? savedPlan : p));
   };
 
   const handleSavePaywall = () => {
+    // API BRIDGE INTEGRATION BLUEPRINT:
+    // To bridge this paywall context to our Next.js middleware and API layers:
+    // fetch('/api/global-config', { method: 'PUT', body: JSON.stringify({ paywallText, paywallDepth, paywallTargetTier }) })
     console.log("Saving Paywall Configuration:", {
       paywallText,
       paywallDepth,
+      paywallTargetTier,
       plans: subscriptionPlans
     });
     alert("Configuration du paywall et des offres mise à jour avec succès !");
@@ -1265,33 +1288,41 @@ export default function AdminCatchAllPage({ params }) {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
                 {subscriptionPlans.map((plan) => (
                   <div key={plan.id} className="table-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
-                    <span style={{ 
-                      position: 'absolute', 
-                      top: '16px', 
-                      right: '16px', 
-                      fontSize: '10px', 
-                      fontWeight: '700', 
-                      letterSpacing: '0.05em', 
-                      textTransform: 'uppercase',
-                      color: 'var(--admin-accent-color)',
-                      backgroundColor: '#FFF0F2',
-                      padding: '3px 8px',
-                      borderRadius: '1px'
-                    }}>
-                      {plan.interval === 'mois' ? 'Mensuel' : 'Annuel'}
-                    </span>
+                    {plan.name === 'Premium' && (
+                      <span style={{ 
+                        position: 'absolute', 
+                        top: '16px', 
+                        right: '16px', 
+                        fontSize: '9px', 
+                        fontWeight: '700', 
+                        letterSpacing: '0.05em', 
+                        textTransform: 'uppercase',
+                        color: '#FFFFFF',
+                        backgroundColor: 'var(--admin-accent-color)',
+                        padding: '3px 8px',
+                        borderRadius: '1px'
+                      }}>
+                        Le Plus Choisi
+                      </span>
+                    )}
 
                     <div>
-                      <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontWeight: '700', color: 'var(--admin-text-color)', margin: '0 0 4px' }}>
+                      <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontWeight: '700', color: 'var(--admin-text-color)', margin: '0 0 8px' }}>
                         {plan.name}
                       </h3>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                        <span style={{ fontSize: '32px', fontWeight: '800', fontFamily: 'Cormorant Garamond', fontStyle: 'italic', color: 'var(--admin-text-color)' }}>
-                          {plan.price.toFixed(2)}
-                        </span>
-                        <span style={{ fontSize: '16px', color: 'var(--admin-text-muted)', fontWeight: '600' }}>
-                          {plan.currency} / {plan.interval}
-                        </span>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                          <span style={{ fontSize: '28px', fontWeight: '800', fontFamily: 'Cormorant Garamond', fontStyle: 'italic', color: 'var(--admin-text-color)' }}>
+                            {plan.priceMonthly.toFixed(2)}
+                          </span>
+                          <span style={{ fontSize: '14px', color: 'var(--admin-text-muted)', fontWeight: '600' }}>
+                            {plan.currency} / mois
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', fontSize: '12px', color: 'var(--admin-text-muted)' }}>
+                          <span>Facturé {plan.priceAnnually.toFixed(2)} {plan.currency} / an</span>
+                        </div>
                       </div>
                     </div>
 
@@ -1312,7 +1343,7 @@ export default function AdminCatchAllPage({ params }) {
                       onClick={() => { setSelectedPlan(plan); setIsPlanDrawerOpen(true); }}
                       style={{ width: '100%', padding: '10px', marginTop: '12px' }}
                     >
-                      Modifier le tarif
+                      Éditer le Plan
                     </button>
                   </div>
                 ))}
@@ -1326,15 +1357,35 @@ export default function AdminCatchAllPage({ params }) {
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div className="drawer-input-group">
-                  <label htmlFor="paywall-text">Texte d'appel à l'action paywall</label>
-                  <textarea 
-                    id="paywall-text"
-                    className="drawer-textarea" 
-                    value={paywallText}
-                    onChange={(e) => setPaywallText(e.target.value)}
-                    rows={3}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '24px' }}>
+                  <div className="drawer-input-group">
+                    <label htmlFor="paywall-text">Texte d'appel à l'action paywall</label>
+                    <textarea 
+                      id="paywall-text"
+                      className="drawer-textarea" 
+                      value={paywallText}
+                      onChange={(e) => setPaywallText(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="drawer-input-group">
+                    <label htmlFor="paywall-target-tier">Niveau d'accès requis pour déverrouiller (VIP)</label>
+                    <div className="select-wrapper">
+                      <select
+                        id="paywall-target-tier"
+                        className="drawer-select"
+                        value={paywallTargetTier}
+                        onChange={(e) => setPaywallTargetTier(e.target.value)}
+                      >
+                        <option value="Premium">Premium</option>
+                        <option value="Élite">Élite</option>
+                      </select>
+                    </div>
+                    <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--admin-text-muted)' }}>
+                      Les abonnés détenant ce niveau d'offre ou supérieur auront accès aux articles restreints.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="drawer-input-group">
@@ -1359,7 +1410,7 @@ export default function AdminCatchAllPage({ params }) {
                     <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)', fontWeight: '600' }}>90% (Permissif)</span>
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--admin-text-muted)' }}>
-                    Détermine l'endroit précis où le lettrage de l'article se floute et demande l'adhésion pour les lecteurs non VIP.
+                    Détermine l'endroit précis où le lettrage de l'article se floute et demande l'adhésion pour les lecteurs non autorisés.
                   </p>
                 </div>
 
