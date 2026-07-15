@@ -156,6 +156,17 @@ export default function AdminCatchAllPage({ params }) {
     contactEmail: "contact@dona-magazine.com"
   });
 
+  // 6. SEO Settings State (Phase 4.7)
+  const [seoSettings, setSeoSettings] = useState({
+    titleTemplate: "%title% | Dona Magazine",
+    ogImage: "/uploads/brand/default-og.png",
+    indexingEnabled: true,
+    robotsTxt: "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: https://dona-magazine.com/sitemap.xml",
+    googleConsoleKey: "google-site-verification-1a2b3c4d5e6f7g8h",
+    googleAnalyticsId: "G-DONA2026",
+    metaPixelId: "FB-PIXEL-789012"
+  });
+
   // Drawer States
   const [isArticleDrawerOpen, setIsArticleDrawerOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -917,6 +928,15 @@ export default function AdminCatchAllPage({ params }) {
           alert("Identité visuelle et configuration de la marque enregistrées avec succès !");
         };
 
+        const handleSaveSeoSubmit = (e) => {
+          e.preventDefault();
+          // API BRIDGE INTEGRATION BLUEPRINT:
+          // To bridge these SEO & tracking settings to public HTML headers and router middleware:
+          // fetch('/api/global-config', { method: 'PUT', body: JSON.stringify({ ...seoSettings }) })
+          console.log("Saving SEO Settings:", seoSettings);
+          alert("Configuration SEO et outils de tracking mis à jour avec succès !");
+        };
+
         if (subsection === 'brand') {
           return (
             <>
@@ -1150,6 +1170,231 @@ export default function AdminCatchAllPage({ params }) {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
                     <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
                       Enregistrer la configuration de marque
+                    </button>
+                  </div>
+
+                </form>
+              </div>
+            </>
+          );
+        }
+
+        if (subsection === 'seo') {
+          return (
+            <>
+              <div className="dashboard-title-row">
+                <h1>Configuration SEO & Tracking Analytics</h1>
+              </div>
+
+              <div className="table-card" style={{ marginTop: '20px', padding: '30px' }}>
+                <form onSubmit={handleSaveSeoSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                  
+                  {/* 1. Global Meta & Social Share Customizer */}
+                  <div>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      1. Métadonnées Globales & Partage Social (Open Graph)
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+                      
+                      <div className="drawer-input-group">
+                        <label htmlFor="title-template">Modèle du Titre SEO (Title Template)</label>
+                        <input 
+                          id="title-template"
+                          type="text" 
+                          className="drawer-text-input"
+                          value={seoSettings.titleTemplate}
+                          onChange={(e) => setSeoSettings(prev => ({ ...prev, titleTemplate: e.target.value }))}
+                          placeholder="%title% | Dona Magazine"
+                          required
+                        />
+                        <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--admin-text-muted)' }}>
+                          Le tag <code>%title%</code> sera dynamiquement remplacé par le titre de l'article ou de la rubrique.
+                        </p>
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label>Visuel de Partage par Défaut (Image Open Graph)</label>
+                        <div style={{
+                          border: '2px dashed var(--admin-border-color)',
+                          borderRadius: '2px',
+                          padding: '24px',
+                          textAlign: 'center',
+                          backgroundColor: '#FAF9F6',
+                          cursor: 'pointer',
+                          position: 'relative'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>
+                            share
+                          </span>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#555555' }}>
+                            Glissez-déposez le visuel par défaut ou cliquez pour parcourir (1200x630px recommandé)
+                          </p>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setSeoSettings(prev => ({ ...prev, ogImage: URL.createObjectURL(e.target.files[0]) }));
+                              }
+                            }}
+                          />
+                        </div>
+                        {seoSettings.ogImage && (
+                          <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--admin-text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'green' }}>check_circle</span>
+                            <span>Image Open Graph chargée : {seoSettings.ogImage.substring(0, 40)}...</span>
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* 2. Indexing & Search Control (Robots & Sitemaps) */}
+                  <div>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      2. Indexation & Visibilité (Robots & Sitemaps)
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      
+                      <div className="drawer-input-group">
+                        <label>Visibilité dans les moteurs de recherche</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                          <span style={{ fontSize: '13px', color: '#555555' }}>Bloquer l'indexation (noindex, nofollow)</span>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const newEnabled = !seoSettings.indexingEnabled;
+                              const newRobots = newEnabled 
+                                ? "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: https://dona-magazine.com/sitemap.xml"
+                                : "User-agent: *\nDisallow: /\n# Mode Privé activé";
+                              setSeoSettings(prev => ({ 
+                                ...prev, 
+                                indexingEnabled: newEnabled,
+                                robotsTxt: newRobots
+                              }));
+                            }}
+                            style={{
+                              border: 'none',
+                              backgroundColor: seoSettings.indexingEnabled ? 'var(--admin-accent-color)' : '#CCCCCC',
+                              width: '48px',
+                              height: '24px',
+                              borderRadius: '12px',
+                              position: 'relative',
+                              cursor: 'pointer',
+                              transition: 'background-color 0.3s'
+                            }}
+                          >
+                            <span style={{
+                              position: 'absolute',
+                              top: '2px',
+                              left: seoSettings.indexingEnabled ? '26px' : '2px',
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: '#FFFFFF',
+                              transition: 'left 0.3s'
+                            }} />
+                          </button>
+                          <span style={{ fontSize: '13px', color: '#555555' }}>Autoriser les moteurs à indexer ce site</span>
+                        </div>
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label htmlFor="robots-txt">Directives Robots.txt personnalisées</label>
+                        <textarea 
+                          id="robots-txt"
+                          className="drawer-textarea"
+                          rows={4}
+                          value={seoSettings.robotsTxt}
+                          onChange={(e) => setSeoSettings(prev => ({ ...prev, robotsTxt: e.target.value }))}
+                          style={{ fontFamily: 'monospace', fontSize: '13px', backgroundColor: '#FAF9F6' }}
+                        />
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label>Index des Fichiers (Sitemaps)</label>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '12px 16px',
+                          backgroundColor: '#FFF0F2',
+                          border: '1px solid var(--admin-border-color)',
+                          borderRadius: '2px',
+                          width: 'fit-content'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ color: 'var(--admin-accent-color)', fontSize: '20px' }}>
+                            link
+                          </span>
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--admin-text-color)' }}>
+                            Sitemap principal détecté : 
+                            <a 
+                              href="/sitemap.xml" 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              style={{ marginLeft: '6px', color: 'var(--admin-accent-color)', textDecoration: 'underline' }}
+                            >
+                              /sitemap.xml
+                            </a>
+                          </span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* 3. Analytics & Integrations */}
+                  <div>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      3. Analyse d'Audience & Clés de Validation (Tracking)
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                      
+                      <div className="drawer-input-group">
+                        <label htmlFor="google-console">Clé de vérification Google Search Console</label>
+                        <input 
+                          id="google-console"
+                          type="text" 
+                          className="drawer-text-input"
+                          value={seoSettings.googleConsoleKey}
+                          onChange={(e) => setSeoSettings(prev => ({ ...prev, googleConsoleKey: e.target.value }))}
+                          placeholder="google-site-verification-..."
+                        />
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label htmlFor="google-analytics">ID de Mesure Google Analytics (GA4)</label>
+                        <input 
+                          id="google-analytics"
+                          type="text" 
+                          className="drawer-text-input"
+                          value={seoSettings.googleAnalyticsId}
+                          onChange={(e) => setSeoSettings(prev => ({ ...prev, googleAnalyticsId: e.target.value }))}
+                          placeholder="G-XXXXXXXXXX"
+                        />
+                      </div>
+
+                      <div className="drawer-input-group">
+                        <label htmlFor="meta-pixel">ID de Script Meta Pixel (Facebook)</label>
+                        <input 
+                          id="meta-pixel"
+                          type="text" 
+                          className="drawer-text-input"
+                          value={seoSettings.metaPixelId}
+                          onChange={(e) => setSeoSettings(prev => ({ ...prev, metaPixelId: e.target.value }))}
+                          placeholder="FB-PIXEL-..."
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Submit button */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                    <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
+                      Enregistrer la configuration SEO
                     </button>
                   </div>
 
