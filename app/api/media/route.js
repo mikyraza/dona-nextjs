@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 const WP_API_URL = process.env.WORDPRESS_API_URL || "http://localhost/wp-json";
 const WP_AUTH_TOKEN = process.env.WORDPRESS_AUTH_TOKEN;
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
+const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB limit
 
 function sanitizeUploadUrl(url) {
   if (!url) return "";
@@ -25,7 +25,7 @@ export async function POST(req) {
 
     // Size limit verification
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "Fichier trop volumineux. La limite est de 50 Mo." }, { status: 413 });
+      return NextResponse.json({ error: "Fichier trop volumineux. La limite est de 200 Mo." }, { status: 413 });
     }
 
     const fileName = file.name || "media_file";
