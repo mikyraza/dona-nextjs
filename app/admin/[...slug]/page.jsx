@@ -683,9 +683,11 @@ export default function AdminCatchAllPage({ params }) {
 
       const typeMap = { text: "Article", video: "Vidéo", audio: "Podcast" };
       const mapped = {
+        ...savedArticle,
         ...dbArticle,
-        type: typeMap[dbArticle.format] || "Article",
-        author: "Rédaction",
+        type: typeMap[dbArticle.format || savedArticle.format] || "Article",
+        author: savedArticle.author || "Rédaction",
+        status: dbArticle.status || savedArticle.status || (savedArticle.isVipOnly ? "Published" : "Draft"),
         updated: "À l'instant"
       };
 
@@ -826,8 +828,8 @@ export default function AdminCatchAllPage({ params }) {
                       <td>{art.author}</td>
                       <td style={{ color: '#888888' }}>{art.category}</td>
                       <td>
-                        <span className={`badge ${art.status.toLowerCase()}`}>
-                          {art.status}
+                        <span className={`badge ${(art.status || 'Draft').toLowerCase()}`}>
+                          {art.status || 'Draft'}
                         </span>
                       </td>
                       <td style={{ color: '#888888' }}>{art.updated}</td>

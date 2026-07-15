@@ -336,8 +336,8 @@ export default function DashboardPage() {
                     <td className="cell-bold">{act.title}</td>
                     <td>{act.author}</td>
                     <td>
-                      <span className={`badge ${act.status.toLowerCase()}`}>
-                        {act.status}
+                      <span className={`badge ${(act.status || 'Draft').toLowerCase()}`}>
+                        {act.status || 'Draft'}
                       </span>
                     </td>
                     <td style={{ color: '#888888' }}>{act.updated}</td>
