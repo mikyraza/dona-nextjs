@@ -1,6 +1,38 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+function isRouteAllowed(role, path) {
+  if (role === "Super-Admin") return true;
+
+  if (role === "Éditeur") {
+    // Block plans, settings, and users directory
+    if (path.startsWith("/admin/plans") || path.startsWith("/admin/settings") || path.startsWith("/admin/utilisateurs")) {
+      return false;
+    }
+    return true;
+  }
+
+  if (role === "Journaliste") {
+    // Allowed only dashboard, articles, videos, podcasts, tags, rubriques
+    const allowedPrefixes = [
+      "/admin/dashboard",
+      "/admin/articles",
+      "/admin/videos",
+      "/admin/podcasts",
+      "/admin/tags",
+      "/admin/rubriques"
+    ];
+    return allowedPrefixes.some(pref => path === pref || path.startsWith(pref + "/"));
+  }
+
+  if (role === "Traducteur") {
+    // Allowed only dashboard and languages settings
+    return path === "/admin/dashboard" || path === "/admin/settings/langues" || path.startsWith("/admin/settings/langues/");
+  }
+
+  return false;
+}
+
 export async function middleware(req) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || "dona-magazine-super-secret-key-987654321" });
   const path = req.nextUrl.pathname;
@@ -25,9 +57,8 @@ export async function middleware(req) {
       return NextResponse.redirect(new URL("/login?error=Unauthorized", req.url));
     }
 
-    // Role restriction for Super-Admin settings & plans & users
-    const isSuperAdminOnly = path.startsWith("/admin/settings") || path.startsWith("/admin/plans") || path.startsWith("/admin/utilisateurs");
-    if (isSuperAdminOnly && token.role !== "Super-Admin") {
+    // Role-based route access verification
+    if (!isRouteAllowed(token.role, path)) {
       return NextResponse.redirect(new URL("/admin/dashboard?error=AccessDenied", req.url));
     }
   }

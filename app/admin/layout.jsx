@@ -32,6 +32,12 @@ function AdminInnerLayout({ children }) {
     return pathname.startsWith(route);
   };
 
+  const userRole = session?.user?.role || "";
+  const isSuperAdmin = userRole === "Super-Admin";
+  const isEditor = userRole === "Éditeur";
+  const isJournalist = userRole === "Journaliste";
+  const isTranslator = userRole === "Traducteur";
+
   return (
     <div className="admin-layout-wrapper">
       {/* Sidebar Navigation */}
@@ -58,130 +64,145 @@ function AdminInnerLayout({ children }) {
           </div>
 
           {/* CONTENU Group */}
-          <div className="nav-group">
-            <span className="group-title">Contenu</span>
-            <Link 
-              href="/admin/articles" 
-              className={`nav-item ${isActiveRoute('/admin/articles') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">description</span>
-              Articles
-            </Link>
-            <Link 
-              href="/admin/videos" 
-              className={`nav-item ${isActiveRoute('/admin/videos') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">videocam</span>
-              Vidéos
-            </Link>
-            <Link 
-              href="/admin/podcasts" 
-              className={`nav-item ${isActiveRoute('/admin/podcasts') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">mic</span>
-              Podcasts
-            </Link>
-            <Link 
-              href="/admin/dossiers" 
-              className={`nav-item ${isActiveRoute('/admin/dossiers') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">folder</span>
-              Dossiers
-            </Link>
-          </div>
+          {(isSuperAdmin || isEditor || isJournalist) && (
+            <div className="nav-group">
+              <span className="group-title">Contenu</span>
+              <Link 
+                href="/admin/articles" 
+                className={`nav-item ${isActiveRoute('/admin/articles') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">description</span>
+                Articles
+              </Link>
+              <Link 
+                href="/admin/videos" 
+                className={`nav-item ${isActiveRoute('/admin/videos') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">videocam</span>
+                Vidéos
+              </Link>
+              <Link 
+                href="/admin/podcasts" 
+                className={`nav-item ${isActiveRoute('/admin/podcasts') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">mic</span>
+                Podcasts
+              </Link>
+              {(isSuperAdmin || isEditor) && (
+                <Link 
+                  href="/admin/dossiers" 
+                  className={`nav-item ${isActiveRoute('/admin/dossiers') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">folder</span>
+                  Dossiers
+                </Link>
+              )}
+            </div>
+          )}
 
           {/* TAXONOMIE Group */}
-          <div className="nav-group">
-            <span className="group-title">Taxonomie</span>
-            <Link 
-              href="/admin/tags" 
-              className={`nav-item ${isActiveRoute('/admin/tags') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">sell</span>
-              Tags & Thèmes
-            </Link>
-            <Link 
-              href="/admin/rubriques" 
-              className={`nav-item ${isActiveRoute('/admin/rubriques') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">category</span>
-              Rubriques
-            </Link>
-          </div>
+          {(isSuperAdmin || isEditor || isJournalist) && (
+            <div className="nav-group">
+              <span className="group-title">Taxonomie</span>
+              <Link 
+                href="/admin/tags" 
+                className={`nav-item ${isActiveRoute('/admin/tags') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">sell</span>
+                Tags & Thèmes
+              </Link>
+              <Link 
+                href="/admin/rubriques" 
+                className={`nav-item ${isActiveRoute('/admin/rubriques') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">category</span>
+                Rubriques
+              </Link>
+            </div>
+          )}
 
           {/* STUDIO / LIVE Group */}
-          <div className="nav-group">
-            <span className="group-title">Studio / Live</span>
-            <Link 
-              href="/admin/radio-live" 
-              className={`nav-item ${isActiveRoute('/admin/radio-live') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">radio</span>
-              Radio Live
-            </Link>
-            <Link 
-              href="/admin/tv-live" 
-              className={`nav-item ${isActiveRoute('/admin/tv-live') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">live_tv</span>
-              TV Live
-            </Link>
-            <Link 
-              href="/admin/replays" 
-              className={`nav-item ${isActiveRoute('/admin/replays') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">replay</span>
-              Replays
-            </Link>
-          </div>
+          {(isSuperAdmin || isEditor) && (
+            <div className="nav-group">
+              <span className="group-title">Studio / Live</span>
+              <Link 
+                href="/admin/radio-live" 
+                className={`nav-item ${isActiveRoute('/admin/radio-live') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">radio</span>
+                Radio Live
+              </Link>
+              <Link 
+                href="/admin/tv-live" 
+                className={`nav-item ${isActiveRoute('/admin/tv-live') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">live_tv</span>
+                TV Live
+              </Link>
+              <Link 
+                href="/admin/replays" 
+                className={`nav-item ${isActiveRoute('/admin/replays') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">replay</span>
+                Replays
+              </Link>
+            </div>
+          )}
 
           {/* CLUB Group */}
-          <div className="nav-group">
-            <span className="group-title">Club</span>
-            {session?.user?.role === "Super-Admin" && (
+          {(isSuperAdmin || isEditor) && (
+            <div className="nav-group">
+              <span className="group-title">Club</span>
+              {isSuperAdmin && (
+                <Link 
+                  href="/admin/plans" 
+                  className={`nav-item ${isActiveRoute('/admin/plans') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">payments</span>
+                  Plans & Paywall
+                </Link>
+              )}
               <Link 
-                href="/admin/plans" 
-                className={`nav-item ${isActiveRoute('/admin/plans') ? 'active' : ''}`}
+                href="/admin/membres" 
+                className={`nav-item ${isActiveRoute('/admin/membres') ? 'active' : ''}`}
               >
-                <span className="material-symbols-outlined">payments</span>
-                Plans & Paywall
+                <span className="material-symbols-outlined">group</span>
+                Membres
               </Link>
-            )}
-            <Link 
-              href="/admin/membres" 
-              className={`nav-item ${isActiveRoute('/admin/membres') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">group</span>
-              Membres
-            </Link>
-          </div>
+            </div>
+          )}
 
           {/* SETTINGS Group */}
-          <div className="nav-group">
-            <span className="group-title">Settings</span>
-            {session?.user?.role === "Super-Admin" ? (
-              <>
-                <Link 
-                  href="/admin/settings/brand" 
-                  className={`nav-item ${isActiveRoute('/admin/settings/brand') ? 'active' : ''}`}
-                >
-                  <span className="material-symbols-outlined">palette</span>
-                  Brand
-                </Link>
-                <Link 
-                  href="/admin/settings/seo" 
-                  className={`nav-item ${isActiveRoute('/admin/settings/seo') ? 'active' : ''}`}
-                >
-                  <span className="material-symbols-outlined">search</span>
-                  SEO
-                </Link>
-                <Link 
-                  href="/admin/settings/navigation" 
-                  className={`nav-item ${isActiveRoute('/admin/settings/navigation') ? 'active' : ''}`}
-                >
-                  <span className="material-symbols-outlined">menu</span>
-                  Navigation
-                </Link>
+          {(isSuperAdmin || isTranslator || isEditor || isJournalist) && (
+            <div className="nav-group">
+              <span className="group-title">Settings</span>
+              {isSuperAdmin && (
+                <>
+                  <Link 
+                    href="/admin/settings/brand" 
+                    className={`nav-item ${isActiveRoute('/admin/settings/brand') ? 'active' : ''}`}
+                  >
+                    <span className="material-symbols-outlined">palette</span>
+                    Brand
+                  </Link>
+                  <Link 
+                    href="/admin/settings/seo" 
+                    className={`nav-item ${isActiveRoute('/admin/settings/seo') ? 'active' : ''}`}
+                  >
+                    <span className="material-symbols-outlined">search</span>
+                    SEO
+                  </Link>
+                  <Link 
+                    href="/admin/settings/navigation" 
+                    className={`nav-item ${isActiveRoute('/admin/settings/navigation') ? 'active' : ''}`}
+                  >
+                    <span className="material-symbols-outlined">menu</span>
+                    Navigation
+                  </Link>
+                </>
+              )}
+
+              {(isSuperAdmin || isTranslator) && (
                 <Link 
                   href="/admin/settings/langues" 
                   className={`nav-item ${isActiveRoute('/admin/settings/langues') ? 'active' : ''}`}
@@ -189,6 +210,9 @@ function AdminInnerLayout({ children }) {
                   <span className="material-symbols-outlined">language</span>
                   Langues (i18n)
                 </Link>
+              )}
+
+              {isSuperAdmin && (
                 <Link 
                   href="/admin/utilisateurs" 
                   className={`nav-item ${isActiveRoute('/admin/utilisateurs') ? 'active' : ''}`}
@@ -196,13 +220,15 @@ function AdminInnerLayout({ children }) {
                   <span className="material-symbols-outlined">admin_panel_settings</span>
                   Utilisateurs
                 </Link>
-              </>
-            ) : (
-              <div style={{ padding: '8px 16px', fontSize: '11px', color: '#888888', fontStyle: 'italic' }}>
-                Accès restreint aux paramètres
-              </div>
-            )}
-          </div>
+              )}
+
+              {(isEditor || isJournalist) && (
+                <div style={{ padding: '8px 16px', fontSize: '11px', color: '#888888', fontStyle: 'italic' }}>
+                  Accès restreint aux paramètres
+                </div>
+              )}
+            </div>
+          )}
         </nav>
       </aside>
 
