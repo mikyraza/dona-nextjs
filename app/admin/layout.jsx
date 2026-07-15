@@ -3,11 +3,20 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, SessionProvider, useSession } from 'next-auth/react';
 import '../../styles/admin.css';
 
 export default function AdminLayout({ children }) {
+  return (
+    <SessionProvider>
+      <AdminInnerLayout>{children}</AdminInnerLayout>
+    </SessionProvider>
+  );
+}
+
+function AdminInnerLayout({ children }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Bypasser le layout pour la page de connexion administrative
@@ -206,10 +215,17 @@ export default function AdminLayout({ children }) {
             
             <div className="user-block-wrapper">
               <div className="user-block" onClick={() => setShowDropdown(!showDropdown)}>
-                <span className="user-name">Elena Moretti</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '8px' }}>
+                  <span className="user-name" style={{ fontSize: '13px', fontWeight: '600' }}>
+                    {session?.user?.name || "Elena Moretti"}
+                  </span>
+                  <span className="user-role" style={{ fontSize: '10px', color: '#888888', fontWeight: '500' }}>
+                    {session?.user?.role || "Super-Admin"}
+                  </span>
+                </div>
                 <img 
                   src="/assets/core/img/avatar-1.png" 
-                  alt="Avatar Elena Moretti" 
+                  alt="Avatar" 
                   className="user-avatar"
                 />
                 <span className="material-symbols-outlined">

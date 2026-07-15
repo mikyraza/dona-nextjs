@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(req) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || "dona-magazine-super-secret-key-987654321" });
   const path = req.nextUrl.pathname;
+
+  const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur"];
 
   // Bypasser la vérification pour la page de connexion administrative
   if (path === "/admin/login") {
     // Si déjà administrateur, rediriger directement vers le dashboard
-    if (token && token.role === "ADMIN") {
+    if (token && allowedAdminRoles.includes(token.role)) {
       return NextResponse.redirect(new URL("/admin/dashboard", req.url));
     }
     return NextResponse.next();
@@ -17,10 +19,16 @@ export async function middleware(req) {
   // 1. Restriction sur le Dashboard Admin Next.js (/admin/*)
   if (path.startsWith("/admin")) {
     if (!token) {
-      return NextResponse.redirect(new URL("/admin/login", req.url));
+      return NextResponse.redirect(new URL("/login", req.url));
     }
-    if (token.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/admin/login?error=Unauthorized", req.url));
+    if (!allowedAdminRoles.includes(token.role)) {
+      return NextResponse.redirect(new URL("/login?error=Unauthorized", req.url));
+    }
+
+    // Role restriction for Super-Admin settings & plans
+    const isSettingsOrPlans = path.startsWith("/admin/settings") || path.startsWith("/admin/plans");
+    if (isSettingsOrPlans && token.role !== "Super-Admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard?error=AccessDenied", req.url));
     }
   }
 
@@ -29,7 +37,8 @@ export async function middleware(req) {
     if (!token) {
       return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(req.url)}`, req.url));
     }
-    if (token.role !== "VIP_SUBSCRIBER" && token.role !== "ADMIN") {
+    const isVip = token.role === "VIP_SUBSCRIBER" || allowedAdminRoles.includes(token.role);
+    if (!isVip) {
       return NextResponse.redirect(new URL("/login?error=Unauthorized", req.url));
     }
   }
