@@ -167,6 +167,138 @@ export default function AdminCatchAllPage({ params }) {
     metaPixelId: "FB-PIXEL-789012"
   });
 
+  // 7. Navigation Settings State (Phase 4.8)
+  const [headerMenu, setHeaderMenu] = useState([
+    { id: "h-1", label: "Accueil", url: "/" },
+    { id: "h-2", label: "Articles", url: "/articles" },
+    { id: "h-3", label: "Vidéos", url: "/videos" },
+    { id: "h-4", label: "Podcasts", url: "/podcasts" },
+    { id: "h-5", label: "Dossiers", url: "/dossiers" },
+    { id: "h-6", label: "Club", url: "/club" }
+  ]);
+
+  const [footerColumns, setFooterColumns] = useState([
+    {
+      id: "fc-1",
+      title: "SECTIONS",
+      links: [
+        { id: "fl-1", label: "Magazines", url: "/magazines" },
+        { id: "fl-2", label: "Émissions", url: "/today" },
+        { id: "fl-3", label: "Studio", url: "/studio" }
+      ]
+    },
+    {
+      id: "fc-2",
+      title: "LÉGAL",
+      links: [
+        { id: "fl-4", label: "Politique de confidentialité", url: "/politique-confidentialite" },
+        { id: "fl-5", label: "Recrutement & Emploi", url: "/recrutement" }
+      ]
+    },
+    {
+      id: "fc-3",
+      title: "COMMUNAUTÉ",
+      links: [
+        { id: "fl-6", label: "Devenir Membre", url: "/abonnement" },
+        { id: "fl-7", label: "Contact", url: "/contact" }
+      ]
+    }
+  ]);
+
+  const [navCtaText, setNavCtaText] = useState("Devenir Membre");
+  const [navCtaUrl, setNavCtaUrl] = useState("/abonnement");
+
+  // Auxiliary state for adding menu items
+  const [newHeaderLabel, setNewHeaderLabel] = useState('');
+  const [newHeaderUrl, setNewHeaderUrl] = useState('');
+
+  // Auxiliary state for adding/editing footer links
+  const [newFooterLabel, setNewFooterLabel] = useState({}); // { [colId]: '' }
+  const [newFooterUrl, setNewFooterUrl] = useState({}); // { [colId]: '' }
+
+  const moveHeaderItem = (index, direction) => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === headerMenu.length - 1) return;
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    setHeaderMenu(prev => {
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[newIndex];
+      updated[newIndex] = temp;
+      return updated;
+    });
+  };
+
+  const removeHeaderItem = (id) => {
+    setHeaderMenu(prev => prev.filter(item => item.id !== id));
+  };
+
+  const addHeaderItem = (e) => {
+    e.preventDefault();
+    if (!newHeaderLabel.trim() || !newHeaderUrl.trim()) return;
+    setHeaderMenu(prev => [
+      ...prev,
+      {
+        id: `h-custom-${Date.now()}`,
+        label: newHeaderLabel.trim(),
+        url: newHeaderUrl.trim()
+      }
+    ]);
+    setNewHeaderLabel('');
+    setNewHeaderUrl('');
+  };
+
+  const removeFooterLink = (colId, linkId) => {
+    setFooterColumns(prev => prev.map(col => {
+      if (col.id === colId) {
+        return { ...col, links: col.links.filter(l => l.id !== linkId) };
+      }
+      return col;
+    }));
+  };
+
+  const addFooterLink = (colId) => {
+    const label = newFooterLabel[colId] || '';
+    const url = newFooterUrl[colId] || '';
+    if (!label.trim() || !url.trim()) return;
+
+    setFooterColumns(prev => prev.map(col => {
+      if (col.id === colId) {
+        return {
+          ...col,
+          links: [
+            ...col.links,
+            {
+              id: `fl-custom-${Date.now()}`,
+              label: label.trim(),
+              url: url.trim()
+            }
+          ]
+        };
+      }
+      return col;
+    }));
+
+    setNewFooterLabel(prev => ({ ...prev, [colId]: '' }));
+    setNewFooterUrl(prev => ({ ...prev, [colId]: '' }));
+  };
+
+  const handleFooterLinkChange = (colId, linkId, field, value) => {
+    setFooterColumns(prev => prev.map(col => {
+      if (col.id === colId) {
+        return {
+          ...col,
+          links: col.links.map(l => l.id === linkId ? { ...l, [field]: value } : l)
+        };
+      }
+      return col;
+    }));
+  };
+
+  const handleFooterColumnTitleChange = (colId, value) => {
+    setFooterColumns(prev => prev.map(col => col.id === colId ? { ...col, title: value } : col));
+  };
+
   // Drawer States
   const [isArticleDrawerOpen, setIsArticleDrawerOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -1400,6 +1532,267 @@ export default function AdminCatchAllPage({ params }) {
 
                 </form>
               </div>
+            </>
+          );
+        }
+        const handleSaveNavigationSubmit = (e) => {
+          e.preventDefault();
+          // API BRIDGE INTEGRATION BLUEPRINT:
+          // To bridge these navigation menu configurations to our layouts and header/footer components:
+          // fetch('/api/global-config', { method: 'PUT', body: JSON.stringify({ headerMenu, footerColumns, navCtaText, navCtaUrl }) })
+          console.log("Saving Navigation Settings:", { headerMenu, footerColumns, navCtaText, navCtaUrl });
+          alert("Configuration de la navigation et des menus enregistrée avec succès !");
+        };
+
+        if (subsection === 'navigation') {
+          return (
+            <>
+              <div className="dashboard-title-row">
+                <h1>Constructeur de Menus & Navigation</h1>
+              </div>
+
+              <form onSubmit={handleSaveNavigationSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                
+                {/* 1. Header CTA Customizer */}
+                <div className="table-card" style={{ padding: '30px' }}>
+                  <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                    1. Bouton d'Action Principal (Header CTA)
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div className="drawer-input-group">
+                      <label htmlFor="cta-text">Libellé du Bouton CTA</label>
+                      <input 
+                        id="cta-text"
+                        type="text" 
+                        className="drawer-text-input" 
+                        value={navCtaText} 
+                        onChange={(e) => setNavCtaText(e.target.value)} 
+                        placeholder="Ex: Devenir Membre..."
+                        required
+                      />
+                    </div>
+                    <div className="drawer-input-group">
+                      <label htmlFor="cta-url">Lien de Destination</label>
+                      <input 
+                        id="cta-url"
+                        type="text" 
+                        className="drawer-text-input" 
+                        value={navCtaUrl} 
+                        onChange={(e) => setNavCtaUrl(e.target.value)} 
+                        placeholder="Ex: /abonnement..."
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Main Header Menu Builder */}
+                <div className="table-card" style={{ padding: '30px' }}>
+                  <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                    2. Menu de Navigation Supérieur (Header Menu)
+                  </h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px', alignItems: 'start' }}>
+                    
+                    {/* Active Menu List with reorder buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--admin-text-muted)', marginBottom: '4px' }}>
+                        Ordre des Liens Actifs
+                      </label>
+                      <div style={{ border: '1px solid var(--admin-border-color)', borderRadius: '2px', backgroundColor: '#FAF9F6' }}>
+                        {headerMenu.map((item, index) => (
+                          <div key={item.id} style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between', 
+                            padding: '12px 16px',
+                            borderBottom: index === headerMenu.length - 1 ? 'none' : '1px solid var(--admin-border-color)'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--admin-text-color)' }}>{item.label}</span>
+                              <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>({item.url})</span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <button 
+                                type="button" 
+                                onClick={() => moveHeaderItem(index, 'up')}
+                                disabled={index === 0}
+                                style={{ border: 'none', background: 'none', cursor: index === 0 ? 'not-allowed' : 'pointer', color: index === 0 ? '#CCC' : 'var(--admin-text-color)', padding: '2px' }}
+                                title="Monter"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_upward</span>
+                              </button>
+                              <button 
+                                type="button" 
+                                onClick={() => moveHeaderItem(index, 'down')}
+                                disabled={index === headerMenu.length - 1}
+                                style={{ border: 'none', background: 'none', cursor: index === headerMenu.length - 1 ? 'not-allowed' : 'pointer', color: index === headerMenu.length - 1 ? '#CCC' : 'var(--admin-text-color)', padding: '2px' }}
+                                title="Descendre"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_downward</span>
+                              </button>
+                              <span style={{ margin: '0 4px', color: 'var(--admin-border-color)' }}>|</span>
+                              <button 
+                                type="button" 
+                                onClick={() => removeHeaderItem(item.id)}
+                                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--admin-accent-color)', padding: '2px' }}
+                                title="Retirer"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Add Custom Link Form */}
+                    <div style={{ padding: '20px', border: '1px solid var(--admin-border-color)', borderRadius: '2px', backgroundColor: '#FFFFFF' }}>
+                      <h4 style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--admin-text-color)' }}>
+                        Ajouter un lien personnalisé
+                      </h4>
+                      <div className="drawer-input-group" style={{ marginBottom: '12px' }}>
+                        <label htmlFor="new-header-label">Label du lien</label>
+                        <input 
+                          id="new-header-label"
+                          type="text" 
+                          className="drawer-text-input" 
+                          value={newHeaderLabel} 
+                          onChange={(e) => setNewHeaderLabel(e.target.value)} 
+                          placeholder="Ex: Le Club..."
+                        />
+                      </div>
+                      <div className="drawer-input-group" style={{ marginBottom: '16px' }}>
+                        <label htmlFor="new-header-url">URL de destination</label>
+                        <input 
+                          id="new-header-url"
+                          type="text" 
+                          className="drawer-text-input" 
+                          value={newHeaderUrl} 
+                          onChange={(e) => setNewHeaderUrl(e.target.value)} 
+                          placeholder="Ex: /abonnement..."
+                        />
+                      </div>
+                      <button 
+                        type="button" 
+                        className="btn-drawer primary" 
+                        onClick={addHeaderItem}
+                        style={{ width: '100%', padding: '10px' }}
+                      >
+                        + Ajouter au Menu
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* 3. Footer Columns Customizer */}
+                <div className="table-card" style={{ padding: '30px' }}>
+                  <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                    3. Groupes de Liens du Pied de Page (Footer Columns)
+                  </h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
+                    {footerColumns.map((col) => (
+                      <div key={col.id} style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px', border: '1px solid var(--admin-border-color)', borderRadius: '2px', backgroundColor: '#FAF9F6' }}>
+                        
+                        {/* Editable Column Title */}
+                        <div className="drawer-input-group" style={{ margin: 0 }}>
+                          <label>Titre du groupe (Colonne)</label>
+                          <input 
+                            type="text" 
+                            className="drawer-text-input" 
+                            value={col.title}
+                            onChange={(e) => handleFooterColumnTitleChange(col.id, e.target.value)}
+                            style={{ fontWeight: '700', fontSize: '14px', textTransform: 'uppercase' }}
+                            required
+                          />
+                        </div>
+
+                        {/* List of Links */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <label style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--admin-text-muted)' }}>
+                            Liens Actifs
+                          </label>
+                          {col.links.map((link) => (
+                            <div key={link.id} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <input 
+                                type="text"
+                                className="drawer-text-input"
+                                value={link.label}
+                                onChange={(e) => handleFooterLinkChange(col.id, link.id, 'label', e.target.value)}
+                                style={{ margin: 0, flexGrow: 1, fontSize: '12px', padding: '6px 8px' }}
+                                placeholder="Label"
+                                required
+                              />
+                              <input 
+                                type="text"
+                                className="drawer-text-input"
+                                value={link.url}
+                                onChange={(e) => handleFooterLinkChange(col.id, link.id, 'url', e.target.value)}
+                                style={{ margin: 0, flexGrow: 1, fontSize: '12px', padding: '6px 8px' }}
+                                placeholder="URL"
+                                required
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => removeFooterLink(col.id, link.id)}
+                                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--admin-accent-color)', padding: 0 }}
+                                title="Supprimer"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Add Link inside Column */}
+                        <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: '1px dashed var(--admin-border-color)' }}>
+                          <label style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--admin-text-muted)', display: 'block', marginBottom: '8px' }}>
+                            Ajouter un lien interne
+                          </label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <input 
+                              type="text"
+                              className="drawer-text-input"
+                              value={newFooterLabel[col.id] || ''}
+                              onChange={(e) => setNewFooterLabel(prev => ({ ...prev, [col.id]: e.target.value }))}
+                              placeholder="Texte (ex: Plan du site)"
+                              style={{ margin: 0, fontSize: '12px', padding: '6px 8px' }}
+                            />
+                            <input 
+                              type="text"
+                              className="drawer-text-input"
+                              value={newFooterUrl[col.id] || ''}
+                              onChange={(e) => setNewFooterUrl(prev => ({ ...prev, [col.id]: e.target.value }))}
+                              placeholder="URL (ex: /sitemap)"
+                              style={{ margin: 0, fontSize: '12px', padding: '6px 8px' }}
+                            />
+                            <button 
+                              type="button"
+                              className="btn-drawer secondary"
+                              onClick={() => addFooterLink(col.id)}
+                              style={{ padding: '6px', fontSize: '12px', marginTop: '4px' }}
+                            >
+                              + Ajouter le lien
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Main Action buttons */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginBottom: '40px' }}>
+                  <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
+                    Enregistrer la configuration de navigation
+                  </button>
+                </div>
+
+              </form>
             </>
           );
         }
