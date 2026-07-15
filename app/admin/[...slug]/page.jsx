@@ -449,9 +449,16 @@ export default function AdminCatchAllPage({ params }) {
       const isEdit = dossiers.some(dos => dos.id === savedDossier.id);
       if (isEdit) {
         setDossiers(prev => prev.map(dos => dos.id === savedDossier.id ? mapped : dos));
+        // Persist local edits
+        const localCustom = JSON.parse(localStorage.getItem('dona_custom_dossiers') || '[]');
+        const updatedCustom = localCustom.map(dos => dos.id === savedDossier.id ? mapped : dos);
+        localStorage.setItem('dona_custom_dossiers', JSON.stringify(updatedCustom));
         alert("Modifications enregistrées avec succès.");
       } else {
         setDossiers(prev => [...prev, mapped]);
+        // Persist new entry
+        const localCustom = JSON.parse(localStorage.getItem('dona_custom_dossiers') || '[]');
+        localStorage.setItem('dona_custom_dossiers', JSON.stringify([...localCustom, mapped]));
         alert("La publication a été mise en ligne sur le serveur principal.");
       }
     } catch (err) {
@@ -462,6 +469,8 @@ export default function AdminCatchAllPage({ params }) {
 
   const handleDeleteDossier = (id) => {
     setDossiers(prev => prev.filter(dos => dos.id !== id));
+    const localCustom = JSON.parse(localStorage.getItem('dona_custom_dossiers') || '[]');
+    localStorage.setItem('dona_custom_dossiers', JSON.stringify(localCustom.filter(dos => dos.id !== id)));
   };
 
   useEffect(() => {
@@ -471,9 +480,10 @@ export default function AdminCatchAllPage({ params }) {
           fetch('/api/admin/articles'),
           fetch('/api/admin/dossiers')
         ]);
+        let fetchedArticles = [];
         if (articlesRes.ok) {
           const wpArticles = await articlesRes.json();
-          const mappedArticles = wpArticles.map(art => ({
+          fetchedArticles = wpArticles.map(art => ({
             id: art.id,
             type: art.format === 'video' ? 'Vidéo' : art.format === 'audio' ? 'Podcast' : 'Article',
             title: art.title,
@@ -487,19 +497,25 @@ export default function AdminCatchAllPage({ params }) {
             audioFile: art.audioFile,
             isVipOnly: art.isVipOnly
           }));
-          setArticles(prev => {
-            const combined = [...mappedArticles];
-            prev.forEach(p => {
-              if (!combined.some(c => c.title === p.title || c.id === p.id)) {
-                combined.push(p);
-              }
-            });
-            return combined;
-          });
         }
+
+        const localCustomArticles = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
+        const combinedArticles = [...localCustomArticles, ...fetchedArticles];
+
+        setArticles(prev => {
+          const combined = [...combinedArticles];
+          prev.forEach(p => {
+            if (!combined.some(c => c.title === p.title || c.id === p.id)) {
+              combined.push(p);
+            }
+          });
+          return combined;
+        });
+
+        let fetchedDossiers = [];
         if (dossiersRes.ok) {
           const wpDossiers = await dossiersRes.json();
-          const mappedDossiers = wpDossiers.map(dos => ({
+          fetchedDossiers = wpDossiers.map(dos => ({
             id: dos.id,
             title: dos.title,
             description: dos.description,
@@ -508,16 +524,20 @@ export default function AdminCatchAllPage({ params }) {
             isVipOnly: dos.isVipOnly,
             updated: "Synchronisé"
           }));
-          setDossiers(prev => {
-            const combined = [...mappedDossiers];
-            prev.forEach(p => {
-              if (!combined.some(c => c.title === p.title || c.id === p.id)) {
-                combined.push(p);
-              }
-            });
-            return combined;
-          });
         }
+
+        const localCustomDossiers = JSON.parse(localStorage.getItem('dona_custom_dossiers') || '[]');
+        const combinedDossiers = [...localCustomDossiers, ...fetchedDossiers];
+
+        setDossiers(prev => {
+          const combined = [...combinedDossiers];
+          prev.forEach(p => {
+            if (!combined.some(c => c.title === p.title || c.id === p.id)) {
+              combined.push(p);
+            }
+          });
+          return combined;
+        });
       } catch (error) {
         console.error("Error fetching data from main proxy:", error);
       }
@@ -672,15 +692,26 @@ export default function AdminCatchAllPage({ params }) {
       const isEdit = articles.some(art => art.id === savedArticle.id);
       if (isEdit) {
         setArticles(prev => prev.map(art => art.id === savedArticle.id ? mapped : art));
+        const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
+        const updatedCustom = localCustom.map(art => art.id === savedArticle.id ? mapped : art);
+        localStorage.setItem('dona_custom_articles', JSON.stringify(updatedCustom));
         alert("Modifications enregistrées avec succès.");
       } else {
         setArticles(prev => [mapped, ...prev]);
+        const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
+        localStorage.setItem('dona_custom_articles', JSON.stringify([mapped, ...localCustom]));
         alert("La publication a été mise en ligne sur le serveur principal.");
       }
     } catch (err) {
       console.error("API sync error:", err);
       alert("Erreur lors de la synchronisation avec le serveur principal : " + err.message);
     }
+  };
+
+  const handleDeleteArticle = (id) => {
+    setArticles(prev => prev.filter(a => a.id !== id));
+    const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
+    localStorage.setItem('dona_custom_articles', JSON.stringify(localCustom.filter(a => a.id !== id)));
   };
 
   // Video Handlers
@@ -806,7 +837,7 @@ export default function AdminCatchAllPage({ params }) {
                             Edit
                           </button>
                           <span className="table-action-divider">|</span>
-                          <button onClick={() => setArticles(prev => prev.filter(a => a.id !== art.id))} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>
+                          <button onClick={() => handleDeleteArticle(art.id)} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>
                             Delete
                           </button>
                         </div>

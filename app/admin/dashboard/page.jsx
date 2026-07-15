@@ -82,20 +82,31 @@ export default function DashboardPage() {
       const dbArticle = await response.json();
       
       const isEdit = activities.some(act => act.id === savedArticle.id);
+      const typeMap = {
+        text: "Article",
+        video: "Vidéo",
+        audio: "Podcast"
+      };
+      
+      const mappedActivity = {
+        ...dbArticle,
+        type: typeMap[dbArticle.format] || "Article",
+        author: "Rédaction",
+        updated: "À l'instant"
+      };
+
       if (isEdit) {
-        setActivities(prev => prev.map(act => act.id === savedArticle.id ? { ...act, ...dbArticle } : act));
+        setActivities(prev => prev.map(act => act.id === savedArticle.id ? mappedActivity : act));
+        // Persist edits
+        const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
+        const updatedCustom = localCustom.map(art => art.id === savedArticle.id ? mappedActivity : art);
+        localStorage.setItem('dona_custom_articles', JSON.stringify(updatedCustom));
         alert("Modifications enregistrées avec succès.");
       } else {
-        const typeMap = {
-          text: "Article",
-          video: "Vidéo",
-          audio: "Podcast"
-        };
-        const newActivity = {
-          ...dbArticle,
-          type: typeMap[dbArticle.format] || "Article"
-        };
-        setActivities(prev => [newActivity, ...prev]);
+        setActivities(prev => [mappedActivity, ...prev]);
+        // Persist new article
+        const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
+        localStorage.setItem('dona_custom_articles', JSON.stringify([mappedActivity, ...localCustom]));
         if (dbArticle.status === "Published") {
           setPublishedCount(prev => prev + 1);
         }
@@ -123,7 +134,7 @@ export default function DashboardPage() {
 
         if (magazinesRes.ok) {
           const magazinesData = await magazinesRes.json();
-          const apiArticles = [];
+          let apiArticles = [];
           magazinesData.forEach(mag => {
             if (mag.articles) {
               mag.articles.forEach(art => {
@@ -154,6 +165,10 @@ export default function DashboardPage() {
               });
             });
           }
+
+          // Merge custom articles from localStorage
+          const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
+          apiArticles = [...localCustom, ...apiArticles];
 
           if (apiArticles.length > 0) {
             setActivities(prev => {
