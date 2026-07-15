@@ -32,6 +32,12 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   // Dynamic Format Selection
   const [format, setFormat] = useState('text'); // 'text' | 'video' | 'audio'
 
+  // Cover Image Upload States
+  const [coverImage, setCoverImage] = useState('');
+  const [coverImageFileName, setCoverImageFileName] = useState('');
+  const [coverImageUploadProgress, setCoverImageUploadProgress] = useState(0);
+  const [coverImageIsUploading, setCoverImageIsUploading] = useState(false);
+
   // Video Upload States
   const [videoSourceType, setVideoSourceType] = useState('url');
   const [videoUrl, setVideoUrl] = useState('');
@@ -52,6 +58,10 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
     if (article) {
       setTitle(article.title || '');
       setAuthor(article.author || 'Elena Moretti');
+      setCoverImage(article.coverImage || '');
+      setCoverImageFileName(article.coverImage ? article.coverImage.split('/').pop() : '');
+      setCoverImageUploadProgress(article.coverImage ? 100 : 0);
+      setCoverImageIsUploading(false);
       
       // Match category slug
       const categoryLower = (article.category || article.type || 'intelligence').toLowerCase();
@@ -81,6 +91,10 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       setTitle('');
       setAuthor('Elena Moretti');
       setCategory('intelligence');
+      setCoverImage('');
+      setCoverImageFileName('');
+      setCoverImageUploadProgress(0);
+      setCoverImageIsUploading(false);
       initialContent = '';
       setIsVipOnly(false);
       setFormat('text');
@@ -186,6 +200,46 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
     }
   };
 
+  const handleCoverImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCoverImageFileName(file.name);
+      setCoverImageIsUploading(true);
+      setCoverImageUploadProgress(10);
+      
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const interval = setInterval(() => {
+        setCoverImageUploadProgress((prev) => (prev < 90 ? prev + 15 : 90));
+      }, 100);
+
+      try {
+        const res = await fetch("/api/media", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        clearInterval(interval);
+        
+        if (data.success && data.url) {
+          setCoverImageUploadProgress(100);
+          setCoverImage(data.url);
+        } else {
+          alert(`Erreur: ${data.error || "Téléversement échoué"}`);
+          setCoverImageUploadProgress(0);
+        }
+      } catch (err) {
+        clearInterval(interval);
+        console.error("Cover image upload error:", err);
+        alert("Erreur de connexion lors du téléversement");
+        setCoverImageUploadProgress(0);
+      } finally {
+        setCoverImageIsUploading(false);
+      }
+    }
+  };
+
   // Handle rich text editor command
   const execEditorCommand = (command, value = null) => {
     document.execCommand(command, false, value);
@@ -226,6 +280,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       category: UNIVERSES.find(u => u.id === category)?.name || category,
       content,
       format,
+      coverImage,
       ...formatMeta,
       status: isVipOnly ? "Published" : "Draft",
       isVipOnly,
@@ -290,6 +345,49 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
               className="drawer-text-input title-field"
               autoFocus
             />
+          </div>
+
+          {/* Image de Couverture */}
+          <div className="drawer-input-group">
+            <label>Image de Couverture (Image à la une)</label>
+            <div className="media-drag-drop-zone">
+              <input
+                type="file"
+                id="drawer-cover-upload"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleCoverImageChange}
+              />
+              <label htmlFor="drawer-cover-upload" className="drag-drop-label">
+                <span className="material-symbols-outlined drag-drop-icon" style={{ color: 'var(--admin-accent-color)' }}>image</span>
+                <span>Glissez-déposez une image ici ou <strong>parcourez</strong></span>
+                <span className="file-limits" style={{ display: 'block', fontSize: '11px', color: '#6B7280', marginTop: '4px' }}>Format : JPG, PNG, WEBP (Max 50 Mo)</span>
+              </label>
+            </div>
+
+            {coverImageFileName && (
+              <div className="file-upload-status-card" style={{ marginTop: '10px' }}>
+                <div className="file-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="material-symbols-outlined file-icon">photo_library</span>
+                  <div className="file-details" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span className="file-name" style={{ fontWeight: 500, color: '#1F2937' }}>{coverImageFileName}</span>
+                    <span className="file-progress-percent" style={{ fontSize: '12px', color: '#6B7280' }}>{coverImageUploadProgress}%</span>
+                  </div>
+                </div>
+                <div className="progress-bar-container" style={{ width: '100%', height: '6px', backgroundColor: '#E5E7EB', borderRadius: '3px', overflow: 'hidden', marginTop: '8px' }}>
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ width: `${coverImageUploadProgress}%`, height: '100%', backgroundColor: 'var(--admin-accent-color)', borderRadius: '3px', transition: 'width 0.2s ease-in-out' }}
+                  />
+                </div>
+                {coverImageUploadProgress === 100 && (
+                  <span className="upload-success-badge" style={{ color: '#03543F', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginTop: '6px' }}>
+                    <span className="material-symbols-outlined" style={{ color: '#31C48D', fontSize: '16px' }}>check_circle</span>
+                    Couverture configurée avec succès.
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Conditional Video Fields */}
