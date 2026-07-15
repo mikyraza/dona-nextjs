@@ -176,6 +176,13 @@ export default function AdminLayout({ children }) {
               <span className="material-symbols-outlined">language</span>
               Langues (i18n)
             </Link>
+            <Link 
+              href="/admin/utilisateurs" 
+              className={`nav-item ${isActiveRoute('/admin/utilisateurs') ? 'active' : ''}`}
+            >
+              <span className="material-symbols-outlined">admin_panel_settings</span>
+              Utilisateurs
+            </Link>
           </div>
         </nav>
       </aside>
