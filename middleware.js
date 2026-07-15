@@ -25,9 +25,9 @@ export async function middleware(req) {
       return NextResponse.redirect(new URL("/login?error=Unauthorized", req.url));
     }
 
-    // Role restriction for Super-Admin settings & plans
-    const isSettingsOrPlans = path.startsWith("/admin/settings") || path.startsWith("/admin/plans");
-    if (isSettingsOrPlans && token.role !== "Super-Admin") {
+    // Role restriction for Super-Admin settings & plans & users
+    const isSuperAdminOnly = path.startsWith("/admin/settings") || path.startsWith("/admin/plans") || path.startsWith("/admin/utilisateurs");
+    if (isSuperAdminOnly && token.role !== "Super-Admin") {
       return NextResponse.redirect(new URL("/admin/dashboard?error=AccessDenied", req.url));
     }
   }

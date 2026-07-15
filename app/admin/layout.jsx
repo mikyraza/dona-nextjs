@@ -138,13 +138,15 @@ function AdminInnerLayout({ children }) {
           {/* CLUB Group */}
           <div className="nav-group">
             <span className="group-title">Club</span>
-            <Link 
-              href="/admin/plans" 
-              className={`nav-item ${isActiveRoute('/admin/plans') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">payments</span>
-              Plans & Paywall
-            </Link>
+            {session?.user?.role === "Super-Admin" && (
+              <Link 
+                href="/admin/plans" 
+                className={`nav-item ${isActiveRoute('/admin/plans') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">payments</span>
+                Plans & Paywall
+              </Link>
+            )}
             <Link 
               href="/admin/membres" 
               className={`nav-item ${isActiveRoute('/admin/membres') ? 'active' : ''}`}
@@ -157,41 +159,49 @@ function AdminInnerLayout({ children }) {
           {/* SETTINGS Group */}
           <div className="nav-group">
             <span className="group-title">Settings</span>
-            <Link 
-              href="/admin/settings/brand" 
-              className={`nav-item ${isActiveRoute('/admin/settings/brand') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">palette</span>
-              Brand
-            </Link>
-            <Link 
-              href="/admin/settings/seo" 
-              className={`nav-item ${isActiveRoute('/admin/settings/seo') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">search</span>
-              SEO
-            </Link>
-            <Link 
-              href="/admin/settings/navigation" 
-              className={`nav-item ${isActiveRoute('/admin/settings/navigation') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">menu</span>
-              Navigation
-            </Link>
-            <Link 
-              href="/admin/settings/langues" 
-              className={`nav-item ${isActiveRoute('/admin/settings/langues') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">language</span>
-              Langues (i18n)
-            </Link>
-            <Link 
-              href="/admin/utilisateurs" 
-              className={`nav-item ${isActiveRoute('/admin/utilisateurs') ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined">admin_panel_settings</span>
-              Utilisateurs
-            </Link>
+            {session?.user?.role === "Super-Admin" ? (
+              <>
+                <Link 
+                  href="/admin/settings/brand" 
+                  className={`nav-item ${isActiveRoute('/admin/settings/brand') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">palette</span>
+                  Brand
+                </Link>
+                <Link 
+                  href="/admin/settings/seo" 
+                  className={`nav-item ${isActiveRoute('/admin/settings/seo') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">search</span>
+                  SEO
+                </Link>
+                <Link 
+                  href="/admin/settings/navigation" 
+                  className={`nav-item ${isActiveRoute('/admin/settings/navigation') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">menu</span>
+                  Navigation
+                </Link>
+                <Link 
+                  href="/admin/settings/langues" 
+                  className={`nav-item ${isActiveRoute('/admin/settings/langues') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">language</span>
+                  Langues (i18n)
+                </Link>
+                <Link 
+                  href="/admin/utilisateurs" 
+                  className={`nav-item ${isActiveRoute('/admin/utilisateurs') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">admin_panel_settings</span>
+                  Utilisateurs
+                </Link>
+              </>
+            ) : (
+              <div style={{ padding: '8px 16px', fontSize: '11px', color: '#888888', fontStyle: 'italic' }}>
+                Accès restreint aux paramètres
+              </div>
+            )}
           </div>
         </nav>
       </aside>

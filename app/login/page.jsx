@@ -32,7 +32,14 @@ function LoginForm() {
       if (res?.error) {
         setError("Adresse email ou mot de passe incorrect.");
       } else {
-        router.push(res?.url || callbackUrl);
+        const { getSession } = await import("next-auth/react");
+        const session = await getSession();
+        const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur"];
+        if (session?.user?.role && allowedAdminRoles.includes(session.user.role)) {
+          router.push("/admin/dashboard");
+        } else {
+          router.push(res?.url || callbackUrl);
+        }
         router.refresh();
       }
     } catch (err) {
