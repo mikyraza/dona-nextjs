@@ -67,7 +67,14 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       setCoverImageFileName(article.coverImage ? article.coverImage.split('/').pop() : '');
       setCoverImageUploadProgress(article.coverImage ? 100 : 0);
       setCoverImageIsUploading(false);
-      setArticleGallery(article.articleGallery || article.galerie_photos || []);
+      const galleryData = article.articleGallery || article.galerie_photos || [];
+      const parsedGallery = galleryData.map(item => {
+        if (typeof item === 'string') {
+          return { url: item, caption: '' };
+        }
+        return { url: item.url || '', caption: item.caption || '' };
+      });
+      setArticleGallery(parsedGallery);
       setGalleryIsUploading(false);
       setGalleryUploadProgress(0);
       
@@ -298,7 +305,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
     }, 1000);
 
     if (uploadedUrls.length > 0) {
-      setArticleGallery((prev) => [...prev, ...uploadedUrls]);
+      setArticleGallery((prev) => [...prev, ...uploadedUrls.map(url => ({ url, caption: '' }))]);
     }
   };
 
@@ -497,44 +504,68 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
             )}
 
             {articleGallery.length > 0 && (
-              <div className="gallery-thumbnail-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginTop: '15px' }}>
-                {articleGallery.map((imgUrl, index) => (
+              <div className="gallery-thumbnail-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginTop: '15px' }}>
+                {articleGallery.map((item, index) => (
                   <div 
                     key={index} 
-                    className="gallery-thumbnail-item" 
-                    style={{ position: 'relative', width: '100%', paddingBottom: '100%', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB' }}
+                    className="gallery-thumbnail-card" 
+                    style={{ display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid #E5E7EB', borderRadius: '6px', padding: '8px', backgroundColor: '#F9FAFB' }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={imgUrl} 
-                      alt={`Gallery item ${index + 1}`} 
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveGalleryImage(index)}
-                      className="gallery-item-delete-btn"
-                      style={{
-                        position: 'absolute',
-                        top: '5px',
-                        right: '5px',
-                        background: 'rgba(239, 68, 68, 0.9)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '24px',
-                        height: '24px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                        transition: 'opacity 0.2s'
-                      }}
-                      title="Supprimer la photo"
+                    <div 
+                      className="gallery-thumbnail-wrapper" 
+                      style={{ position: 'relative', width: '100%', paddingBottom: '75%', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#E5E7EB' }}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete</span>
-                    </button>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={item.url} 
+                        alt={`Gallery item ${index + 1}`} 
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveGalleryImage(index)}
+                        className="gallery-item-delete-btn"
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          background: 'rgba(239, 68, 68, 0.9)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          transition: 'opacity 0.2s'
+                        }}
+                        title="Supprimer la photo"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>delete</span>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={item.caption || ''}
+                      placeholder="Légende..."
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setArticleGallery(prev => prev.map((img, idx) => idx === index ? { ...img, caption: val } : img));
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        padding: '4px 6px',
+                        border: '1px solid #D1D5DB',
+                        borderRadius: '4px',
+                        width: '100%',
+                        backgroundColor: 'white',
+                        fontFamily: 'inherit',
+                        color: '#374151'
+                      }}
+                    />
                   </div>
                 ))}
               </div>
@@ -833,19 +864,21 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                       </div>
                     )}
 
-                    {articleGallery.map((imgUrl, idx) => (
+                    {articleGallery.map((item, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'white', padding: '8px', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={imgUrl} alt={`Gal-${idx}`} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                        <img src={item.url} alt={`Gal-${idx}`} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '10px', fontWeight: '500', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Photo {idx + 1}</div>
+                          <div style={{ fontSize: '10px', fontWeight: '500', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.caption ? `« ${item.caption} »` : `Photo ${idx + 1}`}
+                          </div>
                           <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
                             <button
                               type="button"
                               onClick={() => {
                                 if (editorRef.current) {
                                   editorRef.current.focus();
-                                  document.execCommand('insertImage', false, imgUrl);
+                                  document.execCommand('insertImage', false, item.url);
                                 }
                               }}
                               style={{ fontSize: '10px', border: 'none', background: 'var(--admin-accent-color)', color: 'white', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
@@ -855,7 +888,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                             <button
                               type="button"
                               onClick={() => {
-                                navigator.clipboard.writeText(imgUrl);
+                                navigator.clipboard.writeText(item.url);
                                 alert("URL copiée dans le presse-papiers !");
                               }}
                               style={{ fontSize: '10px', border: '1px solid #D1D5DB', background: 'white', color: '#374151', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
