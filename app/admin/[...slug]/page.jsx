@@ -449,14 +449,14 @@ export default function AdminCatchAllPage({ params }) {
       const isEdit = dossiers.some(dos => dos.id === savedDossier.id);
       if (isEdit) {
         setDossiers(prev => prev.map(dos => dos.id === savedDossier.id ? mapped : dos));
-        alert("Dossier mis à jour avec succès sur WordPress !");
+        alert("Modifications enregistrées avec succès.");
       } else {
         setDossiers(prev => [...prev, mapped]);
-        alert("Nouveau dossier créé avec succès sur WordPress !");
+        alert("La publication a été mise en ligne sur le serveur principal.");
       }
     } catch (err) {
       console.error("API sync error:", err);
-      alert("Erreur lors de la synchronisation avec WordPress : " + err.message);
+      alert("Erreur lors de la synchronisation avec le serveur principal : " + err.message);
     }
   };
 
@@ -480,7 +480,7 @@ export default function AdminCatchAllPage({ params }) {
             author: "Rédaction",
             category: art.category,
             status: art.status,
-            updated: "WordPress Sync",
+            updated: "Synchronisé",
             content: art.content,
             format: art.format,
             videoUrl: art.videoUrl,
@@ -506,7 +506,7 @@ export default function AdminCatchAllPage({ params }) {
             coverImage: dos.coverImage || "/assets/core/img/vault-1.png",
             articles: dos.articles,
             isVipOnly: dos.isVipOnly,
-            updated: "WordPress Sync"
+            updated: "Synchronisé"
           }));
           setDossiers(prev => {
             const combined = [...mappedDossiers];
@@ -519,7 +519,7 @@ export default function AdminCatchAllPage({ params }) {
           });
         }
       } catch (error) {
-        console.error("Error fetching data from WordPress proxy:", error);
+        console.error("Error fetching data from main proxy:", error);
       }
     }
     loadData();
@@ -672,14 +672,14 @@ export default function AdminCatchAllPage({ params }) {
       const isEdit = articles.some(art => art.id === savedArticle.id);
       if (isEdit) {
         setArticles(prev => prev.map(art => art.id === savedArticle.id ? mapped : art));
-        alert("Contenu mis à jour avec succès sur WordPress !");
+        alert("Modifications enregistrées avec succès.");
       } else {
         setArticles(prev => [mapped, ...prev]);
-        alert("Nouveau contenu créé avec succès sur WordPress !");
+        alert("La publication a été mise en ligne sur le serveur principal.");
       }
     } catch (err) {
       console.error("API sync error:", err);
-      alert("Erreur lors de la synchronisation avec WordPress : " + err.message);
+      alert("Erreur lors de la synchronisation avec le serveur principal : " + err.message);
     }
   };
 

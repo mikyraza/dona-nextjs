@@ -84,7 +84,7 @@ export default function DashboardPage() {
       const isEdit = activities.some(act => act.id === savedArticle.id);
       if (isEdit) {
         setActivities(prev => prev.map(act => act.id === savedArticle.id ? { ...act, ...dbArticle } : act));
-        alert("Contenu mis à jour avec succès sur le serveur WordPress !");
+        alert("Modifications enregistrées avec succès.");
       } else {
         const typeMap = {
           text: "Article",
@@ -99,11 +99,11 @@ export default function DashboardPage() {
         if (dbArticle.status === "Published") {
           setPublishedCount(prev => prev + 1);
         }
-        alert("Nouveau contenu créé avec succès sur le serveur WordPress !");
+        alert("La publication a été mise en ligne sur le serveur principal.");
       }
     } catch (err) {
       console.error("API sync error:", err);
-      alert("Erreur lors de la synchronisation avec WordPress : " + err.message);
+      alert("Erreur lors de la synchronisation avec le serveur principal : " + err.message);
     }
   };
 
@@ -150,7 +150,7 @@ export default function DashboardPage() {
                 title: art.title,
                 author: "Rédaction",
                 status: art.status,
-                updated: "WordPress Sync"
+                updated: "Synchronisé"
               });
             });
           }
