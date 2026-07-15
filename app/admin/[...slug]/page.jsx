@@ -299,6 +299,39 @@ export default function AdminCatchAllPage({ params }) {
     setFooterColumns(prev => prev.map(col => col.id === colId ? { ...col, title: value } : col));
   };
 
+  // 8. Multilingual i18n States (Phase 4.9)
+  const [locales, setLocales] = useState([
+    { code: "FR", name: "Français", enabled: true, isDefault: true, rtl: false, flag: "🇫🇷" },
+    { code: "EN", name: "Anglais", enabled: true, isDefault: false, rtl: false, flag: "🇬🇧" },
+    { code: "SW", name: "Swahili", enabled: false, isDefault: false, rtl: false, flag: "🇰🇪" },
+    { code: "ES", name: "Espagnol", enabled: false, isDefault: false, rtl: false, flag: "🇪🇸" },
+    { code: "PT", name: "Portugais", enabled: false, isDefault: false, rtl: false, flag: "🇵🇹" },
+    { code: "DE", name: "Allemand", enabled: false, isDefault: false, rtl: false, flag: "🇩🇪" },
+    { code: "IT", name: "Italien", enabled: false, isDefault: false, rtl: false, flag: "🇮🇹" },
+    { code: "AR", name: "Arabe", enabled: false, isDefault: false, rtl: true, flag: "🇸🇦" }
+  ]);
+
+  const [translations, setTranslations] = useState([
+    { 
+      key: "button_subscribe", 
+      description: "Bouton d'abonnement principal",
+      FR: "S'abonner", EN: "Subscribe", SW: "", ES: "", PT: "", DE: "", IT: "", AR: "" 
+    },
+    { 
+      key: "members_only_badge", 
+      description: "Badge réservé aux abonnés",
+      FR: "Membres uniquement", EN: "Members only", SW: "", ES: "", PT: "", DE: "", IT: "", AR: "" 
+    },
+    { 
+      key: "footer_copyright", 
+      description: "Texte de copyright en pied de page",
+      FR: "Tous droits réservés", EN: "All rights reserved", SW: "", ES: "", PT: "", DE: "", IT: "", AR: "" 
+    }
+  ]);
+
+  const [translationSearch, setTranslationSearch] = useState('');
+  const [translationFilter, setTranslationFilter] = useState('all'); // 'all' | 'untranslated'
+
   // Drawer States
   const [isArticleDrawerOpen, setIsArticleDrawerOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -1789,6 +1822,287 @@ export default function AdminCatchAllPage({ params }) {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginBottom: '40px' }}>
                   <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
                     Enregistrer la configuration de navigation
+                  </button>
+                </div>
+
+              </form>
+            </>
+          );
+        };
+
+        const handleSaveLanguesSubmit = (e) => {
+          e.preventDefault();
+          // API BRIDGE INTEGRATION BLUEPRINT:
+          // To bridge these languages and translations configurations to public pages/i18n engine:
+          // fetch('/api/global-config', { method: 'PUT', body: JSON.stringify({ locales, translations }) })
+          console.log("Saving Multilingual Config:", { locales, translations });
+          alert("Configuration multilingue et dictionnaire de traduction enregistrés avec succès !");
+        };
+
+        const handleBulkTranslate = () => {
+          // Simulate DeepL/Google Translate bulk fill for empty fields
+          setTranslations(prev => prev.map(item => {
+            const updated = { ...item };
+            const fallbackValues = {
+              button_subscribe: {
+                FR: "S'abonner", EN: "Subscribe", SW: "Kujiandikisha", ES: "Suscribirse", PT: "Inscrever-se", DE: "Abonnieren", IT: "Iscriviti", AR: "اشترك"
+              },
+              members_only_badge: {
+                FR: "Membres uniquement", EN: "Members only", SW: "Wanachama tu", ES: "Solo miembros", PT: "Apenas membros", DE: "Nur für Mitglieder", IT: "Solo membri", AR: "الأعضاء فقط"
+              },
+              footer_copyright: {
+                FR: "Tous droits réservés", EN: "All rights reserved", SW: "Haki zote zimehifadhiwa", ES: "Todos los droits réservés", PT: "Todos os direitos reservados", DE: "Alle Rechte vorbehalten", IT: "Tutti i diritti riservati", AR: "جميع الحقوق محفوظة"
+              }
+            };
+
+            const keysMap = fallbackValues[item.key] || {};
+            locales.forEach(loc => {
+              if (!updated[loc.code] && keysMap[loc.code]) {
+                updated[loc.code] = keysMap[loc.code];
+              }
+            });
+            return updated;
+          }));
+          alert("Traduction automatique simulée (via DeepL API) appliquée avec succès sur les champs vides !");
+        };
+
+        if (subsection === 'langues') {
+          // Filtered translation dictionary list
+          const filteredTranslations = translations.filter(item => {
+            // Search filter
+            const matchesSearch = item.key.toLowerCase().includes(translationSearch.toLowerCase()) || 
+                                  item.description.toLowerCase().includes(translationSearch.toLowerCase());
+            
+            if (!matchesSearch) return false;
+
+            // Translation status filter
+            if (translationFilter === 'untranslated') {
+              // check if any of the enabled languages has empty string value
+              return locales.some(loc => loc.enabled && !item[loc.code]);
+            }
+            return true;
+          });
+
+          return (
+            <>
+              <div className="dashboard-title-row">
+                <h1>Configuration Multilingue & Localisation (i18n)</h1>
+                <button 
+                  type="button" 
+                  className="btn-drawer secondary" 
+                  onClick={handleBulkTranslate}
+                  style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>translate</span>
+                  Pré-remplir via Translation API
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveLanguesSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px', marginTop: '20px' }}>
+                
+                {/* 1. Official 8 Locales Configurator */}
+                <div className="table-card" style={{ padding: '30px' }}>
+                  <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                    1. Configuration des 8 Langues Officielles
+                  </h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+                    {locales.map((loc, idx) => (
+                      <div key={loc.code} style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        justifyContent: 'space-between',
+                        padding: '16px', 
+                        border: '1px solid var(--admin-border-color)', 
+                        borderRadius: '2px', 
+                        backgroundColor: loc.enabled ? '#FFFFFF' : '#FAF9F6' 
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '24px' }}>{loc.flag}</span>
+                            <div>
+                              <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--admin-text-color)', display: 'block' }}>
+                                {loc.name}
+                              </span>
+                              <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)', fontFamily: 'monospace' }}>
+                                ISO: {loc.code}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Visual Tags */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+                            {loc.isDefault && (
+                              <span style={{ fontSize: '9px', fontWeight: '700', backgroundColor: 'var(--admin-accent-color)', color: '#FFFFFF', padding: '2px 6px', borderRadius: '2px', textTransform: 'uppercase' }}>
+                                Par Défaut
+                              </span>
+                            )}
+                            {loc.rtl && (
+                              <span style={{ fontSize: '9px', fontWeight: '700', backgroundColor: '#B08D57', color: '#FFFFFF', padding: '2px 6px', borderRadius: '2px', textTransform: 'uppercase' }}>
+                                RTL Enabled
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Toggle switch */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>
+                            Statut : {loc.enabled ? 'Actif' : 'Inactif'}
+                          </span>
+                          <button 
+                            type="button"
+                            disabled={loc.isDefault}
+                            onClick={() => {
+                              setLocales(prev => prev.map(l => l.code === loc.code ? { ...l, enabled: !l.enabled } : l));
+                            }}
+                            style={{
+                              border: 'none',
+                              backgroundColor: loc.enabled ? 'var(--admin-accent-color)' : '#CCCCCC',
+                              width: '40px',
+                              height: '20px',
+                              borderRadius: '10px',
+                              position: 'relative',
+                              cursor: loc.isDefault ? 'not-allowed' : 'pointer',
+                              opacity: loc.isDefault ? 0.6 : 1,
+                              transition: 'background-color 0.3s'
+                            }}
+                          >
+                            <span style={{
+                              position: 'absolute',
+                              top: '2px',
+                              left: loc.enabled ? '22px' : '2px',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: '#FFFFFF',
+                              transition: 'left 0.3s'
+                            }} />
+                          </button>
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Interactive Translation Dictionary */}
+                <div className="table-card" style={{ padding: '30px' }}>
+                  <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                    2. Dictionnaire de Traduction de l'Interface (Keys Dictionary)
+                  </h3>
+                  
+                  {/* Search and Filters */}
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+                    <div style={{ flexGrow: 1, position: 'relative' }}>
+                      <input 
+                        type="text" 
+                        className="drawer-text-input" 
+                        value={translationSearch}
+                        onChange={(e) => setTranslationSearch(e.target.value)}
+                        placeholder="Rechercher une clé ou une description..."
+                        style={{ margin: 0, paddingLeft: '36px' }}
+                      />
+                      <span className="material-symbols-outlined" style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--admin-text-muted)' }}>
+                        search
+                      </span>
+                    </div>
+
+                    <div className="select-wrapper" style={{ width: '220px' }}>
+                      <select 
+                        className="drawer-select" 
+                        value={translationFilter}
+                        onChange={(e) => setTranslationFilter(e.target.value)}
+                        style={{ height: '40px' }}
+                      >
+                        <option value="all">Tous les champs</option>
+                        <option value="untranslated">Champs non traduits</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Translation Matrix Table */}
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--admin-border-color)', borderRadius: '2px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#FAF9F6', borderBottom: '1px solid var(--admin-border-color)' }}>
+                          <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700', minWidth: '220px' }}>Clé & Description</th>
+                          {locales.map(loc => (
+                            <th key={loc.code} style={{ 
+                              padding: '12px 16px', 
+                              textAlign: 'left', 
+                              fontWeight: '700',
+                              minWidth: '160px',
+                              opacity: loc.enabled ? 1 : 0.4
+                            }}>
+                              <span style={{ marginRight: '6px' }}>{loc.flag}</span>
+                              {loc.code}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredTranslations.map((item, idx) => (
+                          <tr key={item.key} style={{ borderBottom: idx === filteredTranslations.length - 1 ? 'none' : '1px solid var(--admin-border-color)' }}>
+                            <td style={{ padding: '12px 16px', backgroundColor: '#FFFFFF' }}>
+                              <span style={{ fontWeight: '700', color: 'var(--admin-text-color)', display: 'block', fontFamily: 'monospace' }}>
+                                {item.key}
+                              </span>
+                              <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>
+                                {item.description}
+                              </span>
+                            </td>
+                            
+                            {locales.map(loc => {
+                              const cellValue = item[loc.code] || '';
+                              return (
+                                <td key={loc.code} style={{ padding: '8px 12px', opacity: loc.enabled ? 1 : 0.5 }}>
+                                  <input 
+                                    type="text"
+                                    disabled={!loc.enabled}
+                                    value={cellValue}
+                                    onChange={(e) => {
+                                      const newVal = e.target.value;
+                                      setTranslations(prev => prev.map(t => {
+                                        if (t.key === item.key) {
+                                          return { ...t, [loc.code]: newVal };
+                                        }
+                                        return t;
+                                      }));
+                                    }}
+                                    placeholder={!loc.enabled ? "Désactivé" : `Traduction ${loc.code}...`}
+                                    style={{
+                                      width: '100%',
+                                      padding: '6px 8px',
+                                      border: '1px solid var(--admin-border-color)',
+                                      borderRadius: '2px',
+                                      fontSize: '12px',
+                                      dir: loc.rtl ? 'rtl' : 'ltr',
+                                      backgroundColor: !loc.enabled ? '#ECECEC' : '#FFFFFF'
+                                    }}
+                                  />
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                        {filteredTranslations.length === 0 && (
+                          <tr>
+                            <td colSpan={9} style={{ textAlign: 'center', padding: '40px', color: 'var(--admin-text-muted)', fontStyle: 'italic' }}>
+                              Aucune clé de traduction trouvée pour vos critères de filtrage.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                </div>
+
+                {/* Submit button */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '40px' }}>
+                  <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
+                    Enregistrer la configuration des langues
                   </button>
                 </div>
 
