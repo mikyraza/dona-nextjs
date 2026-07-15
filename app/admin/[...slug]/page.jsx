@@ -120,6 +120,12 @@ export default function AdminCatchAllPage({ params }) {
   const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dona_members_count', (1281 + members.length).toString());
+    }
+  }, [members]);
+
   // Search & Filter State for Members Directory
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [memberPlanFilter, setMemberPlanFilter] = useState('all');
@@ -360,6 +366,12 @@ export default function AdminCatchAllPage({ params }) {
     remaining: "01:15",
     progress: 50
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && radioNowPlaying && radioNowPlaying.title) {
+      localStorage.setItem('dona_radio_active_title', radioNowPlaying.title);
+    }
+  }, [radioNowPlaying]);
 
   const [tvNowPlaying, setTvNowPlaying] = useState({
     title: "Loop Visuelle DONA TV v2",

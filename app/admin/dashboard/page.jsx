@@ -40,6 +40,24 @@ export default function DashboardPage() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [publishedCount, setPublishedCount] = useState(24);
 
+  // Active sync states
+  const [activeMembersCount, setActiveMembersCount] = useState(1284);
+  const [activeRadioTrack, setActiveRadioTrack] = useState("Intro Édito DONA Radio");
+
+  // Sync state values on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedCount = localStorage.getItem('dona_members_count');
+      if (storedCount) {
+        setActiveMembersCount(parseInt(storedCount, 10));
+      }
+      const storedTrack = localStorage.getItem('dona_radio_active_title');
+      if (storedTrack) {
+        setActiveRadioTrack(storedTrack);
+      }
+    }
+  }, []);
+
   // Triggered when clicking + NOUVEL ARTICLE
   const handleOpenCreateDrawer = () => {
     setSelectedArticle(null);
@@ -79,8 +97,18 @@ export default function DashboardPage() {
       // Edit action: Update the specific article row in the local state array
       setActivities(prev => prev.map(act => act.id === savedArticle.id ? { ...act, ...savedArticle } : act));
     } else {
+      // Map format to visual type
+      const typeMap = {
+        text: "Article",
+        video: "Vidéo",
+        audio: "Podcast"
+      };
+      const newActivity = {
+        ...savedArticle,
+        type: typeMap[savedArticle.format] || "Article"
+      };
       // Add action: Append the new article to the local state array
-      setActivities(prev => [savedArticle, ...prev]);
+      setActivities(prev => [newActivity, ...prev]);
       
       // If the new article is published/VIP, dynamically increment the counter
       if (savedArticle.status === "Published") {
@@ -197,9 +225,9 @@ export default function DashboardPage() {
         {/* Metric 2 */}
         <div className="metric-card">
           <div className="metric-card-title">Active Club Members</div>
-          <div className="metric-card-value">1,284</div>
+          <div className="metric-card-value">{activeMembersCount.toLocaleString('fr-FR')}</div>
           <div className="metric-card-sub">
-            Stable
+            Dynamique
           </div>
         </div>
 
@@ -229,18 +257,33 @@ export default function DashboardPage() {
       <section className="action-buttons-row">
         <button 
           className="btn-admin-action primary"
-          onClick={handleOpenCreateDrawer}
+          onClick={() => { setSelectedArticle({ format: 'text' }); setIsDrawerOpen(true); }}
         >
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
           Nouvel Article
         </button>
-        <button className="btn-admin-action secondary">
+        <button 
+          className="btn-admin-action secondary"
+          onClick={() => { setSelectedArticle({ format: 'video' }); setIsDrawerOpen(true); }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>videocam</span>
           Nouvelle Vidéo
         </button>
-        <button className="btn-admin-action secondary">
+        <button 
+          className="btn-admin-action secondary"
+          onClick={() => { setSelectedArticle({ format: 'audio' }); setIsDrawerOpen(true); }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>mic</span>
           Nouvel Épisode
         </button>
-        <button className="btn-admin-action secondary">
+        <button 
+          className="btn-admin-action secondary"
+          onClick={() => { window.location.href = '/admin/radio-live'; }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
           Lancer Live
         </button>
       </section>
@@ -354,10 +397,15 @@ export default function DashboardPage() {
                 <div className="studio-info">
                   <div className="studio-type">Radio</div>
                   <div className="studio-status-text">
-                    Live: <span>Le Matinal</span>
+                    Live: <span>{activeRadioTrack}</span>
                   </div>
                 </div>
-                <button className="btn-studio-config">Configurer</button>
+                <button 
+                  className="btn-studio-config"
+                  onClick={() => { window.location.href = '/admin/radio-live'; }}
+                >
+                  Configurer
+                </button>
               </div>
 
               {/* TV */}
@@ -371,7 +419,12 @@ export default function DashboardPage() {
                     Off Air
                   </div>
                 </div>
-                <button className="btn-studio-config">Configurer</button>
+                <button 
+                  className="btn-studio-config"
+                  onClick={() => { window.location.href = '/admin/tv-live'; }}
+                >
+                  Configurer
+                </button>
               </div>
             </div>
           </div>
