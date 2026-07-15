@@ -38,6 +38,11 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   const [coverImageUploadProgress, setCoverImageUploadProgress] = useState(0);
   const [coverImageIsUploading, setCoverImageIsUploading] = useState(false);
 
+  // Gallery Upload States
+  const [articleGallery, setArticleGallery] = useState([]);
+  const [galleryIsUploading, setGalleryIsUploading] = useState(false);
+  const [galleryUploadProgress, setGalleryUploadProgress] = useState(0);
+
   // Video Upload States
   const [videoSourceType, setVideoSourceType] = useState('url');
   const [videoUrl, setVideoUrl] = useState('');
@@ -62,6 +67,9 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       setCoverImageFileName(article.coverImage ? article.coverImage.split('/').pop() : '');
       setCoverImageUploadProgress(article.coverImage ? 100 : 0);
       setCoverImageIsUploading(false);
+      setArticleGallery(article.articleGallery || article.galerie_photos || []);
+      setGalleryIsUploading(false);
+      setGalleryUploadProgress(0);
       
       // Match category slug
       const categoryLower = (article.category || article.type || 'intelligence').toLowerCase();
@@ -95,6 +103,9 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       setCoverImageFileName('');
       setCoverImageUploadProgress(0);
       setCoverImageIsUploading(false);
+      setArticleGallery([]);
+      setGalleryIsUploading(false);
+      setGalleryUploadProgress(0);
       initialContent = '';
       setIsVipOnly(false);
       setFormat('text');
@@ -240,6 +251,61 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
     }
   };
 
+  const handleGalleryChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setGalleryIsUploading(true);
+    setGalleryUploadProgress(10);
+
+    const totalFiles = files.length;
+    let completedFiles = 0;
+    const uploadedUrls = [];
+
+    const progressInterval = setInterval(() => {
+      setGalleryUploadProgress((prev) => {
+        const targetProgress = Math.min(90, Math.round((completedFiles / totalFiles) * 100) + 10);
+        return prev < targetProgress ? prev + 5 : prev;
+      });
+    }, 150);
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/api/media", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success && data.url) {
+          uploadedUrls.push(data.url);
+        } else {
+          console.error("Gallery file upload failed:", data.error);
+        }
+      } catch (err) {
+        console.error("Gallery connection error:", err);
+      }
+      completedFiles++;
+    }
+
+    clearInterval(progressInterval);
+    setGalleryUploadProgress(100);
+    setTimeout(() => {
+      setGalleryUploadProgress(0);
+      setGalleryIsUploading(false);
+    }, 1000);
+
+    if (uploadedUrls.length > 0) {
+      setArticleGallery((prev) => [...prev, ...uploadedUrls]);
+    }
+  };
+
+  const handleRemoveGalleryImage = (indexToRemove) => {
+    setArticleGallery((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   // Handle rich text editor command
   const execEditorCommand = (command, value = null) => {
     document.execCommand(command, false, value);
@@ -281,6 +347,8 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       content,
       format,
       coverImage,
+      articleGallery,
+      galerie_photos: articleGallery,
       ...formatMeta,
       status: isVipOnly ? "Published" : "Draft",
       isVipOnly,
@@ -386,6 +454,89 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                     Couverture configurée avec succès.
                   </span>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Galerie de l'article */}
+          <div className="drawer-input-group">
+            <label>Galerie de l'article (Multi-Photos)</label>
+            <div className="media-drag-drop-zone">
+              <input
+                type="file"
+                id="drawer-gallery-upload"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={handleGalleryChange}
+                disabled={galleryIsUploading}
+              />
+              <label htmlFor="drawer-gallery-upload" className="drag-drop-label">
+                <span className="material-symbols-outlined drag-drop-icon" style={{ color: 'var(--admin-accent-color)' }}>collections</span>
+                <span>Glissez-déposez plusieurs photos ici ou <strong>parcourez</strong></span>
+                <span className="file-limits" style={{ display: 'block', fontSize: '11px', color: '#6B7280', marginTop: '4px' }}>Images JPG, PNG, WEBP (Max 200 Mo par fichier)</span>
+              </label>
+            </div>
+
+            {galleryIsUploading && (
+              <div className="file-upload-status-card" style={{ marginTop: '10px' }}>
+                <div className="file-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="material-symbols-outlined file-icon">upload</span>
+                  <div className="file-details" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span className="file-name" style={{ fontWeight: 500, color: '#1F2937' }}>Téléversement de la galerie en cours...</span>
+                    <span className="file-progress-percent" style={{ fontSize: '12px', color: '#6B7280' }}>{galleryUploadProgress}%</span>
+                  </div>
+                </div>
+                <div className="progress-bar-container" style={{ width: '100%', height: '6px', backgroundColor: '#E5E7EB', borderRadius: '3px', overflow: 'hidden', marginTop: '8px' }}>
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ width: `${galleryUploadProgress}%`, height: '100%', backgroundColor: 'var(--admin-accent-color)', borderRadius: '3px', transition: 'width 0.2s ease-in-out' }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {articleGallery.length > 0 && (
+              <div className="gallery-thumbnail-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginTop: '15px' }}>
+                {articleGallery.map((imgUrl, index) => (
+                  <div 
+                    key={index} 
+                    className="gallery-thumbnail-item" 
+                    style={{ position: 'relative', width: '100%', paddingBottom: '100%', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB' }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={imgUrl} 
+                      alt={`Gallery item ${index + 1}`} 
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveGalleryImage(index)}
+                      className="gallery-item-delete-btn"
+                      style={{
+                        position: 'absolute',
+                        top: '5px',
+                        right: '5px',
+                        background: 'rgba(239, 68, 68, 0.9)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                        transition: 'opacity 0.2s'
+                      }}
+                      title="Supprimer la photo"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete</span>
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -534,91 +685,190 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
             </div>
           </div>
 
-          {/* Rich Content Editor (Editorial WYSIWYG) */}
+          {/* Rich Content Editor (Editorial WYSIWYG) & Inline Asset Helper side-by-side */}
           <div className="drawer-input-group" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <label>Contenu éditorial (Texte Enrichi)</label>
-            <div className="rich-editor-container">
-              <div className="rich-editor-toolbar">
-                <button 
-                  type="button" 
-                  onClick={() => execEditorCommand('bold')}
-                  className="toolbar-btn" 
-                  title="Gras"
-                >
-                  <span className="material-symbols-outlined">format_bold</span>
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => execEditorCommand('italic')}
-                  className="toolbar-btn" 
-                  title="Italique"
-                >
-                  <span className="material-symbols-outlined">format_italic</span>
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => execEditorCommand('underline')}
-                  className="toolbar-btn" 
-                  title="Souligné"
-                >
-                  <span className="material-symbols-outlined">format_underlined</span>
-                </button>
-                
-                <span className="toolbar-divider"></span>
-                
-                <button 
-                  type="button" 
-                  onClick={() => execEditorCommand('formatBlock', '<h2>')}
-                  className="toolbar-btn" 
-                  title="Titre H2"
-                >
-                  <span className="material-symbols-outlined">title</span>
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => execEditorCommand('formatBlock', '<blockquote>')}
-                  className="toolbar-btn" 
-                  title="Citation"
-                >
-                  <span className="material-symbols-outlined">format_quote</span>
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => execEditorCommand('insertUnorderedList')}
-                  className="toolbar-btn" 
-                  title="Liste à puces"
-                >
-                  <span className="material-symbols-outlined">format_list_bulleted</span>
-                </button>
-                
-                <span className="toolbar-divider"></span>
-                
-                <button 
-                  type="button" 
-                  onClick={handleAddLink}
-                  className="toolbar-btn" 
-                  title="Insérer un lien"
-                >
-                  <span className="material-symbols-outlined">link</span>
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => execEditorCommand('removeFormat')}
-                  className="toolbar-btn" 
-                  title="Effacer les styles"
-                >
-                  <span className="material-symbols-outlined">format_clear</span>
-                </button>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch' }}>
+              <div className="rich-editor-container" style={{ flex: 2 }}>
+                <div className="rich-editor-toolbar">
+                  <button 
+                    type="button" 
+                    onClick={() => execEditorCommand('bold')}
+                    className="toolbar-btn" 
+                    title="Gras"
+                  >
+                    <span className="material-symbols-outlined">format_bold</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => execEditorCommand('italic')}
+                    className="toolbar-btn" 
+                    title="Italique"
+                  >
+                    <span className="material-symbols-outlined">format_italic</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => execEditorCommand('underline')}
+                    className="toolbar-btn" 
+                    title="Souligné"
+                  >
+                    <span className="material-symbols-outlined">format_underlined</span>
+                  </button>
+                  
+                  <span className="toolbar-divider"></span>
+                  
+                  <button 
+                    type="button" 
+                    onClick={() => execEditorCommand('formatBlock', '<h2>')}
+                    className="toolbar-btn" 
+                    title="Titre H2"
+                  >
+                    <span className="material-symbols-outlined">title</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => execEditorCommand('formatBlock', '<blockquote>')}
+                    className="toolbar-btn" 
+                    title="Citation"
+                  >
+                    <span className="material-symbols-outlined">format_quote</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => execEditorCommand('insertUnorderedList')}
+                    className="toolbar-btn" 
+                    title="Liste à puces"
+                  >
+                    <span className="material-symbols-outlined">format_list_bulleted</span>
+                  </button>
+                  
+                  <span className="toolbar-divider"></span>
+                  
+                  <button 
+                    type="button" 
+                    onClick={handleAddLink}
+                    className="toolbar-btn" 
+                    title="Insérer un lien"
+                  >
+                    <span className="material-symbols-outlined">link</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => execEditorCommand('removeFormat')}
+                    className="toolbar-btn" 
+                    title="Effacer les styles"
+                  >
+                    <span className="material-symbols-outlined">format_clear</span>
+                  </button>
+                </div>
+
+                <div 
+                  ref={editorRef}
+                  className="rich-editor-area"
+                  contentEditable={true}
+                  onInput={handleEditorInput}
+                  placeholder="Écrivez le corps de l'article ici..."
+                  style={{ minHeight: '220px' }}
+                />
               </div>
 
+              {/* Inline Asset Helper Panel */}
               <div 
-                ref={editorRef}
-                className="rich-editor-area"
-                contentEditable={true}
-                onInput={handleEditorInput}
-                placeholder="Écrivez le corps de l'article ici..."
-                style={{ minHeight: '180px' }}
-              />
+                className="inline-assets-helper-panel" 
+                style={{ 
+                  flex: 1, 
+                  border: '1px solid #E5E7EB', 
+                  borderRadius: '8px', 
+                  padding: '15px', 
+                  backgroundColor: '#F9FAFB', 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  maxHeight: '290px',
+                  overflowY: 'auto'
+                }}
+              >
+                <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--admin-accent-color)' }}>photo_library</span>
+                  Images du dossier
+                </div>
+
+                {(!coverImage && articleGallery.length === 0) ? (
+                  <div style={{ fontSize: '11px', color: '#9CA3AF', textAlign: 'center', margin: 'auto 0' }}>
+                    Aucune photo téléversée pour le moment.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {coverImage && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'white', padding: '8px', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={coverImage} alt="Couverture" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--admin-accent-color)' }}>Image à la une</div>
+                          <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editorRef.current) {
+                                  editorRef.current.focus();
+                                  document.execCommand('insertImage', false, coverImage);
+                                }
+                              }}
+                              style={{ fontSize: '10px', border: 'none', background: 'var(--admin-accent-color)', color: 'white', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              Insérer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(coverImage);
+                                alert("URL copiée dans le presse-papiers !");
+                              }}
+                              style={{ fontSize: '10px', border: '1px solid #D1D5DB', background: 'white', color: '#374151', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              Copier
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {articleGallery.map((imgUrl, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'white', padding: '8px', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imgUrl} alt={`Gal-${idx}`} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '10px', fontWeight: '500', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Photo {idx + 1}</div>
+                          <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editorRef.current) {
+                                  editorRef.current.focus();
+                                  document.execCommand('insertImage', false, imgUrl);
+                                }
+                              }}
+                              style={{ fontSize: '10px', border: 'none', background: 'var(--admin-accent-color)', color: 'white', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              Insérer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(imgUrl);
+                                alert("URL copiée dans le presse-papiers !");
+                              }}
+                              style={{ fontSize: '10px', border: '1px solid #D1D5DB', background: 'white', color: '#374151', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              Copier
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
