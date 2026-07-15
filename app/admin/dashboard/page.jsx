@@ -71,59 +71,49 @@ export default function DashboardPage() {
   };
 
   // Handles adding or updating article in local state
-  const handleSaveArticle = (savedArticle) => {
-    const isEdit = activities.some(act => act.id === savedArticle.id);
-
-    // API INTEGRATION BLUEPRINT:
-    // This is where real database updates will hook into our Phase 1 API contracts:
-    /*
-    const endpoint = '/api/magazines';
-    const method = isEdit ? 'PUT' : 'POST';
+  const handleSaveArticle = async (savedArticle) => {
     try {
-      const response = await fetch(endpoint, {
-        method: method,
+      const response = await fetch('/api/admin/articles', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(savedArticle)
       });
-      if (!response.ok) throw new Error("Failed to sync with DB");
+      if (!response.ok) throw new Error("Erreur de synchronisation avec le serveur");
       const dbArticle = await response.json();
-      // then proceed to update state with dbArticle...
+      
+      const isEdit = activities.some(act => act.id === savedArticle.id);
+      if (isEdit) {
+        setActivities(prev => prev.map(act => act.id === savedArticle.id ? { ...act, ...dbArticle } : act));
+        alert("Contenu mis à jour avec succès sur le serveur WordPress !");
+      } else {
+        const typeMap = {
+          text: "Article",
+          video: "Vidéo",
+          audio: "Podcast"
+        };
+        const newActivity = {
+          ...dbArticle,
+          type: typeMap[dbArticle.format] || "Article"
+        };
+        setActivities(prev => [newActivity, ...prev]);
+        if (dbArticle.status === "Published") {
+          setPublishedCount(prev => prev + 1);
+        }
+        alert("Nouveau contenu créé avec succès sur le serveur WordPress !");
+      }
     } catch (err) {
       console.error("API sync error:", err);
-    }
-    */
-
-    if (isEdit) {
-      // Edit action: Update the specific article row in the local state array
-      setActivities(prev => prev.map(act => act.id === savedArticle.id ? { ...act, ...savedArticle } : act));
-    } else {
-      // Map format to visual type
-      const typeMap = {
-        text: "Article",
-        video: "Vidéo",
-        audio: "Podcast"
-      };
-      const newActivity = {
-        ...savedArticle,
-        type: typeMap[savedArticle.format] || "Article"
-      };
-      // Add action: Append the new article to the local state array
-      setActivities(prev => [newActivity, ...prev]);
-      
-      // If the new article is published/VIP, dynamically increment the counter
-      if (savedArticle.status === "Published") {
-        setPublishedCount(prev => prev + 1);
-      }
+      alert("Erreur lors de la synchronisation avec WordPress : " + err.message);
     }
   };
 
   useEffect(() => {
-    // Fetch mock data from our local endpoints to simulate database integration
     const fetchDashboardData = async () => {
       try {
-        const [configRes, magazinesRes] = await Promise.all([
+        const [configRes, magazinesRes, articlesRes] = await Promise.all([
           fetch('/api/global-config'),
-          fetch('/api/magazines')
+          fetch('/api/magazines'),
+          fetch('/api/admin/articles')
         ]);
 
         if (configRes.ok) {
@@ -133,12 +123,10 @@ export default function DashboardPage() {
 
         if (magazinesRes.ok) {
           const magazinesData = await magazinesRes.json();
-          // Extract articles from the first magazine dynamically to enrich our activities list
           const apiArticles = [];
           magazinesData.forEach(mag => {
             if (mag.articles) {
               mag.articles.forEach(art => {
-                // Extract author name from meta (e.g. "DR. ANTOINE MOREAU • 12 MIN DE LECTURE")
                 const author = art.meta ? art.meta.split(' • ')[0] : "Rédaction";
                 apiArticles.push({
                   id: art.id,
@@ -152,17 +140,30 @@ export default function DashboardPage() {
             }
           });
 
-          // Merge fetched articles with screenshot activities to show live database sync
+          if (articlesRes.ok) {
+            const wpArticles = await articlesRes.json();
+            const typeMap = { text: "Article", video: "Vidéo", audio: "Podcast" };
+            wpArticles.forEach(art => {
+              apiArticles.push({
+                id: art.id,
+                type: typeMap[art.format] || "Article",
+                title: art.title,
+                author: "Rédaction",
+                status: art.status,
+                updated: "WordPress Sync"
+              });
+            });
+          }
+
           if (apiArticles.length > 0) {
             setActivities(prev => {
-              // Deduplicate and keep screenshot visual compliance first, then append API items
               const combined = [...prev];
               apiArticles.forEach(apiArt => {
-                if (!combined.some(c => c.title === apiArt.title)) {
+                if (!combined.some(c => c.title === apiArt.title || c.id === apiArt.id)) {
                   combined.push(apiArt);
                 }
               });
-              return combined.slice(0, 5); // Limit to 5 items max for display
+              return combined.slice(0, 5);
             });
           }
         }

@@ -430,18 +430,100 @@ export default function AdminCatchAllPage({ params }) {
   const [isDossierDrawerOpen, setIsDossierDrawerOpen] = useState(false);
   const [selectedDossier, setSelectedDossier] = useState(null);
 
-  const handleSaveDossier = (savedDossier) => {
-    const isEdit = dossiers.some(dos => dos.id === savedDossier.id);
-    if (isEdit) {
-      setDossiers(prev => prev.map(dos => dos.id === savedDossier.id ? savedDossier : dos));
-    } else {
-      setDossiers(prev => [...prev, savedDossier]);
+  const handleSaveDossier = async (savedDossier) => {
+    try {
+      const response = await fetch('/api/admin/dossiers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savedDossier)
+      });
+      if (!response.ok) throw new Error("Erreur de synchronisation avec le serveur");
+      const dbDossier = await response.json();
+
+      const mapped = {
+        ...dbDossier,
+        coverImage: dbDossier.coverImage || "/assets/core/img/vault-1.png",
+        updated: "À l'instant"
+      };
+
+      const isEdit = dossiers.some(dos => dos.id === savedDossier.id);
+      if (isEdit) {
+        setDossiers(prev => prev.map(dos => dos.id === savedDossier.id ? mapped : dos));
+        alert("Dossier mis à jour avec succès sur WordPress !");
+      } else {
+        setDossiers(prev => [...prev, mapped]);
+        alert("Nouveau dossier créé avec succès sur WordPress !");
+      }
+    } catch (err) {
+      console.error("API sync error:", err);
+      alert("Erreur lors de la synchronisation avec WordPress : " + err.message);
     }
   };
 
   const handleDeleteDossier = (id) => {
     setDossiers(prev => prev.filter(dos => dos.id !== id));
   };
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [articlesRes, dossiersRes] = await Promise.all([
+          fetch('/api/admin/articles'),
+          fetch('/api/admin/dossiers')
+        ]);
+        if (articlesRes.ok) {
+          const wpArticles = await articlesRes.json();
+          const mappedArticles = wpArticles.map(art => ({
+            id: art.id,
+            type: art.format === 'video' ? 'Vidéo' : art.format === 'audio' ? 'Podcast' : 'Article',
+            title: art.title,
+            author: "Rédaction",
+            category: art.category,
+            status: art.status,
+            updated: "WordPress Sync",
+            content: art.content,
+            format: art.format,
+            videoUrl: art.videoUrl,
+            audioFile: art.audioFile,
+            isVipOnly: art.isVipOnly
+          }));
+          setArticles(prev => {
+            const combined = [...mappedArticles];
+            prev.forEach(p => {
+              if (!combined.some(c => c.title === p.title || c.id === p.id)) {
+                combined.push(p);
+              }
+            });
+            return combined;
+          });
+        }
+        if (dossiersRes.ok) {
+          const wpDossiers = await dossiersRes.json();
+          const mappedDossiers = wpDossiers.map(dos => ({
+            id: dos.id,
+            title: dos.title,
+            description: dos.description,
+            coverImage: dos.coverImage || "/assets/core/img/vault-1.png",
+            articles: dos.articles,
+            isVipOnly: dos.isVipOnly,
+            updated: "WordPress Sync"
+          }));
+          setDossiers(prev => {
+            const combined = [...mappedDossiers];
+            prev.forEach(p => {
+              if (!combined.some(c => c.title === p.title || c.id === p.id)) {
+                combined.push(p);
+              }
+            });
+            return combined;
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching data from WordPress proxy:", error);
+      }
+    }
+    loadData();
+  }, []);
 
   // 7. Replays State (Phase 4.3)
   const [replays, setReplays] = useState([
@@ -569,15 +651,35 @@ export default function AdminCatchAllPage({ params }) {
   };
 
   // Handle article save
-  const handleSaveArticle = (savedArticle) => {
-    const isEdit = articles.some(art => art.id === savedArticle.id);
+  const handleSaveArticle = async (savedArticle) => {
+    try {
+      const response = await fetch('/api/admin/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savedArticle)
+      });
+      if (!response.ok) throw new Error("Erreur de synchronisation avec le serveur");
+      const dbArticle = await response.json();
 
-    // API BLUEPRINT COMMENTS:
-    // This local state action simulates POST/PUT to /api/magazines
-    if (isEdit) {
-      setArticles(prev => prev.map(art => art.id === savedArticle.id ? { ...art, ...savedArticle } : art));
-    } else {
-      setArticles(prev => [savedArticle, ...prev]);
+      const typeMap = { text: "Article", video: "Vidéo", audio: "Podcast" };
+      const mapped = {
+        ...dbArticle,
+        type: typeMap[dbArticle.format] || "Article",
+        author: "Rédaction",
+        updated: "À l'instant"
+      };
+
+      const isEdit = articles.some(art => art.id === savedArticle.id);
+      if (isEdit) {
+        setArticles(prev => prev.map(art => art.id === savedArticle.id ? mapped : art));
+        alert("Contenu mis à jour avec succès sur WordPress !");
+      } else {
+        setArticles(prev => [mapped, ...prev]);
+        alert("Nouveau contenu créé avec succès sur WordPress !");
+      }
+    } catch (err) {
+      console.error("API sync error:", err);
+      alert("Erreur lors de la synchronisation avec WordPress : " + err.message);
     }
   };
 
