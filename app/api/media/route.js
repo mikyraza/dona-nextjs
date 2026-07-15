@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 
 const WP_API_URL = process.env.WORDPRESS_API_URL || "http://localhost/wp-json";
 const WP_AUTH_TOKEN = process.env.WORDPRESS_AUTH_TOKEN;
@@ -67,7 +69,26 @@ export async function POST(req) {
     }
 
     // Local simulation fallback (for local workspace testing)
-    const mockUrl = `/assets/core/uploads/${Date.now()}_${fileName.replace(/\s+/g, "_")}`;
+    const cleanFileName = `${Date.now()}_${fileName.replace(/\s+/g, "_")}`;
+    const mockUrl = `/assets/core/uploads/${cleanFileName}`;
+
+    try {
+      const publicUploadsDir = path.join(process.cwd(), "public", "assets", "core", "uploads");
+      
+      // Ensure the directory exists
+      if (!fs.existsSync(publicUploadsDir)) {
+        fs.mkdirSync(publicUploadsDir, { recursive: true });
+      }
+
+      // Convert File object to buffer and write to disk
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const filePath = path.join(publicUploadsDir, cleanFileName);
+      await fs.promises.writeFile(filePath, buffer);
+      console.log(`[Dev Simulation] Media saved to disk at: ${filePath}`);
+    } catch (fsError) {
+      console.error("Local file writing error:", fsError);
+    }
 
     return NextResponse.json({
       success: true,
