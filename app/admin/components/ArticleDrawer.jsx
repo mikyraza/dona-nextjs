@@ -55,11 +55,14 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   const [audioUploadProgress, setAudioUploadProgress] = useState(0);
   const [audioIsUploading, setAudioIsUploading] = useState(false);
 
+  const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'preview'
+
   const editorRef = useRef(null);
 
   // Sync state when article prop changes (Edit vs Create mode)
   useEffect(() => {
     let initialContent = '';
+    setActiveTab('edit');
     if (article) {
       setTitle(article.title || '');
       setAuthor(article.author || 'Elena Moretti');
@@ -370,15 +373,38 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       <div 
         className="drawer-panel" 
         onClick={(e) => e.stopPropagation()}
+        style={{ width: '860px', maxWidth: '95%' }}
       >
-        <div className="drawer-header">
-          <h2>{article ? "Modifier l'article" : "Nouvel Article"}</h2>
-          <button className="drawer-close-btn" onClick={onClose} aria-label="Fermer">
+        <div className="drawer-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E5E7EB', paddingBottom: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <h2 style={{ margin: 0 }}>{article ? "Modifier l'article" : "Nouvel Article"}</h2>
+            <div className="media-segmented-control" style={{ margin: 0 }}>
+              <button
+                type="button"
+                className={`segmented-btn ${activeTab === 'edit' ? 'active' : ''}`}
+                onClick={() => setActiveTab('edit')}
+                style={{ padding: '6px 12px', fontSize: '12px' }}
+              >
+                Édition
+              </button>
+              <button
+                type="button"
+                className={`segmented-btn ${activeTab === 'preview' ? 'active' : ''}`}
+                onClick={() => setActiveTab('preview')}
+                style={{ padding: '6px 12px', fontSize: '12px' }}
+              >
+                Aperçu
+              </button>
+            </div>
+          </div>
+          <button className="drawer-close-btn" onClick={onClose} aria-label="Fermer" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="drawer-form">
+        <form onSubmit={handleSubmit} className="drawer-form" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 70px)', padding: '20px 0' }}>
+          {activeTab === 'edit' ? (
+            <div className="drawer-form-scrollable" style={{ flex: 1, overflowY: 'auto', paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '20px' }}>
           {/* Format selector */}
           <div className="drawer-input-group">
             <label>Format de l'article</label>
@@ -904,6 +930,112 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
               </div>
             </div>
           </div>
+
+            </div>
+          ) : (
+            <div className="drawer-preview-scrollable" style={{ flex: 1, overflowY: 'auto', padding: '24px', backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: '8px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ 
+                  textTransform: 'uppercase', 
+                  fontSize: '11px', 
+                  fontWeight: '700', 
+                  letterSpacing: '1px', 
+                  color: 'var(--admin-accent-color)', 
+                  backgroundColor: '#F3F4F6', 
+                  padding: '4px 10px', 
+                  borderRadius: '4px' 
+                }}>
+                  {UNIVERSES.find(u => u.id === category)?.name.substring(4) || category}
+                </span>
+                {isVipOnly && (
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#B45309', backgroundColor: '#FEF3C7', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>lock</span> VIP
+                  </span>
+                )}
+              </div>
+
+              <h1 style={{ 
+                fontSize: '26px', 
+                fontWeight: '800', 
+                color: '#111827', 
+                lineHeight: '1.2', 
+                margin: 0,
+                fontFamily: 'var(--font-outfit), sans-serif'
+              }}>
+                {title || "Sans titre"}
+              </h1>
+
+              <div style={{ fontSize: '13px', color: '#6B7280', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #F3F4F6', paddingBottom: '15px' }}>
+                <span>Par <strong>{author || "Rédaction"}</strong></span>
+                <span>•</span>
+                <span>{new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+              </div>
+
+              {coverImage && (
+                <div style={{ width: '100%', height: '220px', borderRadius: '8px', overflow: 'hidden' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coverImage} alt="Image à la une" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              )}
+
+              {format === 'video' && (
+                <div style={{ backgroundColor: '#111827', borderRadius: '8px', padding: '24px', color: 'white', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#9CA3AF' }}>play_circle</span>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold' }}>Lecteur Vidéo Intégré</div>
+                    <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px', wordBreak: 'break-all' }}>
+                      {videoSourceType === 'url' ? `Lien externe : ${videoUrl}` : `Fichier téléversé : ${videoFileName}`}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {format === 'audio' && (
+                <div style={{ backgroundColor: '#F3F4F6', borderRadius: '8px', padding: '15px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--admin-accent-color)' }}>play_circle</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1F2937' }}>Podcast Audio</div>
+                    <div style={{ fontSize: '11px', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {audioFileName || "Aucune piste audio configurée"}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div 
+                className="article-preview-body"
+                style={{ 
+                  fontSize: '15px', 
+                  lineHeight: '1.6', 
+                  color: '#374151',
+                  minHeight: '100px'
+                }}
+                dangerouslySetInnerHTML={{ __html: content || "<p style='color: #9CA3AF; font-style: italic;'>Saisissez du contenu éditorial pour afficher un aperçu...</p>" }}
+              />
+
+              {articleGallery.length > 0 && (
+                <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '20px', marginTop: '10px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--admin-accent-color)' }}>collections</span>
+                    Galerie Photos
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
+                    {articleGallery.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ width: '100%', height: '130px', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={item.url} alt={`Gallery ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        {item.caption && (
+                          <span style={{ fontSize: '11px', color: '#6B7280', fontStyle: 'italic', lineHeight: '1.3' }}>{item.caption}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* VIP Toggle Switch */}
           <div className="drawer-toggle-group">
