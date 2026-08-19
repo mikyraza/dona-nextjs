@@ -414,11 +414,23 @@ export default function AdminTodayPage() {
   };
 
   // ─── VALUES ───────────────────────────────────────────────────────────────
+  const openValueCreate = () => { setValueDraft({ id: `val-${Date.now()}`, status: 'Published', title: '', desc: '' }); setValueDrawer({ open: true, item: null }); };
   const openValueEdit = (item) => { setValueDraft({ ...item }); setValueDrawer({ open: true, item }); };
   const saveValue = () => {
-    const newValues = data.values.map(v => v.id === valueDraft.id ? { ...valueDraft, updated: "À l'instant" } : v);
+    let newValues;
+    if (valueDrawer.item) {
+      newValues = data.values.map(v => v.id === valueDraft.id ? { ...valueDraft, updated: "À l'instant" } : v);
+    } else {
+      newValues = [...data.values, { ...valueDraft, updated: "À l'instant" }];
+    }
     const newData = { ...data, values: newValues };
     setData(newData); persistAll(newData); setValueDrawer({ open: false, item: null });
+  };
+  const deleteValue = (id) => {
+    if (confirm('Supprimer cette valeur ?')) {
+      const newData = { ...data, values: data.values.filter(v => v.id !== id) };
+      setData(newData); persistAll(newData);
+    }
   };
 
 
@@ -623,6 +635,66 @@ export default function AdminTodayPage() {
                       <button onClick={() => openArticleEdit(item, item._type)} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>Edit</button>
                       <span className="table-action-divider">|</span>
                       <button onClick={() => deleteArticle(item.id, item._type)} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableCard>
+      )}
+
+      {/* ── 4. EDITORIAL ─────────────────────────────────────────────────── */}
+      {activeSection === 'editorial' && (
+        <TableCard
+          title="Section Éditoriale"
+          subtitle="Gérez le message de la rédaction et vos valeurs"
+          action={<button className="btn-admin-action primary" onClick={openEditorialDrawer}><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span> Modifier</button>}
+        >
+          <table className="admin-table">
+            <thead><tr><th>Titre</th><th>Citation</th><th>Status</th><th>Modifié</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
+            <tbody>
+              <tr>
+                <td className="cell-bold">{data.editorial.title.split('\n')[0]}…</td>
+                <td style={{ fontStyle: 'italic', color: '#666' }}>{data.editorial.quote.substring(0, 30)}…</td>
+                <td><StatusBadge status={data.editorial.status} /></td>
+                <td style={{ color: '#888' }}>{data.editorial.updated}</td>
+                <td style={{ textAlign: 'right' }}>
+                  <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                    <button onClick={openEditorialDrawer} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>Edit</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </TableCard>
+      )}
+
+      {/* ── 5. VALEURS ───────────────────────────────────────────────────── */}
+      {activeSection === 'values' && (
+        <TableCard
+          title={`Nos Valeurs (${data.values.length})`}
+          subtitle="Les valeurs affichées sous l'éditorial"
+          action={
+            <button className="btn-admin-action primary" onClick={openValueCreate}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+              Nouvelle Valeur
+            </button>
+          }
+        >
+          <table className="admin-table">
+            <thead><tr><th>Titre</th><th>Description</th><th>Modifié</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
+            <tbody>
+              {data.values.map(v => (
+                <tr key={v.id}>
+                  <td className="cell-bold">{v.title}</td>
+                  <td style={{ color: '#666' }}>{v.desc.substring(0, 40)}…</td>
+                  <td style={{ color: '#888' }}>{v.updated}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                      <button onClick={() => openValueEdit(v)} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>Edit</button>
+                      <span className="table-action-divider">|</span>
+                      <button onClick={() => deleteValue(v.id)} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>Delete</button>
                     </div>
                   </td>
                 </tr>
