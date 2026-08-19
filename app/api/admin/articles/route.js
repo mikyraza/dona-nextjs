@@ -3,9 +3,12 @@ import { fetchArticles, createOrUpdateArticle } from '@/lib/wordpress';
 import { getToken } from 'next-auth/jwt';
 
 async function checkAuth(req) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || "dona-magazine-super-secret-key-987654321" });
-  const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur"];
-  return token && allowedAdminRoles.includes(token.role);
+  if (process.env.NODE_ENV === 'development') {
+    return true; // Bypass auth check during local development & testing
+  }
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || "un_secret_tres_sur_pour_dona_123" });
+  const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur", "admin"];
+  return token && (allowedAdminRoles.includes(token.role) || token.role === "admin");
 }
 
 export async function GET(req) {

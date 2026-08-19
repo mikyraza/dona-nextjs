@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+
+const MediaPickerModal = dynamic(() => import('./MediaPickerModal'), { ssr: false });
 
 // The 16 official magazine universes
 const UNIVERSES = [
@@ -28,6 +31,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   const [category, setCategory] = useState('intelligence');
   const [content, setContent] = useState('');
   const [isVipOnly, setIsVipOnly] = useState(false);
+  const [status, setStatus] = useState('Draft');
   
   // Dynamic Format Selection
   const [format, setFormat] = useState('text'); // 'text' | 'video' | 'audio'
@@ -55,14 +59,15 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   const [audioUploadProgress, setAudioUploadProgress] = useState(0);
   const [audioIsUploading, setAudioIsUploading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'preview'
+  // Media Picker Modal State
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [mediaModalTarget, setMediaModalTarget] = useState(null); // 'cover' | 'gallery' | 'video' | 'audio' | 'editor'
 
   const editorRef = useRef(null);
 
   // Sync state when article prop changes (Edit vs Create mode)
   useEffect(() => {
     let initialContent = '';
-    setActiveTab('edit');
     if (article) {
       setTitle(article.title || '');
       setAuthor(article.author || 'Elena Moretti');
@@ -89,7 +94,8 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       setCategory(matchedUniverse ? matchedUniverse.id : 'intelligence');
       
       initialContent = article.content || '';
-      setIsVipOnly(article.status === 'Published' || article.isVipOnly || false);
+      setIsVipOnly(article.isVipOnly || false);
+      setStatus(article.status || 'Draft');
       
       // Detect Format from initial values
       if (article.format) {
@@ -137,186 +143,11 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
 
   if (!isOpen) return null;
 
-  // Handle video upload via /api/media
-  const handleVideoFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setVideoFileName(file.name);
-      setVideoIsUploading(true);
-      setVideoUploadProgress(10);
-      
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // Simulate progress up to 90%
-      const interval = setInterval(() => {
-        setVideoUploadProgress((prev) => (prev < 90 ? prev + 10 : 90));
-      }, 150);
-
-      try {
-        const res = await fetch("/api/media", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        clearInterval(interval);
-        
-        if (data.success && data.url) {
-          setVideoUploadProgress(100);
-          setVideoUrl(data.url);
-        } else {
-          alert(`Erreur: ${data.error || "Téléversement échoué"}`);
-          setVideoUploadProgress(0);
-        }
-      } catch (err) {
-        clearInterval(interval);
-        console.error("Upload error:", err);
-        alert("Erreur de connexion lors du téléversement");
-        setVideoUploadProgress(0);
-      } finally {
-        setVideoIsUploading(false);
-      }
-    }
-  };
-
-  // Handle audio upload via /api/media
-  const handleAudioFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAudioFileName(file.name);
-      setAudioIsUploading(true);
-      setAudioUploadProgress(10);
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // Simulate progress up to 90%
-      const interval = setInterval(() => {
-        setAudioUploadProgress((prev) => (prev < 90 ? prev + 15 : 90));
-      }, 120);
-
-      try {
-        const res = await fetch("/api/media", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        clearInterval(interval);
-
-        if (data.success && data.url) {
-          setAudioUploadProgress(100);
-          setAudioFileName(data.url);
-        } else {
-          alert(`Erreur: ${data.error || "Téléversement échoué"}`);
-          setAudioUploadProgress(0);
-        }
-      } catch (err) {
-        clearInterval(interval);
-        console.error("Upload error:", err);
-        alert("Erreur de connexion lors du téléversement");
-        setAudioUploadProgress(0);
-      } finally {
-        setAudioIsUploading(false);
-      }
-    }
-  };
-
-  const handleCoverImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setCoverImageFileName(file.name);
-      setCoverImageIsUploading(true);
-      setCoverImageUploadProgress(10);
-      
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const interval = setInterval(() => {
-        setCoverImageUploadProgress((prev) => (prev < 90 ? prev + 15 : 90));
-      }, 100);
-
-      try {
-        const res = await fetch("/api/media", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        clearInterval(interval);
-        
-        if (data.success && data.url) {
-          setCoverImageUploadProgress(100);
-          setCoverImage(data.url);
-        } else {
-          alert(`Erreur: ${data.error || "Téléversement échoué"}`);
-          setCoverImageUploadProgress(0);
-        }
-      } catch (err) {
-        clearInterval(interval);
-        console.error("Cover image upload error:", err);
-        alert("Erreur de connexion lors du téléversement");
-        setCoverImageUploadProgress(0);
-      } finally {
-        setCoverImageIsUploading(false);
-      }
-    }
-  };
-
-  const handleGalleryChange = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-
-    setGalleryIsUploading(true);
-    setGalleryUploadProgress(10);
-
-    const totalFiles = files.length;
-    let completedFiles = 0;
-    const uploadedUrls = [];
-
-    const progressInterval = setInterval(() => {
-      setGalleryUploadProgress((prev) => {
-        const targetProgress = Math.min(90, Math.round((completedFiles / totalFiles) * 100) + 10);
-        return prev < targetProgress ? prev + 5 : prev;
-      });
-    }, 150);
-
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await fetch("/api/media", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (data.success && data.url) {
-          uploadedUrls.push(data.url);
-        } else {
-          console.error("Gallery file upload failed:", data.error);
-        }
-      } catch (err) {
-        console.error("Gallery connection error:", err);
-      }
-      completedFiles++;
-    }
-
-    clearInterval(progressInterval);
-    setGalleryUploadProgress(100);
-    setTimeout(() => {
-      setGalleryUploadProgress(0);
-      setGalleryIsUploading(false);
-    }, 1000);
-
-    if (uploadedUrls.length > 0) {
-      setArticleGallery((prev) => [...prev, ...uploadedUrls.map(url => ({ url, caption: '' }))]);
-    }
-  };
-
   const handleRemoveGalleryImage = (indexToRemove) => {
     setArticleGallery((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  // Handle rich text editor command
+  // Handle rich text editor command - preserve onMouseDown to keep focus
   const execEditorCommand = (command, value = null) => {
     document.execCommand(command, false, value);
     if (editorRef.current) {
@@ -340,7 +171,6 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
     e.preventDefault();
     if (!title.trim()) return;
 
-    // Gather format details
     const formatMeta = {};
     if (format === 'video') {
       formatMeta.videoUrl = videoSourceType === 'url' ? videoUrl : `Fichier : ${videoFileName}`;
@@ -360,7 +190,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
       articleGallery,
       galerie_photos: articleGallery,
       ...formatMeta,
-      status: isVipOnly ? "Published" : "Draft",
+      status: status,
       isVipOnly,
       updated: "À l'instant"
     });
@@ -368,710 +198,552 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
     onClose();
   };
 
+  // Derived display values for preview
+  const categoryLabel = UNIVERSES.find(u => u.id === category)?.name.substring(4).trim() || category;
+  const previewDate = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
   return (
     <div className="drawer-overlay" onClick={onClose}>
-      <div 
-        className="drawer-panel" 
+      <div
+        className="drawer-panel"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '860px', maxWidth: '95%' }}
+        style={{ width: '1200px', maxWidth: '98vw', display: 'flex', flexDirection: 'column' }}
       >
-        <div className="drawer-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E5E7EB', paddingBottom: '15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <h2 style={{ margin: 0 }}>{article ? "Modifier l'article" : "Nouvel Article"}</h2>
-            <div className="media-segmented-control" style={{ margin: 0 }}>
-              <button
-                type="button"
-                className={`segmented-btn ${activeTab === 'edit' ? 'active' : ''}`}
-                onClick={() => setActiveTab('edit')}
-                style={{ padding: '6px 12px', fontSize: '12px' }}
-              >
-                Édition
-              </button>
-              <button
-                type="button"
-                className={`segmented-btn ${activeTab === 'preview' ? 'active' : ''}`}
-                onClick={() => setActiveTab('preview')}
-                style={{ padding: '6px 12px', fontSize: '12px' }}
-              >
-                Aperçu
-              </button>
-            </div>
+        {/* HEADER */}
+        <div className="drawer-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #EAEAEA', padding: '14px 24px', flexShrink: 0, background: '#FFFFFF', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--admin-accent-color)' }}>edit_note</span>
+            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>
+              {article ? "Modifier l'article" : "Nouvel Article"}
+            </h2>
+            {title && (
+              <span style={{ fontSize: '12px', color: '#9CA3AF', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                — {title}
+              </span>
+            )}
           </div>
-          <button className="drawer-close-btn" onClick={onClose} aria-label="Fermer" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            
+            {/* Status Toggle in Header for better visibility */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '16px', padding: '4px 8px', background: status === 'Published' ? '#ECFDF5' : '#F3F4F6', borderRadius: '4px', border: `1px solid ${status === 'Published' ? '#A7F3D0' : '#E5E7EB'}` }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: status === 'Published' ? '#059669' : '#6B7280' }}>
+                {status === 'Published' ? 'public' : 'visibility_off'}
+              </span>
+              <span style={{ fontSize: '11px', fontWeight: '600', color: status === 'Published' ? '#059669' : '#4B5563', textTransform: 'uppercase' }}>
+                {status === 'Published' ? 'Publié' : 'Brouillon'}
+              </span>
+              <label className="switch" style={{ margin: '0 0 0 6px', transform: 'scale(0.8)' }}>
+                <input
+                  type="checkbox"
+                  checked={status === 'Published'}
+                  onChange={(e) => setStatus(e.target.checked ? 'Published' : 'Draft')}
+                />
+                <span className="slider round"></span>
+              </label>
+            </div>
+
+            <button type="button" className="btn-drawer secondary" onClick={onClose} style={{ padding: '7px 14px', fontSize: '12px' }}>
+              Annuler
+            </button>
+            <button
+              type="button"
+              className="btn-drawer primary"
+              onClick={handleSubmit}
+              disabled={videoIsUploading || audioIsUploading || !title.trim()}
+              style={{ padding: '7px 16px', fontSize: '12px' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                {status === 'Published' ? 'publish' : 'save'}
+              </span>
+              {status === 'Published' ? (article ? "Mettre à jour" : "Publier") : "Enregistrer brouillon"}
+            </button>
+            <button className="drawer-close-btn" onClick={onClose} aria-label="Fermer" style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '4px' }}>
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="drawer-form" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 70px)', padding: '20px 0' }}>
-          {activeTab === 'edit' ? (
-            <div className="drawer-form-scrollable" style={{ flex: 1, overflowY: 'auto', paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '20px' }}>
-          {/* Format selector */}
-          <div className="drawer-input-group">
-            <label>Format de l'article</label>
-            <div className="media-segmented-control">
-              <button
-                type="button"
-                className={`segmented-btn ${format === 'text' ? 'active' : ''}`}
-                onClick={() => setFormat('text')}
-              >
-                Texte
-              </button>
-              <button
-                type="button"
-                className={`segmented-btn ${format === 'video' ? 'active' : ''}`}
-                onClick={() => setFormat('video')}
-              >
-                Vidéo
-              </button>
-              <button
-                type="button"
-                className={`segmented-btn ${format === 'audio' ? 'active' : ''}`}
-                onClick={() => setFormat('audio')}
-              >
-                Audio
-              </button>
-            </div>
-          </div>
+        {/* SPLIT BODY */}
+        <form onSubmit={handleSubmit} style={{ flex: 1, overflow: 'hidden', display: 'flex', height: 'calc(100% - 56px)' }}>
+          <div className="article-editor-split" style={{ flex: 1 }}>
 
-          {/* Title input */}
-          <div className="drawer-input-group">
-            <label htmlFor="drawer-title">Titre de l'article</label>
-            <input
-              id="drawer-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Saisissez un titre élégant..."
-              required
-              className="drawer-text-input title-field"
-              autoFocus
-            />
-          </div>
+            {/* ====== LEFT COLUMN: EDITOR ====== */}
+            <div className="editor-left-col">
 
-          {/* Image de Couverture */}
-          <div className="drawer-input-group">
-            <label>Image de Couverture (Image à la une)</label>
-            <div className="media-drag-drop-zone">
-              <input
-                type="file"
-                id="drawer-cover-upload"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleCoverImageChange}
-              />
-              <label htmlFor="drawer-cover-upload" className="drag-drop-label">
-                <span className="material-symbols-outlined drag-drop-icon" style={{ color: 'var(--admin-accent-color)' }}>image</span>
-                <span>Glissez-déposez une image ici ou <strong>parcourez</strong></span>
-                <span className="file-limits" style={{ display: 'block', fontSize: '11px', color: '#6B7280', marginTop: '4px' }}>Format : JPG, PNG, WEBP (Max 50 Mo)</span>
-              </label>
-            </div>
+              {/* SECTION 1: IDENTITÉ */}
+              <div className="editor-section">
+                <div className="editor-section-title">
+                  <span className="material-symbols-outlined">badge</span>
+                  Identité de l&apos;article
+                </div>
 
-            {coverImageFileName && (
-              <div className="file-upload-status-card" style={{ marginTop: '10px' }}>
-                <div className="file-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span className="material-symbols-outlined file-icon">photo_library</span>
-                  <div className="file-details" style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span className="file-name" style={{ fontWeight: 500, color: '#1F2937' }}>{coverImageFileName}</span>
-                    <span className="file-progress-percent" style={{ fontSize: '12px', color: '#6B7280' }}>{coverImageUploadProgress}%</span>
+                {/* Title */}
+                <input
+                  className="editor-title-input"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Titre de l'article..."
+                  required
+                  autoFocus
+                  style={{ marginBottom: '16px' }}
+                />
+
+                {/* Auteur + Univers en ligne */}
+                <div className="editor-meta-row" style={{ marginBottom: '14px' }}>
+                  <div className="editor-meta-field">
+                    <label htmlFor="ed-author">Auteur</label>
+                    <input
+                      id="ed-author"
+                      type="text"
+                      value={author}
+                      onChange={(e) => setAuthor(e.target.value)}
+                      placeholder="Nom de l'auteur"
+                      required
+                    />
                   </div>
-                </div>
-                <div className="progress-bar-container" style={{ width: '100%', height: '6px', backgroundColor: '#E5E7EB', borderRadius: '3px', overflow: 'hidden', marginTop: '8px' }}>
-                  <div 
-                    className="progress-bar-fill" 
-                    style={{ width: `${coverImageUploadProgress}%`, height: '100%', backgroundColor: 'var(--admin-accent-color)', borderRadius: '3px', transition: 'width 0.2s ease-in-out' }}
-                  />
-                </div>
-                {coverImageUploadProgress === 100 && (
-                  <span className="upload-success-badge" style={{ color: '#03543F', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginTop: '6px' }}>
-                    <span className="material-symbols-outlined" style={{ color: '#31C48D', fontSize: '16px' }}>check_circle</span>
-                    Couverture configurée avec succès.
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Galerie de l'article */}
-          <div className="drawer-input-group">
-            <label>Galerie de l'article (Multi-Photos)</label>
-            <div className="media-drag-drop-zone">
-              <input
-                type="file"
-                id="drawer-gallery-upload"
-                accept="image/*"
-                multiple
-                style={{ display: 'none' }}
-                onChange={handleGalleryChange}
-                disabled={galleryIsUploading}
-              />
-              <label htmlFor="drawer-gallery-upload" className="drag-drop-label">
-                <span className="material-symbols-outlined drag-drop-icon" style={{ color: 'var(--admin-accent-color)' }}>collections</span>
-                <span>Glissez-déposez plusieurs photos ici ou <strong>parcourez</strong></span>
-                <span className="file-limits" style={{ display: 'block', fontSize: '11px', color: '#6B7280', marginTop: '4px' }}>Images JPG, PNG, WEBP (Max 200 Mo par fichier)</span>
-              </label>
-            </div>
-
-            {galleryIsUploading && (
-              <div className="file-upload-status-card" style={{ marginTop: '10px' }}>
-                <div className="file-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span className="material-symbols-outlined file-icon">upload</span>
-                  <div className="file-details" style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span className="file-name" style={{ fontWeight: 500, color: '#1F2937' }}>Téléversement de la galerie en cours...</span>
-                    <span className="file-progress-percent" style={{ fontSize: '12px', color: '#6B7280' }}>{galleryUploadProgress}%</span>
-                  </div>
-                </div>
-                <div className="progress-bar-container" style={{ width: '100%', height: '6px', backgroundColor: '#E5E7EB', borderRadius: '3px', overflow: 'hidden', marginTop: '8px' }}>
-                  <div 
-                    className="progress-bar-fill" 
-                    style={{ width: `${galleryUploadProgress}%`, height: '100%', backgroundColor: 'var(--admin-accent-color)', borderRadius: '3px', transition: 'width 0.2s ease-in-out' }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {articleGallery.length > 0 && (
-              <div className="gallery-thumbnail-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginTop: '15px' }}>
-                {articleGallery.map((item, index) => (
-                  <div 
-                    key={index} 
-                    className="gallery-thumbnail-card" 
-                    style={{ display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid #E5E7EB', borderRadius: '6px', padding: '8px', backgroundColor: '#F9FAFB' }}
-                  >
-                    <div 
-                      className="gallery-thumbnail-wrapper" 
-                      style={{ position: 'relative', width: '100%', paddingBottom: '75%', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#E5E7EB' }}
+                  <div className="editor-meta-field">
+                    <label htmlFor="ed-category">Univers / Magazine</label>
+                    <select
+                      id="ed-category"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={item.url} 
-                        alt={`Gallery item ${index + 1}`} 
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveGalleryImage(index)}
-                        className="gallery-item-delete-btn"
-                        style={{
-                          position: 'absolute',
-                          top: '4px',
-                          right: '4px',
-                          background: 'rgba(239, 68, 68, 0.9)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: '20px',
-                          height: '20px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                          transition: 'opacity 0.2s'
-                        }}
-                        title="Supprimer la photo"
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>delete</span>
+                      {UNIVERSES.map((u) => (
+                        <option key={u.id} value={u.id}>{u.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Format tabs */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888888', marginBottom: '6px' }}>Format</div>
+                  <div className="editor-format-tabs">
+                    <button type="button" className={`editor-format-tab ${format === 'text' ? 'active' : ''}`} onClick={() => setFormat('text')}>
+                      <span className="material-symbols-outlined">article</span>
+                      Texte
+                    </button>
+                    <button type="button" className={`editor-format-tab ${format === 'video' ? 'active' : ''}`} onClick={() => setFormat('video')}>
+                      <span className="material-symbols-outlined">videocam</span>
+                      Vidéo
+                    </button>
+                    <button type="button" className={`editor-format-tab ${format === 'audio' ? 'active' : ''}`} onClick={() => setFormat('audio')}>
+                      <span className="material-symbols-outlined">mic</span>
+                      Audio
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: MÉDIAS (thumbnails compacts uniquement) */}
+              <div className="editor-section">
+                <div className="editor-section-title">
+                  <span className="material-symbols-outlined">perm_media</span>
+                  Médias
+                </div>
+
+                {/* Cover Image compact */}
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888888', marginBottom: '6px' }}>Image à la une</div>
+                  {coverImage ? (
+                    <div className="media-compact-row">
+                      <div className="media-compact-thumb">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={coverImage} alt="Couverture" />
+                      </div>
+                      <div className="media-compact-info">
+                        <div className="media-compact-filename">{coverImageFileName || 'image-couverture.jpg'}</div>
+                        {coverImageIsUploading ? (
+                          <div className="upload-mini-progress">
+                            <div className="upload-mini-progress-fill" style={{ width: `${coverImageUploadProgress}%` }} />
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '11px', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>check_circle</span>
+                            Image configurée
+                          </div>
+                        )}
+                        <div className="media-compact-actions" style={{ marginTop: '6px' }}>
+                          <button type="button" className="btn-media-action" onClick={() => { setMediaModalTarget('cover'); setIsMediaModalOpen(true); }}>
+                            Changer
+                          </button>
+                          <button type="button" className="btn-media-action danger" onClick={() => { setCoverImage(''); setCoverImageFileName(''); setCoverImageUploadProgress(0); }}>
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <button type="button" className="cover-placeholder-btn" onClick={() => { setMediaModalTarget('cover'); setIsMediaModalOpen(true); }}>
+                      <span className="material-symbols-outlined">add_photo_alternate</span>
+                      Choisir depuis la médiathèque
+                    </button>
+                  )}
+                </div>
+
+                {/* Gallery compact strip */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888888', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>Galerie ({articleGallery.length} photo{articleGallery.length !== 1 ? 's' : ''})</span>
+                    {galleryIsUploading && <span style={{ fontSize: '10px', color: 'var(--admin-accent-color)' }}>Envoi {galleryUploadProgress}%...</span>}
+                  </div>
+                  <div className="gallery-compact-strip">
+                    {articleGallery.map((item, idx) => (
+                      <div key={idx} className="gallery-compact-item">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.url} alt={`Photo ${idx + 1}`} />
+                        <button
+                          type="button"
+                          className="gallery-compact-item-delete"
+                          onClick={() => handleRemoveGalleryImage(idx)}
+                          title="Supprimer"
+                        >
+                          <span className="material-symbols-outlined">close</span>
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="gallery-add-btn"
+                      onClick={() => { setMediaModalTarget('gallery'); setIsMediaModalOpen(true); }}
+                      title="Ajouter depuis la médiathèque"
+                    >
+                      <span className="material-symbols-outlined">add</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Video source (if format = video) */}
+                {format === 'video' && (
+                  <div style={{ marginTop: '14px', borderTop: '1px solid #EAEAEA', paddingTop: '14px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888888', marginBottom: '8px' }}>Source Vidéo</div>
+                    <div className="editor-format-tabs" style={{ marginBottom: '10px' }}>
+                      <button type="button" className={`editor-format-tab ${videoSourceType === 'url' ? 'active' : ''}`} onClick={() => setVideoSourceType('url')}>
+                        <span className="material-symbols-outlined">link</span>
+                        Lien externe
+                      </button>
+                      <button type="button" className={`editor-format-tab ${videoSourceType === 'upload' ? 'active' : ''}`} onClick={() => setVideoSourceType('upload')}>
+                        <span className="material-symbols-outlined">upload</span>
+                        Uploader
                       </button>
                     </div>
-                    <input
-                      type="text"
-                      value={item.caption || ''}
-                      placeholder="Légende..."
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setArticleGallery(prev => prev.map((img, idx) => idx === index ? { ...img, caption: val } : img));
-                      }}
-                      style={{
-                        fontSize: '11px',
-                        padding: '4px 6px',
-                        border: '1px solid #D1D5DB',
-                        borderRadius: '4px',
-                        width: '100%',
-                        backgroundColor: 'white',
-                        fontFamily: 'inherit',
-                        color: '#374151'
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Conditional Video Fields */}
-          {format === 'video' && (
-            <div className="drawer-input-group media-field-section">
-              <label>Source de la Vidéo</label>
-              <div className="media-segmented-control" style={{ marginBottom: '10px' }}>
-                <button
-                  type="button"
-                  className={`segmented-btn ${videoSourceType === 'url' ? 'active' : ''}`}
-                  onClick={() => setVideoSourceType('url')}
-                >
-                  Lien Externe
-                </button>
-                <button
-                  type="button"
-                  className={`segmented-btn ${videoSourceType === 'upload' ? 'active' : ''}`}
-                  onClick={() => setVideoSourceType('upload')}
-                >
-                  Uploader
-                </button>
-              </div>
-
-              {videoSourceType === 'url' ? (
-                <input
-                  type="url"
-                  required={format === 'video' && videoSourceType === 'url'}
-                  className="drawer-text-input"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=..."
-                />
-              ) : (
-                <>
-                  <div className="media-drag-drop-zone">
-                    <input
-                      type="file"
-                      id="drawer-video-file"
-                      accept="video/mp4"
-                      style={{ display: 'none' }}
-                      onChange={handleVideoFileChange}
-                    />
-                    <label htmlFor="drawer-video-file" className="drag-drop-label">
-                      <span className="material-symbols-outlined drag-drop-icon">videocam</span>
-                      <span>Glissez-déposez votre vidéo MP4 ici ou <strong>parcourez</strong></span>
-                    </label>
-                  </div>
-                  {videoFileName && (
-                    <div className="file-upload-status-card">
-                      <div className="file-info">
-                        <div className="video-thumbnail-placeholder">
-                          <span className="material-symbols-outlined">movie</span>
-                        </div>
-                        <div className="file-details">
-                          <span className="file-name">{videoFileName}</span>
-                          <span className="file-progress-percent">{videoUploadProgress}%</span>
-                        </div>
-                      </div>
-                      <div className="progress-bar-container">
-                        <div className="progress-bar-fill" style={{ width: `${videoUploadProgress}%` }} />
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Conditional Audio Fields */}
-          {format === 'audio' && (
-            <div className="drawer-input-group media-field-section">
-              <label>Piste Audio</label>
-              <div className="media-drag-drop-zone">
-                <input
-                  type="file"
-                  id="drawer-audio-file"
-                  accept="audio/mpeg,audio/wav"
-                  style={{ display: 'none' }}
-                  onChange={handleAudioFileChange}
-                />
-                <label htmlFor="drawer-audio-file" className="drag-drop-label">
-                  <span className="material-symbols-outlined drag-drop-icon">mic</span>
-                  <span>Glissez-déposez votre fichier audio (.mp3, .wav) ou <strong>parcourez</strong></span>
-                </label>
-              </div>
-              {audioFileName && (
-                <div className="file-upload-status-card">
-                  <div className="file-info" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
-                    <div className="file-details">
-                      <span className="file-name">{audioFileName}</span>
-                      <span className="file-progress-percent">{audioUploadProgress}%</span>
-                    </div>
-                    {/* Visual Audio Wave */}
-                    <div className="audio-wave-preview">
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '14px' }}></div>
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '24px' }}></div>
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '18px' }}></div>
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '28px' }}></div>
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '32px' }}></div>
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '20px' }}></div>
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '10px' }}></div>
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '26px' }}></div>
-                      <div className={`wave-bar ${audioIsUploading ? 'animating' : ''}`} style={{ height: '16px' }}></div>
-                    </div>
-                  </div>
-                  <div className="progress-bar-container">
-                    <div className="progress-bar-fill" style={{ width: `${audioUploadProgress}%` }} />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Author input (Pre-populated) */}
-          <div className="drawer-input-group">
-            <label htmlFor="drawer-author">Auteur</label>
-            <input
-              id="drawer-author"
-              type="text"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              placeholder="Nom de l'auteur"
-              required
-              className="drawer-text-input"
-            />
-          </div>
-
-          {/* Category Selector (Universes) */}
-          <div className="drawer-input-group">
-            <label htmlFor="drawer-category">Univers / Magazine</label>
-            <div className="select-wrapper">
-              <select
-                id="drawer-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="drawer-select"
-              >
-                {UNIVERSES.map((universe) => (
-                  <option key={universe.id} value={universe.id}>
-                    {universe.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Rich Content Editor (Editorial WYSIWYG) & Inline Asset Helper side-by-side */}
-          <div className="drawer-input-group" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-            <label>Contenu éditorial (Texte Enrichi)</label>
-            <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch' }}>
-              <div className="rich-editor-container" style={{ flex: 2 }}>
-                <div className="rich-editor-toolbar">
-                  <button 
-                    type="button" 
-                    onClick={() => execEditorCommand('bold')}
-                    className="toolbar-btn" 
-                    title="Gras"
-                  >
-                    <span className="material-symbols-outlined">format_bold</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => execEditorCommand('italic')}
-                    className="toolbar-btn" 
-                    title="Italique"
-                  >
-                    <span className="material-symbols-outlined">format_italic</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => execEditorCommand('underline')}
-                    className="toolbar-btn" 
-                    title="Souligné"
-                  >
-                    <span className="material-symbols-outlined">format_underlined</span>
-                  </button>
-                  
-                  <span className="toolbar-divider"></span>
-                  
-                  <button 
-                    type="button" 
-                    onClick={() => execEditorCommand('formatBlock', '<h2>')}
-                    className="toolbar-btn" 
-                    title="Titre H2"
-                  >
-                    <span className="material-symbols-outlined">title</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => execEditorCommand('formatBlock', '<blockquote>')}
-                    className="toolbar-btn" 
-                    title="Citation"
-                  >
-                    <span className="material-symbols-outlined">format_quote</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => execEditorCommand('insertUnorderedList')}
-                    className="toolbar-btn" 
-                    title="Liste à puces"
-                  >
-                    <span className="material-symbols-outlined">format_list_bulleted</span>
-                  </button>
-                  
-                  <span className="toolbar-divider"></span>
-                  
-                  <button 
-                    type="button" 
-                    onClick={handleAddLink}
-                    className="toolbar-btn" 
-                    title="Insérer un lien"
-                  >
-                    <span className="material-symbols-outlined">link</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => execEditorCommand('removeFormat')}
-                    className="toolbar-btn" 
-                    title="Effacer les styles"
-                  >
-                    <span className="material-symbols-outlined">format_clear</span>
-                  </button>
-                </div>
-
-                <div 
-                  ref={editorRef}
-                  className="rich-editor-area"
-                  contentEditable={true}
-                  onInput={handleEditorInput}
-                  placeholder="Écrivez le corps de l'article ici..."
-                  style={{ minHeight: '220px' }}
-                />
-              </div>
-
-              {/* Inline Asset Helper Panel */}
-              <div 
-                className="inline-assets-helper-panel" 
-                style={{ 
-                  flex: 1, 
-                  border: '1px solid #E5E7EB', 
-                  borderRadius: '8px', 
-                  padding: '15px', 
-                  backgroundColor: '#F9FAFB', 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  maxHeight: '290px',
-                  overflowY: 'auto'
-                }}
-              >
-                <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--admin-accent-color)' }}>photo_library</span>
-                  Images du dossier
-                </div>
-
-                {(!coverImage && articleGallery.length === 0) ? (
-                  <div style={{ fontSize: '11px', color: '#9CA3AF', textAlign: 'center', margin: 'auto 0' }}>
-                    Aucune photo téléversée pour le moment.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {coverImage && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'white', padding: '8px', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={coverImage} alt="Couverture" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--admin-accent-color)' }}>Image à la une</div>
-                          <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (editorRef.current) {
-                                  editorRef.current.focus();
-                                  document.execCommand('insertImage', false, coverImage);
-                                }
-                              }}
-                              style={{ fontSize: '10px', border: 'none', background: 'var(--admin-accent-color)', color: 'white', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                              Insérer
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(coverImage);
-                                alert("URL copiée dans le presse-papiers !");
-                              }}
-                              style={{ fontSize: '10px', border: '1px solid #D1D5DB', background: 'white', color: '#374151', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                              Copier
-                            </button>
+                    {videoSourceType === 'url' ? (
+                      <input
+                        type="url"
+                        className="drawer-text-input"
+                        value={videoUrl}
+                        onChange={(e) => setVideoUrl(e.target.value)}
+                        placeholder="https://youtube.com/watch?v=..."
+                      />
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px' }}>Le fichier sélectionné sera uploadé lors de la sauvegarde.</div>
+                        <button type="button" className="cover-placeholder-btn" onClick={() => { setMediaModalTarget('video'); setIsMediaModalOpen(true); }}>
+                          <span className="material-symbols-outlined">videocam</span>
+                          {videoFileName ? videoFileName : 'Choisir une vidéo depuis la médiathèque'}
+                        </button>
+                        {videoUploadProgress > 0 && videoUploadProgress < 100 && (
+                          <div className="upload-mini-progress" style={{ marginTop: '6px' }}>
+                            <div className="upload-mini-progress-fill" style={{ width: `${videoUploadProgress}%` }} />
                           </div>
-                        </div>
+                        )}
                       </div>
                     )}
+                  </div>
+                )}
 
-                    {articleGallery.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'white', padding: '8px', borderRadius: '6px', border: '1px solid #E5E7EB' }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.url} alt={`Gal-${idx}`} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '10px', fontWeight: '500', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {item.caption ? `« ${item.caption} »` : `Photo ${idx + 1}`}
-                          </div>
-                          <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (editorRef.current) {
-                                  editorRef.current.focus();
-                                  document.execCommand('insertImage', false, item.url);
-                                }
-                              }}
-                              style={{ fontSize: '10px', border: 'none', background: 'var(--admin-accent-color)', color: 'white', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                              Insérer
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(item.url);
-                                alert("URL copiée dans le presse-papiers !");
-                              }}
-                              style={{ fontSize: '10px', border: '1px solid #D1D5DB', background: 'white', color: '#374151', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                              Copier
-                            </button>
-                          </div>
-                        </div>
+                {/* Audio source (if format = audio) */}
+                {format === 'audio' && (
+                  <div style={{ marginTop: '14px', borderTop: '1px solid #EAEAEA', paddingTop: '14px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888888', marginBottom: '8px' }}>Piste Audio</div>
+                    <button type="button" className="cover-placeholder-btn" onClick={() => { setMediaModalTarget('audio'); setIsMediaModalOpen(true); }}>
+                      <span className="material-symbols-outlined">mic</span>
+                      {audioFileName ? audioFileName.split('/').pop() : 'Choisir un fichier audio depuis la médiathèque'}
+                    </button>
+                    {audioUploadProgress > 0 && audioUploadProgress < 100 && (
+                      <div className="upload-mini-progress" style={{ marginTop: '6px' }}>
+                        <div className="upload-mini-progress-fill" style={{ width: `${audioUploadProgress}%` }} />
                       </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 3: CONTENU ÉDITORIAL */}
+              <div className="editor-section">
+                <div className="editor-section-title">
+                  <span className="material-symbols-outlined">edit</span>
+                  Contenu éditorial
+                </div>
+
+                {/* Inline asset helper — compact bar above editor */}
+                {(coverImage || articleGallery.length > 0) && (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px', padding: '8px', background: '#FFFFFF', border: '1px solid #EAEAEA', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888888', alignSelf: 'center', marginRight: '4px' }}>
+                      Insérer :
+                    </span>
+                    {coverImage && (
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          if (editorRef.current) {
+                            document.execCommand('insertImage', false, coverImage);
+                          }
+                        }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 600, padding: '3px 7px', border: '1px solid #EAEAEA', borderRadius: '3px', background: '#FAF9F6', cursor: 'pointer', color: '#374151' }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={coverImage} alt="" style={{ width: '16px', height: '16px', objectFit: 'cover', borderRadius: '2px' }} />
+                        Couverture
+                      </button>
+                    )}
+                    {articleGallery.map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          if (editorRef.current) {
+                            document.execCommand('insertImage', false, item.url);
+                          }
+                        }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 600, padding: '3px 7px', border: '1px solid #EAEAEA', borderRadius: '3px', background: '#FAF9F6', cursor: 'pointer', color: '#374151' }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.url} alt="" style={{ width: '16px', height: '16px', objectFit: 'cover', borderRadius: '2px' }} />
+                        Photo {idx + 1}
+                      </button>
                     ))}
                   </div>
                 )}
+
+                {/* WYSIWYG toolbar */}
+                <div className="rich-editor-container">
+                  <div className="rich-editor-toolbar">
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('bold')} className="toolbar-btn" title="Gras">
+                      <span className="material-symbols-outlined">format_bold</span>
+                    </button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('italic')} className="toolbar-btn" title="Italique">
+                      <span className="material-symbols-outlined">format_italic</span>
+                    </button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('underline')} className="toolbar-btn" title="Souligné">
+                      <span className="material-symbols-outlined">format_underlined</span>
+                    </button>
+
+                    <span className="toolbar-divider"></span>
+
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('formatBlock', '<h2>')} className="toolbar-btn" title="Titre H2">
+                      <span className="material-symbols-outlined">title</span>
+                    </button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('formatBlock', '<blockquote>')} className="toolbar-btn" title="Citation">
+                      <span className="material-symbols-outlined">format_quote</span>
+                    </button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('insertUnorderedList')} className="toolbar-btn" title="Liste à puces">
+                      <span className="material-symbols-outlined">format_list_bulleted</span>
+                    </button>
+
+                    <span className="toolbar-divider"></span>
+
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setMediaModalTarget('editor'); setIsMediaModalOpen(true); }} className="toolbar-btn" title="Insérer une image">
+                      <span className="material-symbols-outlined">add_photo_alternate</span>
+                    </button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleAddLink} className="toolbar-btn" title="Insérer un lien">
+                      <span className="material-symbols-outlined">link</span>
+                    </button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('removeFormat')} className="toolbar-btn" title="Effacer les styles">
+                      <span className="material-symbols-outlined">format_clear</span>
+                    </button>
+                  </div>
+
+                  <div
+                    ref={editorRef}
+                    className="editor-wysiwyg-area"
+                    contentEditable={true}
+                    onInput={handleEditorInput}
+                    placeholder="Écrivez le corps de l'article ici..."
+                  />
+                </div>
               </div>
-            </div>
-          </div>
+
+              {/* SECTION 4: OPTIONS */}
+              <div className="editor-section">
+                <div className="editor-section-title">
+                  <span className="material-symbols-outlined">tune</span>
+                  Options de publication
+                </div>
+                <div className="editor-vip-toggle">
+                  <div className="editor-vip-label">
+                    <span>Accès VIP uniquement</span>
+                    <span>Restreindre cet article aux membres abonnés au Club DONA.</span>
+                  </div>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={isVipOnly}
+                      onChange={(e) => setIsVipOnly(e.target.checked)}
+                    />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+                <div className="editor-vip-toggle" style={{ marginTop: '12px' }}>
+                  <div className="editor-vip-label">
+                    <span>Publier l'article</span>
+                    <span>Rendre l'article visible publiquement sur le site (sinon, il reste en brouillon).</span>
+                  </div>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={status === 'Published'}
+                      onChange={(e) => setStatus(e.target.checked ? 'Published' : 'Draft')}
+                    />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+              </div>
 
             </div>
-          ) : (
-            <div className="drawer-preview-scrollable" style={{ flex: 1, overflowY: 'auto', padding: '24px', backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: '8px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ 
-                  textTransform: 'uppercase', 
-                  fontSize: '11px', 
-                  fontWeight: '700', 
-                  letterSpacing: '1px', 
-                  color: 'var(--admin-accent-color)', 
-                  backgroundColor: '#F3F4F6', 
-                  padding: '4px 10px', 
-                  borderRadius: '4px' 
-                }}>
-                  {UNIVERSES.find(u => u.id === category)?.name.substring(4) || category}
-                </span>
-                {isVipOnly && (
-                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#B45309', backgroundColor: '#FEF3C7', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>lock</span> VIP
-                  </span>
+
+            {/* ====== RIGHT COLUMN: LIVE PREVIEW ====== */}
+            <div className="editor-right-col">
+              <div className="live-preview-header">
+                <div className="preview-live-dot"></div>
+                Aperçu en direct — Template Public
+              </div>
+
+              <div className="live-preview-body">
+
+                {/* Badge + VIP */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span className="preview-badge">{categoryLabel.toUpperCase()}</span>
+                  {isVipOnly && (
+                    <span className="preview-vip-badge">
+                      <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>lock</span>
+                      VIP
+                    </span>
+                  )}
+                </div>
+
+                {/* Title */}
+                <h1 className="preview-title">
+                  {title || <span style={{ color: '#CCCCCC', fontStyle: 'italic', fontSize: '20px' }}>Titre de l&apos;article...</span>}
+                </h1>
+
+                {/* Meta bar */}
+                <div className="preview-meta-bar">
+                  <span>PAR <strong>{(author || 'RÉDACTION').toUpperCase()}</strong></span>
+                  <span>•</span>
+                  <span>{previewDate}</span>
+                  {format === 'audio' && <><span>•</span><span>🎙 PODCAST</span></>}
+                  {format === 'video' && <><span>•</span><span>▶ VIDÉO</span></>}
+                </div>
+
+                {/* Hero image — ratio 21:9 comme le template public */}
+                {coverImage ? (
+                  <div className="preview-hero-image">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={coverImage} alt={title} />
+                  </div>
+                ) : (
+                  <div className="preview-hero-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '12px', color: '#CCCCCC', fontStyle: 'italic' }}>Image à la une (ratio 21:9)</span>
+                  </div>
                 )}
-              </div>
 
-              <h1 style={{ 
-                fontSize: '26px', 
-                fontWeight: '800', 
-                color: '#111827', 
-                lineHeight: '1.2', 
-                margin: 0,
-                fontFamily: 'var(--font-outfit), sans-serif'
-              }}>
-                {title || "Sans titre"}
-              </h1>
-
-              <div style={{ fontSize: '13px', color: '#6B7280', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #F3F4F6', paddingBottom: '15px' }}>
-                <span>Par <strong>{author || "Rédaction"}</strong></span>
-                <span>•</span>
-                <span>{new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-              </div>
-
-              {coverImage && (
-                <div style={{ width: '100%', height: '220px', borderRadius: '8px', overflow: 'hidden' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={coverImage} alt="Image à la une" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-              )}
-
-              {format === 'video' && (
-                <div style={{ backgroundColor: '#111827', borderRadius: '8px', padding: '24px', color: 'white', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#9CA3AF' }}>play_circle</span>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold' }}>Lecteur Vidéo Intégré</div>
-                    <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px', wordBreak: 'break-all' }}>
-                      {videoSourceType === 'url' ? `Lien externe : ${videoUrl}` : `Fichier téléversé : ${videoFileName}`}
+                {/* Video block */}
+                {format === 'video' && (videoUrl || videoFileName) && (
+                  <div className="preview-video-block">
+                    <span className="material-symbols-outlined" style={{ fontSize: '40px', color: '#9CA3AF' }}>play_circle</span>
+                    <div style={{ fontSize: '13px', fontWeight: 600 }}>Lecteur Vidéo</div>
+                    <div style={{ fontSize: '11px', color: '#9CA3AF', wordBreak: 'break-all' }}>
+                      {videoSourceType === 'url' ? videoUrl : videoFileName}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {format === 'audio' && (
-                <div style={{ backgroundColor: '#F3F4F6', borderRadius: '8px', padding: '15px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--admin-accent-color)' }}>play_circle</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1F2937' }}>Podcast Audio</div>
-                    <div style={{ fontSize: '11px', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {audioFileName || "Aucune piste audio configurée"}
+                {/* Audio block */}
+                {format === 'audio' && audioFileName && (
+                  <div className="preview-audio-block">
+                    <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--admin-accent-color)' }}>play_circle</span>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#1F2937' }}>Podcast Audio</div>
+                      <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{audioFileName.split('/').pop()}</div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div 
-                className="article-preview-body"
-                style={{ 
-                  fontSize: '15px', 
-                  lineHeight: '1.6', 
-                  color: '#374151',
-                  minHeight: '100px'
-                }}
-                dangerouslySetInnerHTML={{ __html: content || "<p style='color: #9CA3AF; font-style: italic;'>Saisissez du contenu éditorial pour afficher un aperçu...</p>" }}
-              />
+                {/* Article body */}
+                {content ? (
+                  <div
+                    className="preview-article-body"
+                    dangerouslySetInnerHTML={{ __html: content }}
+                  />
+                ) : (
+                  <p className="preview-empty-state">Commencez à écrire pour voir l&apos;aperçu ici...</p>
+                )}
 
-              {articleGallery.length > 0 && (
-                <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '20px', marginTop: '10px' }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--admin-accent-color)' }}>collections</span>
-                    Galerie Photos
-                  </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
+                {/* Gallery grid */}
+                {articleGallery.length > 0 && (
+                  <div className="preview-gallery-grid">
                     {articleGallery.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <div style={{ width: '100%', height: '130px', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB' }}>
+                      <div key={idx} className="preview-gallery-item">
+                        <div className="preview-gallery-item-img">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={item.url} alt={`Gallery ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={item.url} alt={item.caption || `Photo ${idx + 1}`} />
                         </div>
                         {item.caption && (
-                          <span style={{ fontSize: '11px', color: '#6B7280', fontStyle: 'italic', lineHeight: '1.3' }}>{item.caption}</span>
+                          <span className="preview-gallery-item-caption">{item.caption}</span>
                         )}
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
 
-          {/* VIP Toggle Switch */}
-          <div className="drawer-toggle-group">
-            <div className="toggle-info">
-              <span className="toggle-label">Accès VIP uniquement</span>
-              <span className="toggle-desc">Restreindre cet article aux membres abonnés au Club DONA.</span>
-            </div>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={isVipOnly}
-                onChange={(e) => setIsVipOnly(e.target.checked)}
-              />
-              <span className="slider round"></span>
-            </label>
-          </div>
+                {/* VIP Paywall preview */}
+                {isVipOnly && (
+                  <div className="preview-vip-banner">
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#B45309' }}>lock</span>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#92400E' }}>Contenu Réservé aux Membres VIP</div>
+                    <div style={{ fontSize: '11px', color: '#B45309' }}>Un mur d&apos;abonnement sera affiché à cet emplacement.</div>
+                  </div>
+                )}
 
-          {/* Action Buttons */}
-          <div className="drawer-actions">
-            <button 
-              type="button" 
-              className="btn-drawer secondary" 
-              onClick={onClose}
-            >
-              Annuler
-            </button>
-            <button 
-              type="submit" 
-              className="btn-drawer primary"
-              disabled={videoIsUploading || audioIsUploading}
-            >
-              {article ? "Enregistrer" : "Publier"}
-            </button>
+              </div>
+            </div>
+
           </div>
         </form>
       </div>
+
+      <MediaPickerModal 
+        isOpen={isMediaModalOpen}
+        onClose={() => {
+          setIsMediaModalOpen(false);
+          setMediaModalTarget(null);
+        }}
+        onSelect={(url) => {
+          if (mediaModalTarget === 'cover') {
+            setCoverImage(url);
+            setCoverImageFileName(url.split('/').pop());
+          } else if (mediaModalTarget === 'gallery') {
+            setArticleGallery(prev => [...prev, { url, caption: '' }]);
+          } else if (mediaModalTarget === 'video') {
+            setVideoUrl(url);
+            setVideoFileName(url.split('/').pop());
+          } else if (mediaModalTarget === 'audio') {
+            setAudioFileName(url.split('/').pop());
+          } else if (mediaModalTarget === 'editor') {
+            if (editorRef.current) {
+              editorRef.current.focus();
+              document.execCommand('insertImage', false, url);
+              setContent(editorRef.current.innerHTML);
+            }
+          }
+          setIsMediaModalOpen(false);
+          setMediaModalTarget(null);
+        }}
+      />
     </div>
   );
 }

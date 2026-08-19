@@ -10,7 +10,7 @@ import DossierDrawer from '../components/DossierDrawer';
 import ReplayDrawer from '../components/ReplayDrawer';
 import PlanDrawer from '../components/PlanDrawer';
 import MemberDrawer from '../components/MemberDrawer';
-
+import { getStorageItem, setStorageItem } from '@/lib/storage';
 // The 16 official magazine universes for category matching
 const UNIVERSES = [
   { id: "intelligence", name: "01. Intelligence" },
@@ -450,15 +450,15 @@ export default function AdminCatchAllPage({ params }) {
       if (isEdit) {
         setDossiers(prev => prev.map(dos => dos.id === savedDossier.id ? mapped : dos));
         // Persist local edits
-        const localCustom = JSON.parse(localStorage.getItem('dona_custom_dossiers') || '[]');
+        const localCustom = await getStorageItem('dona_custom_dossiers', []);
         const updatedCustom = localCustom.map(dos => dos.id === savedDossier.id ? mapped : dos);
-        localStorage.setItem('dona_custom_dossiers', JSON.stringify(updatedCustom));
+        await setStorageItem('dona_custom_dossiers', updatedCustom);
         alert("Modifications enregistrées avec succès.");
       } else {
         setDossiers(prev => [...prev, mapped]);
         // Persist new entry
-        const localCustom = JSON.parse(localStorage.getItem('dona_custom_dossiers') || '[]');
-        localStorage.setItem('dona_custom_dossiers', JSON.stringify([...localCustom, mapped]));
+        const localCustom = await getStorageItem('dona_custom_dossiers', []);
+        await setStorageItem('dona_custom_dossiers', [...localCustom, mapped]);
         alert("La publication a été mise en ligne sur le serveur principal.");
       }
     } catch (err) {
@@ -467,10 +467,10 @@ export default function AdminCatchAllPage({ params }) {
     }
   };
 
-  const handleDeleteDossier = (id) => {
+  const handleDeleteDossier = async (id) => {
     setDossiers(prev => prev.filter(dos => dos.id !== id));
-    const localCustom = JSON.parse(localStorage.getItem('dona_custom_dossiers') || '[]');
-    localStorage.setItem('dona_custom_dossiers', JSON.stringify(localCustom.filter(dos => dos.id !== id)));
+    const localCustom = await getStorageItem('dona_custom_dossiers', []);
+    await setStorageItem('dona_custom_dossiers', localCustom.filter(dos => dos.id !== id));
   };
 
   useEffect(() => {
@@ -483,30 +483,45 @@ export default function AdminCatchAllPage({ params }) {
         let fetchedArticles = [];
         if (articlesRes.ok) {
           const wpArticles = await articlesRes.json();
-          fetchedArticles = wpArticles.map(art => ({
-            id: art.id,
-            type: art.format === 'video' ? 'Vidéo' : art.format === 'audio' ? 'Podcast' : 'Article',
-            title: art.title,
-            author: "Rédaction",
-            category: art.category,
-            status: art.status,
-            updated: "Synchronisé",
-            content: art.content,
-            format: art.format,
-            videoUrl: art.videoUrl,
-            audioFile: art.audioFile,
-            isVipOnly: art.isVipOnly
-          }));
+          if (Array.isArray(wpArticles)) {
+            fetchedArticles = wpArticles.map(art => ({
+              id: art.id,
+              type: art.format === 'video' ? 'Vidéo' : art.format === 'audio' ? 'Podcast' : 'Article',
+              title: art.title || "Sans titre",
+              author: art.author || "Rédaction",
+              category: art.category || "General",
+              status: art.status || "Draft",
+              updated: art.updated || "Synchronisé",
+              content: art.content || "",
+              format: art.format || "text",
+              videoUrl: art.videoUrl || "",
+              audioFile: art.audioFile || "",
+              isVipOnly: art.isVipOnly || false
+            }));
+          }
         }
 
-        const localCustomArticles = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
-        const combinedArticles = [...localCustomArticles, ...fetchedArticles];
+        const localCustomArticles = await getStorageItem('dona_custom_articles', []);
+        
+        const combinedArticles = [];
+        const seenIds = new Set();
+        
+        // Combine fetched and local, keeping unique IDs
+        [...fetchedArticles, ...localCustomArticles].forEach(art => {
+          const idStr = String(art.id);
+          if (!seenIds.has(idStr)) {
+            seenIds.add(idStr);
+            combinedArticles.push(art);
+          }
+        });
 
         setArticles(prev => {
           const combined = [...combinedArticles];
-          prev.forEach(p => {
-            if (!combined.some(c => c.title === p.title || c.id === p.id)) {
+          (Array.isArray(prev) ? prev : []).forEach(p => {
+            const idStr = String(p.id);
+            if (!seenIds.has(idStr)) {
               combined.push(p);
+              seenIds.add(idStr);
             }
           });
           return combined;
@@ -515,18 +530,20 @@ export default function AdminCatchAllPage({ params }) {
         let fetchedDossiers = [];
         if (dossiersRes.ok) {
           const wpDossiers = await dossiersRes.json();
-          fetchedDossiers = wpDossiers.map(dos => ({
-            id: dos.id,
-            title: dos.title,
-            description: dos.description,
-            coverImage: dos.coverImage || "/assets/core/img/vault-1.png",
-            articles: dos.articles,
-            isVipOnly: dos.isVipOnly,
-            updated: "Synchronisé"
-          }));
+          if (Array.isArray(wpDossiers)) {
+            fetchedDossiers = wpDossiers.map(dos => ({
+              id: dos.id,
+              title: dos.title || "Sans titre",
+              description: dos.description || "",
+              coverImage: dos.coverImage || "/assets/core/img/vault-1.png",
+              articles: dos.articles || [],
+              isVipOnly: dos.isVipOnly || false,
+              updated: "Synchronisé"
+            }));
+          }
         }
 
-        const localCustomDossiers = JSON.parse(localStorage.getItem('dona_custom_dossiers') || '[]');
+        const localCustomDossiers = await getStorageItem('dona_custom_dossiers', []);
         const combinedDossiers = [...localCustomDossiers, ...fetchedDossiers];
 
         setDossiers(prev => {
@@ -694,14 +711,14 @@ export default function AdminCatchAllPage({ params }) {
       const isEdit = articles.some(art => art.id === savedArticle.id);
       if (isEdit) {
         setArticles(prev => prev.map(art => art.id === savedArticle.id ? mapped : art));
-        const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
+        const localCustom = await getStorageItem('dona_custom_articles', []);
         const updatedCustom = localCustom.map(art => art.id === savedArticle.id ? mapped : art);
-        localStorage.setItem('dona_custom_articles', JSON.stringify(updatedCustom));
+        await setStorageItem('dona_custom_articles', updatedCustom);
         alert("Modifications enregistrées avec succès.");
       } else {
         setArticles(prev => [mapped, ...prev]);
-        const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
-        localStorage.setItem('dona_custom_articles', JSON.stringify([mapped, ...localCustom]));
+        const localCustom = await getStorageItem('dona_custom_articles', []);
+        await setStorageItem('dona_custom_articles', [mapped, ...localCustom]);
         alert("La publication a été mise en ligne sur le serveur principal.");
       }
     } catch (err) {
@@ -710,10 +727,10 @@ export default function AdminCatchAllPage({ params }) {
     }
   };
 
-  const handleDeleteArticle = (id) => {
+  const handleDeleteArticle = async (id) => {
     setArticles(prev => prev.filter(a => a.id !== id));
-    const localCustom = JSON.parse(localStorage.getItem('dona_custom_articles') || '[]');
-    localStorage.setItem('dona_custom_articles', JSON.stringify(localCustom.filter(a => a.id !== id)));
+    const localCustom = await getStorageItem('dona_custom_articles', []);
+    await setStorageItem('dona_custom_articles', localCustom.filter(a => a.id !== id));
   };
 
   // Video Handlers
@@ -826,7 +843,9 @@ export default function AdminCatchAllPage({ params }) {
                     <tr key={art.id}>
                       <td className="cell-bold">{art.title}</td>
                       <td>{art.author}</td>
-                      <td style={{ color: '#888888' }}>{art.category}</td>
+                      <td style={{ color: '#888888' }}>
+                        {UNIVERSES.find(u => u.id === art.category || `magazine-${u.id}` === art.category || art.category?.includes(u.id) || u.name === art.category)?.name || art.category}
+                      </td>
                       <td>
                         <span className={`badge ${(art.status || 'Draft').toLowerCase()}`}>
                           {art.status || 'Draft'}

@@ -1,16 +1,27 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { magazines } from '../data';
+import { magazines as staticMagazines } from '../data';
+import { fetchArticles, fetchMagazineConfig } from '@/lib/wordpress';
 
 export default async function Page({ params }) {
   const resolvedParams = await params;
   const { magazineSlug } = resolvedParams;
 
-  const magazine = magazines.find(m => m.slug === magazineSlug || m.slug.replace(/^magazine-\d{2}-/, '') === magazineSlug);
-  if (!magazine) {
+  const baseMag = staticMagazines.find(m => m.slug === magazineSlug || m.slug.replace(/^magazine-\d{2}-/, '') === magazineSlug);
+  const dynamicConfig = await fetchMagazineConfig(magazineSlug);
+
+  if (!baseMag && !dynamicConfig) {
     notFound();
   }
+
+  const magazine = {
+    ...baseMag,
+    ...dynamicConfig
+  };
+
+  const dynamicArticles = await fetchArticles({ category: magazine.slug });
+  const displayArticles = dynamicArticles.length > 0 ? dynamicArticles : (magazine.articles || []);
 
   const primaryColor = magazine.themePrimary || "#a31835";
   const secondaryColor = magazine.themeSecondary || "#3d0c1b";
@@ -270,25 +281,56 @@ export default async function Page({ params }) {
         </section>
 
         {/* D. Articles Grid */}
-        <section className="mag-articles container section-padding" style={{ padding: "80px 20px" }}>
+        <section className="mag-articles container section-padding" id="articles" style={{ padding: "80px 20px" }}>
           <h2 style={{
             fontFamily: "var(--font-secondary)",
             fontSize: "28px",
             fontWeight: "700",
             color: "var(--color-text)",
             textAlign: "center",
-            marginBottom: "48px",
+            marginBottom: "24px",
             letterSpacing: "-0.01em"
           }}>
             Dernières parutions
           </h2>
-          
+
+          {/* Dynamic Tabs (Categories) Bar */}
+          {magazine.tabs && magazine.tabs.length > 0 && (
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              flexWrap: "wrap",
+              gap: "12px",
+              marginBottom: "40px"
+            }}>
+              {magazine.tabs.filter(t => !t.hidden).map((tab, idx) => (
+                <span 
+                  key={tab.id || idx}
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    background: idx === 0 ? primaryColor : "var(--color-bg)",
+                    color: idx === 0 ? "#FFFFFF" : "var(--color-text)",
+                    border: "1px solid var(--color-border)",
+                    cursor: "pointer"
+                  }}
+                >
+                  {tab.name}
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="mag-articles-grid" style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: "32px"
           }}>
-            {magazine.articles.map((art, idx) => (
+            {displayArticles.map((art, idx) => (
               <article key={idx} className="mag-article" style={{
                 display: "flex",
                 flexDirection: "column",

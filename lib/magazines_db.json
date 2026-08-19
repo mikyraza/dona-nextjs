@@ -1,0 +1,167 @@
+[
+  {
+    "id": 1,
+    "slug": "magazine-01-intelligence",
+    "title": "Intelligence",
+    "subtitle": "Savoir & Décision Stratégique 2026",
+    "description": "Stratégies et analyses pour un esprit affûté.",
+    "themePrimary": "#a31835",
+    "themeSecondary": "#3d0c1b",
+    "gradient": "linear-gradient(135deg, #2b1126, #411d3d)",
+    "heroImage": "/assets/core/img/mag_hero_01.png",
+    "heroButtons": [
+      {
+        "id": "btn-1",
+        "label": "Explorer les Éditions",
+        "url": "#articles",
+        "visible": true
+      },
+      {
+        "id": "btn-2",
+        "label": "S'abonner au Magazine",
+        "url": "/abonnement",
+        "visible": true
+      }
+    ],
+    "essenceTitle": "L'Essence de l'Intelligence",
+    "essenceText": "Sous la direction de la Pr Nora Patrius, ce magazine explore les frontières de la connaissance stratégique. Nous décryptons les signaux faibles pour transformer l'information brute en une intelligence actionnable pour les décideurs de demain.",
+    "essenceQuote": "L'intelligence n'est pas seulement l'accumulation de données, c'est l'art de discerner le motif au milieu du chaos.",
+    "essenceImage": "/assets/core/img/mag_hero_02.png",
+    "tabs": [
+      {
+        "id": "tab-1",
+        "slug": "the-pulse",
+        "name": "The Pulse",
+        "order": 1,
+        "defaultActive": true,
+        "hidden": false
+      },
+      {
+        "id": "tab-2",
+        "slug": "ia-generative",
+        "name": "IA Générative",
+        "order": 2,
+        "defaultActive": false,
+        "hidden": false
+      },
+      {
+        "id": "tab-3",
+        "slug": "cybersecurite",
+        "name": "Cybersécurité",
+        "order": 3,
+        "defaultActive": false,
+        "hidden": false
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-hero",
+        "type": "HERO",
+        "name": "Hero Banner",
+        "visible": true,
+        "order": 1
+      },
+      {
+        "id": "sec-essence",
+        "type": "PRESENTATION",
+        "name": "Présentation Éditoriale",
+        "visible": true,
+        "order": 2
+      },
+      {
+        "id": "sec-tabs",
+        "type": "CATEGORIES_FEED",
+        "name": "Onglets & Articles",
+        "visible": true,
+        "order": 3
+      },
+      {
+        "id": "sec-tools",
+        "type": "TOOLS",
+        "name": "Outils & Services",
+        "visible": true,
+        "order": 4
+      },
+      {
+        "id": "sec-cta",
+        "type": "CTA_PREMIUM",
+        "name": "Appel à l'Abonnement",
+        "visible": true,
+        "order": 5
+      }
+    ],
+    "updatedAt": "2026-07-23T11:58:16.779Z"
+  },
+  {
+    "id": 2,
+    "slug": "magazine-02-power-lab",
+    "title": "Power Lab",
+    "subtitle": "Innovation & Performance",
+    "description": "L'innovation et la performance redéfinies.",
+    "themePrimary": "#cf5c49",
+    "themeSecondary": "#4a1912",
+    "gradient": "linear-gradient(135deg, #a33827, #cf5c49)",
+    "heroImage": "/assets/core/img/home_mag_02_1782125769846.png",
+    "heroButtons": [
+      {
+        "id": "btn-1",
+        "label": "Voir les Projets",
+        "url": "#articles",
+        "visible": true
+      }
+    ],
+    "essenceTitle": "Laboratoire de Performance",
+    "essenceText": "Une immersion dans les technologies de pointe, l'optimisation des systèmes et les révolutions industrielles en cours.",
+    "essenceQuote": "La performance de demain s'invente à l'intersection de la rigueur scientifique et de la vision créative.",
+    "essenceImage": "/assets/core/img/mag_hero_04.png",
+    "tabs": [
+      {
+        "id": "tab-1",
+        "slug": "deep-tech",
+        "name": "Deep Tech",
+        "order": 1,
+        "defaultActive": true,
+        "hidden": false
+      },
+      {
+        "id": "tab-2",
+        "slug": "energie",
+        "name": "Énergie & Matériaux",
+        "order": 2,
+        "defaultActive": false,
+        "hidden": false
+      },
+      {
+        "id": "tab-3",
+        "slug": "biotech",
+        "name": "Biotechnologies",
+        "order": 3,
+        "defaultActive": false,
+        "hidden": false
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-hero",
+        "type": "HERO",
+        "name": "Hero Banner",
+        "visible": true,
+        "order": 1
+      },
+      {
+        "id": "sec-essence",
+        "type": "PRESENTATION",
+        "name": "Présentation Éditoriale",
+        "visible": true,
+        "order": 2
+      },
+      {
+        "id": "sec-tabs",
+        "type": "CATEGORIES_FEED",
+        "name": "Onglets & Articles",
+        "visible": true,
+        "order": 3
+      }
+    ]
+  }
+]

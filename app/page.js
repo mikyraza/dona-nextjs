@@ -1,7 +1,34 @@
 import React from 'react';
 import Link from 'next/link';
+import { fetchArticles } from '@/lib/wordpress';
 
-export default function Home() {
+export default async function Home() {
+  const articles = await fetchArticles();
+  
+  const mainFeature = articles.find(a => a.placementTarget === 'HERO_MAIN') || articles[0] || {
+    id: "hero-main-default",
+    title: "La Métamorphose du Pouvoir à l'Ère des Algorithmes",
+    category: "INTELLIGENCE",
+    desc: "Dans un monde en mutation constante, la capacité à naviguer dans l'incertitude devient le premier levier de puissance souveraine.",
+    author: "HÉLÈNE GIRARD",
+    updated: "8 MIN DE LECTURE",
+    coverImage: "assets/core/img/home_alaune_main_1782125698619.png"
+  };
+
+  const sideFeatures = articles.filter(a => a.id !== mainFeature.id).slice(0, 2);
+  const side1 = sideFeatures[0] || {
+    title: "L'Art de la Transmission",
+    category: "HÉRITAGE",
+    desc: "Comment préserver les valeurs au-delà du succès matériel.",
+    coverImage: "assets/core/img/home_alaune_side1_1782125709654.png"
+  };
+  const side2 = sideFeatures[1] || {
+    title: "Le Rituel du Matin Solaire",
+    category: "AGENDA",
+    desc: "Trois étapes pour aligner votre intention quotidienne.",
+    coverImage: "assets/core/img/home_alaune_side2_1782125722981.png"
+  };
+
   return (
     <>
       <section className="home-hero">
@@ -140,31 +167,31 @@ export default function Home() {
                 {/* Main Feature */}
                 <article className="alaune-main">
                     <div className="alaune-main-img">
-                        <span className="badge badge-red">INTELLIGENCE</span>
-                        <img src="assets/core/img/home_alaune_main_1782125698619.png" alt="Décoder la complexité" />
+                        <span className="badge badge-red">{mainFeature.category?.toUpperCase() || 'INTELLIGENCE'}</span>
+                        <img src={mainFeature.coverImage || "assets/core/img/home_alaune_main_1782125698619.png"} alt={mainFeature.title} />
                     </div>
-                    <h3 className="alaune-main-title">Décoder la Complexité : La nouvelle grammaire du Leadership</h3>
-                    <p className="alaune-main-desc">Dans un monde en mutation constante, la capacité à naviguer dans l'incertitude devient le premier levier de puissance souveraine.</p>
-                    <div className="alaune-meta">PAR HÉLÈNE GIRARD • 8 MIN DE LECTURE</div>
+                    <h3 className="alaune-main-title">{mainFeature.title}</h3>
+                    <p className="alaune-main-desc">{mainFeature.desc}</p>
+                    <div className="alaune-meta">PAR {mainFeature.author?.toUpperCase() || 'ÉLÉNA MORETTI'} • {mainFeature.updated || 'RÉCENT'}</div>
                 </article>
                 
                 {/* Side Features */}
                 <div className="alaune-side">
                     <article className="alaune-side-item">
-                        <img src="assets/core/img/home_alaune_side1_1782125709654.png" alt="Art de la transmission" className="alaune-side-img" />
+                        <img src={side1.coverImage || "assets/core/img/home_alaune_side1_1782125709654.png"} alt={side1.title} className="alaune-side-img" />
                         <div className="alaune-side-content">
-                            <span className="alaune-side-cat">HÉRITAGE</span>
-                            <h4 className="alaune-side-title">L'Art de la Transmission</h4>
-                            <p className="alaune-side-desc">Comment préserver les valeurs au-delà du succès matériel.</p>
+                            <span className="alaune-side-cat">{side1.category?.toUpperCase() || 'HÉRITAGE'}</span>
+                            <h4 className="alaune-side-title">{side1.title}</h4>
+                            <p className="alaune-side-desc">{side1.desc}</p>
                         </div>
                     </article>
                     
                     <article className="alaune-side-item">
-                        <img src="assets/core/img/home_alaune_side2_1782125722981.png" alt="Rituel du Matin" className="alaune-side-img" />
+                        <img src={side2.coverImage || "assets/core/img/home_alaune_side2_1782125722981.png"} alt={side2.title} className="alaune-side-img" />
                         <div className="alaune-side-content">
-                            <span className="alaune-side-cat">AGENDA</span>
-                            <h4 className="alaune-side-title">Le Rituel du Matin Solaire</h4>
-                            <p className="alaune-side-desc">Trois étapes pour aligner votre intention quotidienne.</p>
+                            <span className="alaune-side-cat">{side2.category?.toUpperCase() || 'AGENDA'}</span>
+                            <h4 className="alaune-side-title">{side2.title}</h4>
+                            <p className="alaune-side-desc">{side2.desc}</p>
                         </div>
                     </article>
                     

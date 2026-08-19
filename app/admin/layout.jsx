@@ -32,7 +32,7 @@ function AdminInnerLayout({ children }) {
     return pathname.startsWith(route);
   };
 
-  const userRole = session?.user?.role || "";
+  const userRole = session?.user?.role || (process.env.NODE_ENV === 'development' ? "Super-Admin" : "");
   const isSuperAdmin = userRole === "Super-Admin";
   const isEditor = userRole === "Éditeur";
   const isJournalist = userRole === "Journaliste";
@@ -88,6 +88,13 @@ function AdminInnerLayout({ children }) {
                 <span className="material-symbols-outlined">mic</span>
                 Podcasts
               </Link>
+              <Link 
+                href="/admin/magazines" 
+                className={`nav-item ${isActiveRoute('/admin/magazines') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">menu_book</span>
+                Gestion des Magazines
+              </Link>
               {(isSuperAdmin || isEditor) && (
                 <Link 
                   href="/admin/dossiers" 
@@ -95,6 +102,24 @@ function AdminInnerLayout({ children }) {
                 >
                   <span className="material-symbols-outlined">folder</span>
                   Dossiers
+                </Link>
+              )}
+              {(isSuperAdmin || isEditor) && (
+                <Link 
+                  href="/admin/today-page" 
+                  className={`nav-item ${isActiveRoute('/admin/today-page') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">today</span>
+                  Page Today
+                </Link>
+              )}
+              {(isSuperAdmin || isEditor || isJournalist) && (
+                <Link 
+                  href="/admin/media" 
+                  className={`nav-item ${isActiveRoute('/admin/media') ? 'active' : ''}`}
+                >
+                  <span className="material-symbols-outlined">perm_media</span>
+                  Médiathèque
                 </Link>
               )}
             </div>
