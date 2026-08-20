@@ -9,9 +9,24 @@ export default function Header() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isThemeDark, setIsThemeDark] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [hubData, setHubData] = useState({ liveTv: null, featuredVideo: null });
+  const timeoutRef = useRef(null);
   const headerRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Load video hub data for the Studio Mega Menu
+  useEffect(() => {
+    fetch('/api/videos')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const featured = data.videos.find(v => v.isFeatured) || data.videos[0];
+          setHubData({ liveTv: data.liveTv, featuredVideo: featured });
+        }
+      })
+      .catch(err => console.error("Failed to fetch hub data", err));
+  }, []);
 
   // Initialize theme from document element attribute
   useEffect(() => {
@@ -458,27 +473,31 @@ export default function Header() {
             <div className="studio-menu-grid">
               {/* Colonne 1: Navigation Audio/Video */}
               <div className="studio-col-nav">
-                <span className="studio-section-title">CATÉGORIES AUDIOVISUELLES</span>
+                <span className="studio-section-title">MULTIMEDIA VIDEO HUB</span>
                 <ul className="studio-links-list">
-                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Live Audio / Vidéo <span className="studio-live-dot"></span></Link></li>
-                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Les Podcasts</Link></li>
-                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Séries Documentaires</Link></li>
-                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Interviews Haute Définition</Link></li>
-                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Replays Intégraux</Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>TV en Direct <span className="studio-live-dot"></span></Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>VOD : À la Une</Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Dernières Sorties</Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Par Catégories</Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Replays (Exclusif VIP)</Link></li>
                 </ul>
                 <div className="studio-live-card">
-                  <span className="live-badge"><span className="pulse-dot"></span> EN DIRECT</span>
-                  <h4 className="live-title">Le Grand Entretien : Penser Demain</h4>
+                  {hubData.liveTv?.isLive ? (
+                    <span className="live-badge"><span className="pulse-dot"></span> EN DIRECT</span>
+                  ) : (
+                    <span className="live-badge" style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--color-border)' }}>HORS ANTENNE</span>
+                  )}
+                  <h4 className="live-title">{hubData.liveTv?.currentTitle || 'Dona TV Live — Hub Premium'}</h4>
                   <Link href="/studio" className="live-action" onClick={closeAllMenus}>Rejoindre la diffusion</Link>
                 </div>
               </div>
 
               {/* Colonne 2: Vidéo Feature (Center) */}
               <div className="studio-col-video">
-                <span className="studio-section-title">DERNIER DOCUMENTAIRE HD</span>
+                <span className="studio-section-title">À LA UNE</span>
                 <Link href="/studio" className="studio-video-card" onClick={closeAllMenus}>
                   <div className="studio-video-img-container">
-                    <img src="/assets/core/img/studio-video-featured.png" alt="Featured Video" className="studio-video-img" />
+                    <img src={hubData.featuredVideo?.thumbnailUrl || "/assets/core/img/ecouter-1.png"} alt="Featured Video" className="studio-video-img" />
                     <div className="studio-video-overlay">
                       <div className="play-btn-circle">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -486,11 +505,11 @@ export default function Header() {
                         </svg>
                       </div>
                     </div>
-                    <span className="studio-video-duration">VIDÉO • 45 MIN</span>
+                    <span className="studio-video-duration">{hubData.featuredVideo?.duration || 'VIDÉO • HD'}</span>
                   </div>
                   <div className="studio-video-info">
-                    <h3 className="studio-video-title">Le Pouvoir du Design Intemporel</h3>
-                    <p className="studio-video-desc">Plongez dans les secrets des créateurs de pointe à travers ce documentaire original DONA.</p>
+                    <h3 className="studio-video-title">{hubData.featuredVideo?.title || 'Chargement...'}</h3>
+                    <p className="studio-video-desc">{hubData.featuredVideo?.subtitle || 'Veuillez patienter'}</p>
                   </div>
                 </Link>
               </div>

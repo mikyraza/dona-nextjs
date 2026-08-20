@@ -71,25 +71,89 @@ export default function AdminCatchAllPage({ params }) {
     }
   ]);
 
-  // 2. Videos State
-  const [videos, setVideos] = useState([
-    {
-      id: "vid-1",
-      title: "Reportage: Les coulisses de DONA",
-      duration: "14:20",
-      status: "Scheduled",
-      updated: "5h ago",
-      url: "https://youtube.com/watch?v=dona-backstage"
-    },
-    {
-      id: "vid-2",
-      title: "Le Pouvoir du Design Intemporel",
-      duration: "08:45",
-      status: "Published",
-      updated: "2d ago",
-      url: "https://youtube.com/watch?v=dona-design"
+  // 2. Videos State — chargé depuis /api/admin/videos
+  const [videos, setVideos] = useState([]);
+  const [videosLoading, setVideosLoading] = useState(false);
+  const [videoFilter, setVideoFilter] = useState('all');
+
+  const fetchVideos = async () => {
+    setVideosLoading(true);
+    try {
+      const res = await fetch('/api/admin/videos');
+      const data = await res.json();
+      if (data.success) setVideos(data.videos);
+    } catch (e) {
+      console.error('Failed to fetch videos:', e);
+    } finally {
+      setVideosLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    if (section === 'videos') fetchVideos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section]);
+
+  // TV Live State — chargé depuis /api/admin/tv-live
+  const [tvLiveState, setTvLiveState] = useState({ isLive: false, currentTitle: '', currentGuest: '', format: '', location: '', epg: [] });
+  const [tvLiveLoading, setTvLiveLoading] = useState(false);
+  const [tvHlsUrl, setTvHlsUrl] = useState('');
+  const [tvTitle, setTvTitle] = useState('');
+  const [tvGuest, setTvGuest] = useState('');
+
+  const fetchTvLive = async () => {
+    setTvLiveLoading(true);
+    try {
+      const res = await fetch('/api/admin/tv-live');
+      const data = await res.json();
+      if (data.success !== false) {
+        setTvLiveState(data);
+        setTvHlsUrl(data.hlsUrl || '');
+        setTvTitle(data.currentTitle || '');
+        setTvGuest(data.currentGuest || '');
+        // Sync EPG into tvQueue for display
+        if (data.epg && data.epg.length > 0) {
+          setTvQueue(data.epg.map(e => ({ id: e.id, title: e.title, format: e.type === 'replay' ? 'Replay' : 'Direct', duration: e.duration })));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch tv-live:', e);
+    } finally {
+      setTvLiveLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (section === 'tv-live') fetchTvLive();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section]);
+
+  const handleToggleLive = async (newState) => {
+    try {
+      const res = await fetch('/api/admin/tv-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isLive: newState, hlsUrl: tvHlsUrl, currentTitle: tvTitle, currentGuest: tvGuest }),
+      });
+      const data = await res.json();
+      if (data.success !== false) setTvLiveState(prev => ({ ...prev, isLive: newState }));
+    } catch (e) {
+      console.error('Toggle live error:', e);
+    }
+  };
+
+  const handleSaveTvMeta = async () => {
+    try {
+      await fetch('/api/admin/tv-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hlsUrl: tvHlsUrl, currentTitle: tvTitle, currentGuest: tvGuest }),
+      });
+      alert('Métadonnées TV sauvegardées !');
+    } catch (e) {
+      console.error('Save TV meta error:', e);
+    }
+  };
 
   // 3. Podcasts State
   const [podcasts, setPodcasts] = useState([
@@ -783,30 +847,23 @@ export default function AdminCatchAllPage({ params }) {
   };
 
   const handleSaveVideo = (savedVideo) => {
+    // VideoDrawer handles the API call itself; we just sync local state
     const isEdit = videos.some(v => v.id === savedVideo.id);
-
-    // API INTEGRATION BLUEPRINT:
-    // This is where real database updates will hook into our Phase 1 API contracts:
-    /*
-    const endpoint = '/api/studio';
-    const method = isEdit ? 'PUT' : 'POST';
-    try {
-      const response = await fetch(endpoint, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(savedVideo)
-      });
-      if (!response.ok) throw new Error("Failed to sync video with DB");
-    } catch (err) {
-      console.error("API sync error:", err);
-    }
-    */
-
     if (isEdit) {
       setVideos(prev => prev.map(v => v.id === savedVideo.id ? { ...v, ...savedVideo } : v));
     } else {
       setVideos(prev => [savedVideo, ...prev]);
     }
+  };
+
+  const handleDeleteVideo = async (vidId) => {
+    if (!confirm('Supprimer cette vidéo définitivement ?')) return;
+    try {
+      await fetch(`/api/admin/videos?id=${vidId}`, { method: 'DELETE' });
+    } catch (e) {
+      console.error('Delete video error:', e);
+    }
+    setVideos(prev => prev.filter(v => v.id !== vidId));
   };
 
   // Podcast Handlers
@@ -926,46 +983,90 @@ export default function AdminCatchAllPage({ params }) {
               </button>
             </div>
 
-            <div className="table-card" style={{ marginTop: '20px' }}>
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px', flexWrap: 'wrap' }}>
+              {['all', 'Published', 'Draft'].map(f => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setVideoFilter(f)}
+                  style={{
+                    padding: '6px 14px', fontSize: '11px', fontWeight: '600',
+                    border: `1px solid ${videoFilter === f ? 'var(--admin-accent-color)' : '#E0E0E0'}`,
+                    background: videoFilter === f ? 'var(--admin-accent-color)' : '#fff',
+                    color: videoFilter === f ? '#fff' : '#555',
+                    borderRadius: '4px', cursor: 'pointer'
+                  }}
+                >
+                  {f === 'all' ? 'Toutes' : f}
+                </button>
+              ))}
+              <button type="button" onClick={fetchVideos} style={{ marginLeft: 'auto', padding: '6px 14px', fontSize: '11px', fontWeight: '600', border: '1px solid #E0E0E0', background: '#fff', borderRadius: '4px', cursor: 'pointer' }}>
+                ↻ Actualiser
+              </button>
+            </div>
+
+            <div className="table-card" style={{ marginTop: '16px' }}>
               <div className="table-header">
-                <h2 className="table-title">Bibliothèque Vidéo</h2>
+                <h2 className="table-title">Bibliothèque Vidéo Unifiée</h2>
+                <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>{videos.filter(v => videoFilter === 'all' || v.status === videoFilter).length} vidéos</span>
               </div>
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Titre</th>
-                    <th>Durée</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {videos.map((vid) => (
-                    <tr key={vid.id}>
-                      <td className="cell-bold">{vid.title}</td>
-                      <td>{vid.duration}</td>
-                      <td>
-                        <span className={`badge ${vid.status.toLowerCase()}`}>
-                          {vid.status}
-                        </span>
-                      </td>
-                      <td style={{ color: '#888888' }}>{vid.updated}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
-                          <button onClick={() => handleOpenVideoEdit(vid)} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
-                            Edit
-                          </button>
-                          <span className="table-action-divider">|</span>
-                          <button onClick={() => setVideos(prev => prev.filter(v => v.id !== vid.id))} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+              {videosLoading ? (
+                <p style={{ padding: '30px', textAlign: 'center', color: 'var(--admin-text-muted)' }}>Chargement de la bibliothèque…</p>
+              ) : (
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Titre</th>
+                      <th>Catégorie</th>
+                      <th>Durée</th>
+                      <th>Accès</th>
+                      <th>Statut</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {videos
+                      .filter(v => videoFilter === 'all' || v.status === videoFilter)
+                      .map((vid) => (
+                      <tr key={vid.id}>
+                        <td>
+                          <div style={{ fontWeight: '600', fontSize: '13px' }}>{vid.title}</div>
+                          {vid.subtitle && <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)', marginTop: '2px' }}>{vid.subtitle}</div>}
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '11px', background: '#F0F0F0', borderRadius: '3px', padding: '2px 8px' }}>{vid.category || '—'}</span>
+                        </td>
+                        <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{vid.duration || '—'}</td>
+                        <td>
+                          {vid.isVipOnly ? (
+                            <span style={{ fontSize: '11px', background: 'rgba(176,141,87,0.15)', color: '#B08D57', borderRadius: '3px', padding: '2px 8px', fontWeight: '600' }}>👑 VIP</span>
+                          ) : (
+                            <span style={{ fontSize: '11px', background: 'rgba(34,197,94,0.1)', color: '#16A34A', borderRadius: '3px', padding: '2px 8px', fontWeight: '600' }}>🌐 Public</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className={`badge ${(vid.status || 'Draft').toLowerCase()}`}>{vid.status || 'Draft'}</span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                            <button onClick={() => handleOpenVideoEdit(vid)} className="table-action-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                              Modifier
+                            </button>
+                            <span className="table-action-divider">|</span>
+                            <button onClick={() => handleDeleteVideo(vid.id)} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>
+                              Supprimer
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {videos.filter(v => videoFilter === 'all' || v.status === videoFilter).length === 0 && (
+                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: 'var(--admin-text-muted)' }}>Aucune vidéo. Ajoutez votre première vidéo !</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           </>
         );
@@ -2594,6 +2695,32 @@ export default function AdminCatchAllPage({ params }) {
           <>
             <div className="dashboard-title-row">
               <h1>Studio TV Live</h1>
+              {tvLiveLoading && <span style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>Synchronisation…</span>}
+            </div>
+
+            {/* Live Toggle Banner */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '20px 24px', borderRadius: '10px', marginBottom: '24px',
+              background: tvLiveState.isLive ? 'linear-gradient(135deg, #A30626, #7A0120)' : '#1C1B1B',
+              color: '#fff', boxShadow: tvLiveState.isLive ? '0 4px 20px rgba(163,6,38,0.4)' : 'none',
+              transition: 'all 0.3s ease'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {tvLiveState.isLive && <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite', display: 'inline-block' }} />}
+                  <span style={{ fontSize: '20px', fontWeight: '700', fontFamily: 'Cormorant Garamond, serif' }}>
+                    {tvLiveState.isLive ? '● DONA TV — EN DIRECT' : 'DONA TV — HORS ANTENNE'}
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '13px', opacity: 0.8 }}>
+                  {tvLiveState.isLive ? 'Le flux live est actif et visible par les membres VIP.' : 'Activez le live pour démarrer la diffusion vers les abonnés VIP.'}
+                </p>
+              </div>
+              <label className="switch" style={{ transform: 'scale(1.3)' }}>
+                <input type="checkbox" checked={tvLiveState.isLive} onChange={e => handleToggleLive(e.target.checked)} />
+                <span className="slider round" />
+              </label>
             </div>
 
             <div className="playout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '30px' }}>
