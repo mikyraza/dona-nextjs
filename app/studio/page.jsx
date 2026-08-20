@@ -42,17 +42,26 @@ function VideoCard({ video, featured = false, onPlay }) {
     >
       {/* Thumbnail */}
       <div className="vh-card__thumb">
-        {/* SVG placeholder éditorial */}
-        <div className="vh-card__art">
-          <svg viewBox="0 0 400 225" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}>
-            <rect width="400" height="225" fill="#F4F3F0" />
-            <line x1="0" y1="112" x2="400" y2="112" stroke="#EAEAEA" strokeWidth="1" />
-            <line x1="200" y1="0" x2="200" y2="225" stroke="#EAEAEA" strokeWidth="1" />
-            <circle cx="200" cy="112" r="55" stroke="#DDDDDD" strokeWidth="0.8" />
-            <circle cx="200" cy="112" r="26" stroke="#DDDDDD" strokeWidth="0.8" />
-            <polygon points="189,99 189,126 217,112" fill="#A30626" opacity="0.5" />
-          </svg>
-        </div>
+        {/* Thumbnail Image or SVG placeholder */}
+        {video.thumbnailUrl ? (
+          <img 
+            src={video.thumbnailUrl} 
+            alt={video.title} 
+            className="vh-card__art" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <div className="vh-card__art">
+            <svg viewBox="0 0 400 225" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}>
+              <rect width="400" height="225" fill="#F4F3F0" />
+              <line x1="0" y1="112" x2="400" y2="112" stroke="#EAEAEA" strokeWidth="1" />
+              <line x1="200" y1="0" x2="200" y2="225" stroke="#EAEAEA" strokeWidth="1" />
+              <circle cx="200" cy="112" r="55" stroke="#DDDDDD" strokeWidth="0.8" />
+              <circle cx="200" cy="112" r="26" stroke="#DDDDDD" strokeWidth="0.8" />
+              <polygon points="189,99 189,126 217,112" fill="#A30626" opacity="0.5" />
+            </svg>
+          </div>
+        )}
 
         {/* Video element for hover preview */}
         {video.videoUrl && !video.isLocked && (
