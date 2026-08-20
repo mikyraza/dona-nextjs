@@ -1700,8 +1700,26 @@ input:checked + .slider:before {
 }
 
 .editor-meta-field input:focus,
-.editor-meta-field select:focus {
+.editor-meta-field select:focus,
+.drawer-textarea:focus {
   border-color: var(--admin-accent-color);
+  box-shadow: 0 0 0 2px rgba(163, 6, 38, 0.08);
+}
+
+.drawer-textarea {
+  width: 100%;
+  border: 1px solid var(--admin-border-color);
+  border-radius: 4px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--admin-text-color);
+  background-color: #FFFFFF;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+  box-sizing: border-box;
+  resize: vertical;
 }
 
 /* Compact media thumbnail strip */

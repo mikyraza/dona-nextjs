@@ -64,7 +64,10 @@ const authOptions = {
           { id: "u-3", name: "Sophie Laurent", email: "sophie@donamagazine.com", role: "Journaliste", active: true },
           { id: "u-4", name: "Ahmed Al-Farsi", email: "ahmed@donamagazine.com", role: "Traducteur", active: true },
           { id: "u-5", name: "Thomas Bernard", email: "thomas@donamagazine.com", role: "Journaliste", active: false },
-          { id: "usr-admin-1", name: "Nora Patrius", email: "admin@dona.com", role: "Super-Admin", active: true }
+          { id: "usr-admin-1", name: "Nora Patrius", email: "admin@dona.com", role: "Super-Admin", active: true },
+          { id: "u-vip-1", name: "Claire Delorme", email: "vip@dona.com", role: "VIP", active: true },
+          { id: "u-vip-2", name: "Membre Club VIP", email: "membre@dona.com", role: "VIP", active: true },
+          { id: "u-vip-3", name: "Abonné Premium", email: "premium@dona.com", role: "Premium", active: true }
         ];
 
         const matchedUser = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -75,6 +78,18 @@ const authOptions = {
             email: matchedUser.email,
             jwt_token: `mock-jwt-token-${matchedUser.id}`,
             role: matchedUser.role
+          };
+        }
+
+        // Generic VIP fallback for any test email logging in with password dona123
+        if (email && email.includes("@")) {
+          const userName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          return {
+            id: `u-gen-${Date.now()}`,
+            name: userName,
+            email: email,
+            jwt_token: `mock-jwt-token-gen`,
+            role: email.includes("admin") ? "Super-Admin" : "VIP"
           };
         }
 
@@ -108,4 +123,4 @@ const authOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+export { authOptions, handler as GET, handler as POST };

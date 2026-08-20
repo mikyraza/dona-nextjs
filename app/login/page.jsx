@@ -9,6 +9,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const isVipIntent = searchParams.get("vip") === "1" || callbackUrl.includes("/magazines/") || callbackUrl.includes("/espace-lecture") || callbackUrl.includes("vip");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,14 +55,41 @@ function LoginForm() {
     <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "500px", width: "100%", borderRadius: "2px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center"}}>
       
       {/* Logo */}
-      <Link href="/" style={{marginBottom: "32px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
+      <Link href="/" style={{marginBottom: "24px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
           <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" style={{height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease"}} />
       </Link>
 
+      {/* VIP Intent Badge */}
+      {isVipIntent && (
+        <div style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          background: "rgba(163, 6, 38, 0.08)",
+          border: "1px solid rgba(163, 6, 38, 0.2)",
+          padding: "6px 14px",
+          borderRadius: "2px",
+          marginBottom: "16px",
+          color: "var(--color-accent)",
+          fontFamily: "var(--font-primary)",
+          fontSize: "11px",
+          fontWeight: "700",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase"
+        }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>stars</span>
+          <span>Connexion Espace Membre VIP</span>
+        </div>
+      )}
+
       {/* Heading */}
-      <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "700", color: "var(--color-text)", marginBottom: "12px", textAlign: "center", letterSpacing: "-0.02em"}}>Bienvenue parmi l'Alliance</h1>
+      <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "700", color: "var(--color-text)", marginBottom: "12px", textAlign: "center", letterSpacing: "-0.02em"}}>
+        {isVipIntent ? "Accès à la Zone VIP" : "Bienvenue parmi l'Alliance"}
+      </h1>
       <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", textAlign: "center", marginBottom: "30px"}}>
-          Connectez-vous pour accéder à votre espace membre
+        {isVipIntent 
+          ? "Identifiez-vous pour débloquer les analyses exclusives et les dossiers réservés."
+          : "Connectez-vous pour accéder à votre espace membre"}
       </p>
 
       {/* Error Message */}
@@ -167,20 +195,29 @@ function LoginForm() {
           </button>
       </div>
 
-      {/* Signup Link */}
-      <div style={{marginTop: "32px", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)"}}>
-          Pas encore membre ? <Link href="/signup" className="login-link" style={{fontWeight: "600"}}>Devenir membre</Link>
+      {/* Signup / Subscribe Link */}
+      <div style={{marginTop: "32px", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", textAlign: "center"}}>
+        {isVipIntent ? (
+          <>Pas encore abonné VIP ? <Link href="/abonnement" className="login-link" style={{fontWeight: "700", color: "var(--color-accent)"}}>Découvrir les offres d'abonnement</Link></>
+        ) : (
+          <>Pas encore membre ? <Link href="/signup" className="login-link" style={{fontWeight: "600"}}>Devenir membre</Link></>
+        )}
+      </div>
+
+      {/* Admin Link Distinction */}
+      <div style={{marginTop: "16px", textAlign: "center", fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-text-muted)"}}>
+        Équipe éditoriale & rédaction ? <Link href="/admin/login" className="login-link" style={{textDecoration: "underline"}}>Accès Portail Admin</Link>
       </div>
 
       {/* Back to Home Link */}
-      <div style={{marginTop: "20px"}}>
+      <div style={{marginTop: "16px"}}>
           <Link href="/" className="login-link" style={{fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "600"}}>
               Retour à l'accueil
           </Link>
       </div>
 
       {/* Security text */}
-      <div style={{marginTop: "40px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-primary)", fontSize: "11px", color: "var(--color-text-muted)"}}>
+      <div style={{marginTop: "32px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-primary)", fontSize: "11px", color: "var(--color-text-muted)"}}>
           <span className="material-symbols-outlined" style={{fontSize: "14px"}}>security</span>
           Connexion sécurisée par chiffrement SSL 256-bit
       </div>

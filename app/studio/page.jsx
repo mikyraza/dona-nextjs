@@ -115,6 +115,22 @@ export default function StudioPage() {
   const { loadTrack } = useAudioPlayer();
   const [liveActive, setLiveActive] = useState(false);
   const [activeEpisode, setActiveEpisode] = useState(null);
+  const [podcastEpisodes, setPodcastEpisodes] = useState(PODCAST_EPISODES);
+  const [videoArchives, setVideoArchives] = useState(VIDEO_ARCHIVES);
+
+  React.useEffect(() => {
+    fetch('/api/studio')
+      .then(res => res.json())
+      .then(data => {
+        if (data.podcastEpisodes && data.podcastEpisodes.length > 0) {
+          setPodcastEpisodes(data.podcastEpisodes);
+        }
+        if (data.videoArchives && data.videoArchives.length > 0) {
+          setVideoArchives(data.videoArchives);
+        }
+      })
+      .catch(err => console.error("Error fetching studio data:", err));
+  }, []);
 
   const handleLivePlay = () => {
     setLiveActive((v) => !v);
@@ -185,18 +201,18 @@ export default function StudioPage() {
             </div>
 
             <button
-              className={`studio3-live__cta ${liveActive ? 'studio3-live__cta--active' : ''}`}
+              className={`studio3-live__btn ${liveActive ? 'studio3-live__btn--playing' : ''}`}
               onClick={handleLivePlay}
-              id="studio-live-play-btn"
+              aria-label={liveActive ? 'Mettre en pause le direct' : 'Écouter le direct'}
             >
-              <span className="studio3-cta-icon">
+              <span className="studio3-btn-icon">
                 {liveActive ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="5" y="3" width="5" height="18" rx="1" />
-                    <rect x="14" y="3" width="5" height="18" rx="1" />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
                   </svg>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5 3 19 12 5 21" />
                   </svg>
                 )}
@@ -249,86 +265,88 @@ export default function StudioPage() {
           </header>
 
           {/* Featured episode (large) + side list */}
-          <div className="studio3-podcasts__grid">
+          {podcastEpisodes.length > 0 && (
+            <div className="studio3-podcasts__grid">
 
-            {/* Featured */}
-            <div
-              className={`studio3-podcast-feature ${activeEpisode === PODCAST_EPISODES[0].id ? 'studio3-podcast--active' : ''}`}
-              onClick={() => handleEpisodePlay(PODCAST_EPISODES[0])}
-              role="button"
-              tabIndex={0}
-              aria-label={`Écouter : ${PODCAST_EPISODES[0].title}`}
-              onKeyDown={(e) => e.key === 'Enter' && handleEpisodePlay(PODCAST_EPISODES[0])}
-            >
-              <div className="studio3-feature__artwork">
-                <div className="studio3-feature__art-bg">
-                  <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.15">
-                    <circle cx="60" cy="60" r="50" />
-                    <circle cx="60" cy="60" r="35" />
-                    <circle cx="60" cy="60" r="20" />
-                    <line x1="10" y1="60" x2="110" y2="60" />
-                    <line x1="60" y1="10" x2="60" y2="110" />
-                  </svg>
-                </div>
-                <div className="studio3-feature__play-ring">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <polygon points="5 3 19 12 5 21" />
-                  </svg>
-                </div>
-              </div>
-              <div className="studio3-feature__info">
-                <div className="studio3-feature__tags">
-                  <span className="studio3-series-badge" style={{ background: SERIES_COLORS[PODCAST_EPISODES[0].series] }}>
-                    {PODCAST_EPISODES[0].series}
-                  </span>
-                  <span className="studio3-ep-label">{PODCAST_EPISODES[0].episode} · {PODCAST_EPISODES[0].duration}</span>
-                </div>
-                <h3 className="studio3-feature__title">{PODCAST_EPISODES[0].title}</h3>
-                <p className="studio3-feature__desc">{PODCAST_EPISODES[0].subtitle}</p>
-              </div>
-            </div>
-
-            {/* Side list — remaining 5 episodes */}
-            <div className="studio3-podcasts__list">
-              {PODCAST_EPISODES.slice(1).map((ep) => (
-                <div
-                  key={ep.id}
-                  className={`studio3-podcast-row ${activeEpisode === ep.id ? 'studio3-podcast--active' : ''}`}
-                  onClick={() => handleEpisodePlay(ep)}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Écouter : ${ep.title}`}
-                  onKeyDown={(e) => e.key === 'Enter' && handleEpisodePlay(ep)}
-                >
-                  <div className="studio3-row__play">
-                    {activeEpisode === ep.id ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="5" y="3" width="5" height="18" rx="1" />
-                        <rect x="14" y="3" width="5" height="18" rx="1" />
-                      </svg>
-                    ) : (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21" />
-                      </svg>
-                    )}
+              {/* Featured */}
+              <div
+                className={`studio3-podcast-feature ${activeEpisode === podcastEpisodes[0].id ? 'studio3-podcast--active' : ''}`}
+                onClick={() => handleEpisodePlay(podcastEpisodes[0])}
+                role="button"
+                tabIndex={0}
+                aria-label={`Écouter : ${podcastEpisodes[0].title}`}
+                onKeyDown={(e) => e.key === 'Enter' && handleEpisodePlay(podcastEpisodes[0])}
+              >
+                <div className="studio3-feature__artwork">
+                  <div className="studio3-feature__art-bg">
+                    <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.15">
+                      <circle cx="60" cy="60" r="50" />
+                      <circle cx="60" cy="60" r="35" />
+                      <circle cx="60" cy="60" r="20" />
+                      <line x1="10" y1="60" x2="110" y2="60" />
+                      <line x1="60" y1="10" x2="60" y2="110" />
+                    </svg>
                   </div>
-                  <div className="studio3-row__info">
-                    <div className="studio3-row__tags">
-                      <span
-                        className="studio3-series-badge studio3-series-badge--sm"
-                        style={{ background: SERIES_COLORS[ep.series] || '#1C1B1B' }}
-                      >
-                        {ep.series}
-                      </span>
-                      <span className="studio3-ep-label">{ep.episode}</span>
+                  <div className="studio3-feature__play-ring">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="studio3-feature__info">
+                  <div className="studio3-feature__tags">
+                    <span className="studio3-series-badge" style={{ background: SERIES_COLORS[podcastEpisodes[0].series] || '#A30626' }}>
+                      {podcastEpisodes[0].series}
+                    </span>
+                    <span className="studio3-ep-label">{podcastEpisodes[0].episode} · {podcastEpisodes[0].duration}</span>
+                  </div>
+                  <h3 className="studio3-feature__title">{podcastEpisodes[0].title}</h3>
+                  <p className="studio3-feature__desc">{podcastEpisodes[0].subtitle}</p>
+                </div>
+              </div>
+
+              {/* Side list — remaining episodes */}
+              <div className="studio3-podcasts__list">
+                {podcastEpisodes.slice(1).map((ep) => (
+                  <div
+                    key={ep.id}
+                    className={`studio3-podcast-row ${activeEpisode === ep.id ? 'studio3-podcast--active' : ''}`}
+                    onClick={() => handleEpisodePlay(ep)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Écouter : ${ep.title}`}
+                    onKeyDown={(e) => e.key === 'Enter' && handleEpisodePlay(ep)}
+                  >
+                    <div className="studio3-row__play">
+                      {activeEpisode === ep.id ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <rect x="5" y="3" width="5" height="18" rx="1" />
+                          <rect x="14" y="3" width="5" height="18" rx="1" />
+                        </svg>
+                      ) : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <polygon points="5 3 19 12 5 21" />
+                        </svg>
+                      )}
                     </div>
-                    <span className="studio3-row__title">{ep.title}</span>
+                    <div className="studio3-row__info">
+                      <div className="studio3-row__tags">
+                        <span
+                          className="studio3-series-badge studio3-series-badge--sm"
+                          style={{ background: SERIES_COLORS[ep.series] || '#1C1B1B' }}
+                        >
+                          {ep.series}
+                        </span>
+                        <span className="studio3-ep-label">{ep.episode}</span>
+                      </div>
+                      <span className="studio3-row__title">{ep.title}</span>
+                    </div>
+                    <span className="studio3-row__duration">{ep.duration}</span>
                   </div>
-                  <span className="studio3-row__duration">{ep.duration}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -353,7 +371,7 @@ export default function StudioPage() {
           </header>
 
           <div className="studio3-videos__grid">
-            {VIDEO_ARCHIVES.map((vid) => (
+            {videoArchives.map((vid) => (
               <div
                 key={vid.id}
                 className={`studio3-video-card ${vid.featured ? 'studio3-video-card--featured' : ''}`}

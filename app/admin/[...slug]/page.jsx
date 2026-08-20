@@ -490,6 +490,7 @@ export default function AdminCatchAllPage({ params }) {
               title: art.title || "Sans titre",
               author: art.author || "Rédaction",
               category: art.category || "General",
+              rubrique: art.rubrique || art.subcategory || art.badge || "",
               status: art.status || "Draft",
               updated: art.updated || "Synchronisé",
               content: art.content || "",
@@ -704,9 +705,23 @@ export default function AdminCatchAllPage({ params }) {
         ...dbArticle,
         type: typeMap[dbArticle.format || savedArticle.format] || "Article",
         author: savedArticle.author || "Rédaction",
+        category: savedArticle.category || dbArticle.category || "General",
+        rubrique: savedArticle.rubrique || dbArticle.rubrique || "",
+        subcategory: savedArticle.rubrique || dbArticle.rubrique || "",
+        badge: savedArticle.badge || dbArticle.badge || "ARTICLE",
         status: dbArticle.status || savedArticle.status || (savedArticle.isVipOnly ? "Published" : "Draft"),
         updated: "À l'instant"
       };
+
+      // Broadcast instant live background sync
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('dona_content_updated', Date.now().toString());
+          const channel = new BroadcastChannel('dona_live_sync');
+          channel.postMessage({ type: 'CONTENT_UPDATED', timestamp: Date.now() });
+          channel.close();
+        } catch (e) {}
+      }
 
       const isEdit = articles.some(art => art.id === savedArticle.id);
       if (isEdit) {
@@ -727,10 +742,33 @@ export default function AdminCatchAllPage({ params }) {
     }
   };
 
-  const handleDeleteArticle = async (id) => {
-    setArticles(prev => prev.filter(a => a.id !== id));
-    const localCustom = await getStorageItem('dona_custom_articles', []);
-    await setStorageItem('dona_custom_articles', localCustom.filter(a => a.id !== id));
+  const handleDeleteArticle = async (id, articleTitle) => {
+    const titleText = articleTitle || articles.find(a => a.id === id)?.title || "cet article";
+    const confirmed = window.confirm(`Êtes-vous sûr de vouloir supprimer l'article "${titleText}" ?\n\nCette action est irréversible.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await fetch(`/api/admin/articles?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      }).catch(() => {});
+
+      setArticles(prev => prev.filter(a => a.id !== id));
+      const localCustom = await getStorageItem('dona_custom_articles', []);
+      await setStorageItem('dona_custom_articles', localCustom.filter(a => a.id !== id));
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('dona_content_updated', Date.now().toString());
+          const channel = new BroadcastChannel('dona_live_sync');
+          channel.postMessage({ type: 'CONTENT_UPDATED', timestamp: Date.now() });
+          channel.close();
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.error("Error deleting article:", err);
+    }
   };
 
   // Video Handlers
@@ -833,6 +871,7 @@ export default function AdminCatchAllPage({ params }) {
                     <th>Titre</th>
                     <th>Auteur</th>
                     <th>Magazine / Univers</th>
+                    <th>Rubrique / Catégorie</th>
                     <th>Status</th>
                     <th>Date</th>
                     <th style={{ textAlign: 'right' }}>Actions</th>
@@ -843,8 +882,13 @@ export default function AdminCatchAllPage({ params }) {
                     <tr key={art.id}>
                       <td className="cell-bold">{art.title}</td>
                       <td>{art.author}</td>
-                      <td style={{ color: '#888888' }}>
+                      <td style={{ color: '#111827', fontWeight: '500' }}>
                         {UNIVERSES.find(u => u.id === art.category || `magazine-${u.id}` === art.category || art.category?.includes(u.id) || u.name === art.category)?.name || art.category}
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '11px', background: '#F3F4F6', border: '1px solid #E5E7EB', padding: '2px 8px', borderRadius: '4px', color: '#374151', fontWeight: 600 }}>
+                          {art.rubrique || art.subcategory || art.badge || 'Général'}
+                        </span>
                       </td>
                       <td>
                         <span className={`badge ${(art.status || 'Draft').toLowerCase()}`}>
@@ -858,7 +902,7 @@ export default function AdminCatchAllPage({ params }) {
                             Edit
                           </button>
                           <span className="table-action-divider">|</span>
-                          <button onClick={() => handleDeleteArticle(art.id)} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>
+                          <button onClick={() => handleDeleteArticle(art.id, art.title)} className="table-action-btn secondary" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}>
                             Delete
                           </button>
                         </div>

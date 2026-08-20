@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
 import PersistentPlayer from './PersistentPlayer';
+import BackgroundSync from '../common/BackgroundSync';
 
 export default function ConditionalLayout({ children }) {
   const pathname = usePathname();
@@ -16,6 +17,7 @@ export default function ConditionalLayout({ children }) {
 
   return (
     <>
+      <BackgroundSync />
       <Header />
       <main>{children}</main>
       <Footer />

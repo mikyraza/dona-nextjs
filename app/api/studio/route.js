@@ -1,79 +1,40 @@
 import { NextResponse } from 'next/server';
+import { fetchArticles } from '@/lib/wordpress';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
-  /*
-  // FUTURE WORDPRESS HEADLESS API FETCH INTEGRATION:
   try {
-    // 1. Fetch CPT 'studio_live' (should return single active option block or latest post)
-    const responseLive = await fetch('http://localhost/wp-json/wp/v2/studio_live?per_page=1', {
-      headers: { 'Accept': 'application/json' }
-    });
-    const lives = await responseLive.json();
-    const activeLive = lives[0] || null;
+    const articles = await fetchArticles();
 
-    // 2. Fetch CPT 'podcast_episode'
-    const responsePodcasts = await fetch('http://localhost/wp-json/wp/v2/podcast_episode?per_page=10', {
-      headers: { 'Accept': 'application/json' }
-    });
-    const wpPodcasts = await responsePodcasts.json();
+    const audioArticles = articles
+      .filter(a => a.format === 'audio' || a.audioFile)
+      .map((a, idx) => ({
+        id: a.id,
+        title: a.title,
+        subtitle: a.desc || `Épisode issu de ${a.category}`,
+        series: (a.rubrique || a.badge || 'DONA STUDIO').toUpperCase(),
+        episode: `ÉP. ${idx + 1}`,
+        duration: '35 MIN',
+        durationSec: 2100,
+        src: a.audioFile || '',
+      }));
 
-    // 3. Fetch CPT 'video_archive'
-    const responseVideos = await fetch('http://localhost/wp-json/wp/v2/video_archive?per_page=10', {
-      headers: { 'Accept': 'application/json' }
-    });
-    const wpVideos = await responseVideos.json();
+    const videoArticles = articles
+      .filter(a => a.format === 'video' || a.videoUrl)
+      .map((a, idx) => ({
+        id: a.id,
+        title: a.title,
+        subtitle: a.desc || `Production ${a.category}`,
+        label: (a.rubrique || a.badge || 'VIDÉO').toUpperCase(),
+        duration: '45MIN',
+        featured: idx === 0,
+        videoUrl: a.videoUrl || '',
+        thumbnailUrl: a.coverImage || a.image || '/assets/core/img/studio-video-featured.png'
+      }));
 
-    return NextResponse.json({
-      liveStream: activeLive ? {
-        isActive: activeLive.acf.is_active || false,
-        title: activeLive.title.rendered,
-        subtitle: activeLive.acf.subtitle || '',
-        guest: activeLive.acf.featured_guest || '',
-        format: activeLive.acf.broadcast_format || '',
-        location: activeLive.acf.location || '',
-        streamUrl: activeLive.acf.stream_url || '',
-        backgroundImage: activeLive.acf.background_image_path || ''
-      } : null,
-      podcastEpisodes: wpPodcasts.map(ep => ({
-        id: ep.acf.episode_id || ep.slug,
-        title: ep.title.rendered,
-        subtitle: ep.acf.subtitle || '',
-        series: ep.acf.series_tag || '',
-        episode: ep.acf.episode_label || '',
-        duration: ep.acf.duration || '',
-        durationSec: ep.acf.duration_seconds || 0,
-        src: ep.acf.audio_url || ''
-      })),
-      videoArchives: wpVideos.map(vid => ({
-        id: vid.id,
-        title: vid.title.rendered,
-        subtitle: vid.acf.subtitle || '',
-        label: vid.acf.label_text || '',
-        duration: vid.acf.duration || '',
-        featured: vid.acf.is_featured || false,
-        videoUrl: vid.acf.video_url || '',
-        thumbnailUrl: vid.acf.thumbnail_path || ''
-      }))
-    });
-  } catch (error) {
-    console.error("WordPress API Fetch Error:", error);
-    // Fallback to static mock below
-  }
-  */
-
-  // Mock response mapping docs/dynamic-matrix.md
-  return NextResponse.json({
-    liveStream: {
-      isActive: true,
-      title: "The Global Intelligence Summit",
-      subtitle: "Live depuis le Grand Palais. Interviews exclusives avec les grandes figures de l'économie et du design mondial.",
-      guest: "Jean Nouvel",
-      format: "Keynote · Q&A",
-      location: "Grand Palais, Paris",
-      streamUrl: "https://example.com/live-stream.mp3",
-      backgroundImage: "/assets/core/img/ecouter-hero.png"
-    },
-    podcastEpisodes: [
+    const defaultPodcasts = [
       {
         id: 'ep-42',
         title: 'Architecture of Tomorrow',
@@ -82,7 +43,7 @@ export async function GET() {
         episode: 'ÉP. 42',
         duration: '45 MIN',
         durationSec: 2700,
-        src: 'https://example.com/podcasts/ep42.mp3',
+        src: '',
       },
       {
         id: 'ep-41',
@@ -92,7 +53,7 @@ export async function GET() {
         episode: 'ÉP. 41',
         duration: '38 MIN',
         durationSec: 2280,
-        src: 'https://example.com/podcasts/ep41.mp3',
+        src: '',
       },
       {
         id: 'ep-40',
@@ -102,10 +63,11 @@ export async function GET() {
         episode: 'ÉP. 40',
         duration: '52 MIN',
         durationSec: 3120,
-        src: 'https://example.com/podcasts/ep40.mp3',
+        src: '',
       }
-    ],
-    videoArchives: [
+    ];
+
+    const defaultVideos = [
       {
         id: 'vid-1',
         title: 'The Global Intelligence Summit',
@@ -113,7 +75,7 @@ export async function GET() {
         label: 'ÉVÉNEMENT',
         duration: '1H 24MIN',
         featured: true,
-        videoUrl: 'https://example.com/videos/summit2024.mp4',
+        videoUrl: '',
         thumbnailUrl: '/assets/core/img/studio-video-featured.png'
       },
       {
@@ -123,9 +85,31 @@ export async function GET() {
         label: 'DOCUMENTAIRE',
         duration: '4 × 52MIN',
         featured: false,
-        videoUrl: 'https://example.com/videos/silence.mp4',
+        videoUrl: '',
         thumbnailUrl: '/assets/core/img/avantage-1.png'
       }
-    ]
-  });
+    ];
+
+    return NextResponse.json({
+      liveStream: {
+        isActive: true,
+        title: "The Global Intelligence Summit",
+        subtitle: "Live depuis le Grand Palais. Interviews exclusives avec les grandes figures de l'économie et du design mondial.",
+        guest: "Jean Nouvel",
+        format: "Keynote · Q&A",
+        location: "Grand Palais, Paris",
+        streamUrl: "",
+        backgroundImage: "/assets/core/img/ecouter-hero.png"
+      },
+      podcastEpisodes: [...audioArticles, ...defaultPodcasts],
+      videoArchives: [...videoArticles, ...defaultVideos]
+    });
+  } catch (err) {
+    console.error("GET /api/studio error:", err);
+    return NextResponse.json({
+      liveStream: { isActive: true, title: "DONA Live" },
+      podcastEpisodes: [],
+      videoArchives: []
+    });
+  }
 }

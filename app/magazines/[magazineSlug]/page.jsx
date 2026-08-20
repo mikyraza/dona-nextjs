@@ -3,6 +3,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { magazines as staticMagazines } from '../data';
 import { fetchArticles, fetchMagazineConfig } from '@/lib/wordpress';
+import MagazineArticlesSection from '@/components/magazine/MagazineArticlesSection';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function Page({ params }) {
   const resolvedParams = await params;
@@ -25,6 +29,7 @@ export default async function Page({ params }) {
 
   const primaryColor = magazine.themePrimary || "#a31835";
   const secondaryColor = magazine.themeSecondary || "#3d0c1b";
+  const vipLoginUrl = `/login?vip=1&callbackUrl=${encodeURIComponent(`/magazines/${magazineSlug}`)}`;
 
   return (
     <main style={{ background: "var(--color-bg)" }}>
@@ -131,84 +136,94 @@ export default async function Page({ params }) {
         </section>
 
         {/* B. Essence Section */}
-        <section className="mag-essence container section-padding" style={{ padding: "80px 20px" }}>
+        <section className="mag-essence container section-padding" style={{ padding: "70px 20px" }}>
           <div className="mag-essence-grid" style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "48px",
-            alignItems: "center"
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: "56px",
+            alignItems: "center",
+            maxWidth: "1120px",
+            margin: "0 auto"
           }}>
-            <div className="mag-essence-content">
+            <div className="mag-essence-content" style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
               <h2 className="mag-essence-title" style={{
                 fontFamily: "var(--font-secondary)",
-                fontSize: "32px",
+                fontSize: "30px",
                 fontWeight: "700",
                 color: "var(--color-text)",
-                marginBottom: "16px"
+                marginBottom: "14px",
+                letterSpacing: "-0.01em"
               }}>
-                L'Essence du Magazine
+                {magazine.essenceTitle || "L'Essence du Magazine"}
               </h2>
               <div className="mag-divider" style={{
                 width: "40px",
                 height: "2px",
                 background: primaryColor,
-                marginBottom: "24px"
+                marginBottom: "20px"
               }}></div>
               <p className="mag-essence-text" style={{
                 fontFamily: "var(--font-primary)",
-                fontSize: "16px",
-                lineHeight: "1.7",
+                fontSize: "15px",
+                lineHeight: "1.75",
                 color: "var(--color-text)",
-                marginBottom: "24px"
+                marginBottom: "20px"
               }}>
                 {magazine.essenceText}
               </p>
               {magazine.essenceQuote && (
                 <blockquote className="mag-essence-quote" style={{
                   fontFamily: "var(--font-secondary)",
-                  fontSize: "20px",
+                  fontSize: "18px",
                   fontStyle: "italic",
                   borderLeft: `3px solid ${primaryColor}`,
-                  paddingLeft: "20px",
-                  margin: "0 0 32px 0",
+                  paddingLeft: "18px",
+                  margin: "0 0 24px 0",
                   color: "var(--color-text-muted)",
                   lineHeight: "1.5"
                 }}>
-                  "{magazine.essenceQuote}"
+                  &ldquo;{magazine.essenceQuote}&rdquo;
                 </blockquote>
               )}
-              <Link href={`/magazines/${magazineSlug}/vip`} className="mag-link-arrow" style={{
+              <Link href={vipLoginUrl} className="mag-link-arrow" style={{
                 fontFamily: "var(--font-primary)",
-                fontSize: "12px",
+                fontSize: "11px",
                 fontWeight: "700",
                 color: primaryColor,
                 textDecoration: "none",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.08em",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px"
+                gap: "8px",
+                textTransform: "uppercase"
               }}>
                 ACCÉDER À LA ZONE VIP <span className="arrow" style={{ transition: "transform 0.2s" }}>→</span>
               </Link>
             </div>
             {magazine.essenceImage && (
-              <div className="mag-essence-img-wrapper" style={{
-                position: "relative",
-                aspectRatio: "4/3",
-                overflow: "hidden",
-                borderRadius: "2px",
-                boxShadow: "0 20px 40px rgba(0,0,0,0.03)"
-              }}>
-                <img 
-                  src={magazine.essenceImage} 
-                  alt="Essence" 
-                  className="mag-essence-img" 
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover"
-                  }}
-                />
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                <div className="mag-essence-img-wrapper" style={{
+                  position: "relative",
+                  width: "100%",
+                  maxWidth: "400px",
+                  aspectRatio: "4/3",
+                  overflow: "hidden",
+                  borderRadius: "3px",
+                  border: "1px solid var(--color-border)",
+                  boxShadow: "0 12px 30px rgba(0,0,0,0.06)"
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={magazine.essenceImage} 
+                    alt={magazine.essenceTitle || "L'Essence du Magazine"} 
+                    className="mag-essence-img" 
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover"
+                    }}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -226,192 +241,102 @@ export default async function Page({ params }) {
             gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
             gap: "24px"
           }}>
-            {magazine.features.map((feat, idx) => (
-              <div key={idx} id={`feature-${idx}`} className="mag-feature-card" style={{
-                background: "var(--color-bg)",
-                border: "1px solid var(--color-border)",
-                padding: "32px 24px",
-                borderRadius: "2px",
-                display: "flex",
-                flexDirection: "column"
-              }}>
-                <div className="feature-icon" style={{ color: primaryColor, marginBottom: "20px" }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>
-                    {feat.icon || "explore"}
-                  </span>
-                </div>
-                <h3 className="feature-title" style={{
-                  fontFamily: "var(--font-secondary)",
-                  fontSize: "20px",
-                  fontWeight: "600",
-                  color: "var(--color-text)",
-                  marginBottom: "8px"
-                }}>
-                  {feat.title}
-                </h3>
-                <p className="feature-subtitle" style={{
-                  fontFamily: "var(--font-primary)",
-                  fontSize: "10px",
-                  fontWeight: "700",
-                  letterSpacing: "0.1em",
-                  color: "var(--color-text-muted)",
-                  marginBottom: "16px",
-                  textTransform: "uppercase"
-                }}>
-                  {feat.subtitle}
-                </p>
-                <hr className="feature-line" style={{
-                  border: "none",
-                  height: "1px",
-                  background: "var(--color-border)",
-                  margin: "auto 0 16px 0"
-                }} />
-                <div className="feature-meta" style={{
-                  fontFamily: "var(--font-primary)",
-                  fontSize: "9px",
-                  fontWeight: "600",
-                  letterSpacing: "0.05em",
-                  color: "var(--color-text-muted)"
-                }}>
-                  {feat.meta}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+            {magazine.features && magazine.features.map((feat, idx) => {
+              // Determine appropriate destination URL for each feature card
+              const matchingArticle = displayArticles.find(a => 
+                (a.rubrique && a.rubrique.toLowerCase() === feat.title.toLowerCase()) ||
+                (a.badge && a.badge.toLowerCase() === feat.title.toLowerCase()) ||
+                (a.subcategory && a.subcategory.toLowerCase() === feat.title.toLowerCase()) ||
+                (a.title && a.title.toLowerCase().includes(feat.title.toLowerCase()))
+              );
 
-        {/* D. Articles Grid */}
-        <section className="mag-articles container section-padding" id="articles" style={{ padding: "80px 20px" }}>
-          <h2 style={{
-            fontFamily: "var(--font-secondary)",
-            fontSize: "28px",
-            fontWeight: "700",
-            color: "var(--color-text)",
-            textAlign: "center",
-            marginBottom: "24px",
-            letterSpacing: "-0.01em"
-          }}>
-            Dernières parutions
-          </h2>
+              let featUrl = feat.url || feat.link || feat.href;
+              if (!featUrl) {
+                if (matchingArticle) {
+                  featUrl = `/magazines/${magazineSlug}/articles/${matchingArticle.id}`;
+                } else {
+                  const fLower = `${feat.title || ''} ${feat.subtitle || ''}`.toLowerCase();
+                  if (fLower.includes("radar") || fLower.includes("net map") || fLower.includes("beta test") || fLower.includes("metrics") || fLower.includes("vip")) {
+                    featUrl = `/magazines/${magazineSlug}/vip`;
+                  } else if (fLower.includes("studio") || fLower.includes("direct") || fLower.includes("live") || fLower.includes("pulse")) {
+                    featUrl = `/magazines/${magazineSlug}/studio`;
+                  } else {
+                    featUrl = `/magazines/${magazineSlug}#articles`;
+                  }
+                }
+              }
 
-          {/* Dynamic Tabs (Categories) Bar */}
-          {magazine.tabs && magazine.tabs.length > 0 && (
-            <div style={{
-              display: "flex",
-              justifyContent: "center",
-              flexWrap: "wrap",
-              gap: "12px",
-              marginBottom: "40px"
-            }}>
-              {magazine.tabs.filter(t => !t.hidden).map((tab, idx) => (
-                <span 
-                  key={tab.id || idx}
+              return (
+                <Link
+                  key={idx}
+                  id={`feature-${idx}`}
+                  href={featUrl}
+                  className="mag-feature-card"
                   style={{
-                    padding: "8px 20px",
-                    borderRadius: "20px",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    letterSpacing: "0.05em",
-                    textTransform: "uppercase",
-                    background: idx === 0 ? primaryColor : "var(--color-bg)",
-                    color: idx === 0 ? "#FFFFFF" : "var(--color-text)",
+                    background: "var(--color-bg)",
                     border: "1px solid var(--color-border)",
+                    padding: "32px 24px",
+                    borderRadius: "2px",
+                    display: "flex",
+                    flexDirection: "column",
+                    textDecoration: "none",
+                    color: "inherit",
                     cursor: "pointer"
                   }}
                 >
-                  {tab.name}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="mag-articles-grid" style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "32px"
-          }}>
-            {displayArticles.map((art, idx) => (
-              <article key={idx} className="mag-article" style={{
-                display: "flex",
-                flexDirection: "column",
-                border: "1px solid var(--color-border)",
-                background: "var(--color-bg)",
-                borderRadius: "2px",
-                overflow: "hidden"
-              }}>
-                {art.image && (
-                  <div className="mag-article-img-container" style={{
-                    position: "relative",
-                    aspectRatio: "16/9",
-                    overflow: "hidden",
-                    background: "var(--color-bg-alt)"
-                  }}>
-                    <span className="badge" style={{
-                      position: "absolute",
-                      top: "12px",
-                      left: "12px",
-                      background: primaryColor,
-                      color: "#FFFFFF",
-                      fontSize: "9px",
-                      fontWeight: "700",
-                      padding: "4px 8px",
-                      borderRadius: "2px",
-                      zIndex: 2,
-                      letterSpacing: "0.05em"
-                    }}>
-                      {art.badge}
+                  <div className="feature-icon" style={{ color: primaryColor, marginBottom: "20px" }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>
+                      {feat.icon || "explore"}
                     </span>
-                    <img 
-                      src={art.image} 
-                      alt={art.title} 
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover"
-                      }}
-                    />
                   </div>
-                )}
-                
-                <div style={{ padding: "24px", flexGrow: 1, display: "flex", flexDirection: "column" }}>
-                  <h3 style={{
+                  <h3 className="feature-title" style={{
                     fontFamily: "var(--font-secondary)",
-                    fontSize: "18px",
+                    fontSize: "20px",
                     fontWeight: "600",
-                    lineHeight: "1.4",
                     color: "var(--color-text)",
-                    marginBottom: "12px"
+                    marginBottom: "8px"
                   }}>
-                    <Link href={`/magazines/${magazineSlug}/articles/${art.id}`} style={{ color: "inherit", textDecoration: "none" }}>
-                      {art.title}
-                    </Link>
+                    {feat.title}
                   </h3>
-                  <p style={{
+                  <p className="feature-subtitle" style={{
                     fontFamily: "var(--font-primary)",
-                    fontSize: "14px",
-                    lineHeight: "1.6",
+                    fontSize: "10px",
+                    fontWeight: "700",
+                    letterSpacing: "0.1em",
                     color: "var(--color-text-muted)",
-                    marginBottom: "24px"
+                    marginBottom: "16px",
+                    textTransform: "uppercase"
                   }}>
-                    {art.desc}
+                    {feat.subtitle}
                   </p>
-                  
-                  <div style={{
-                    marginTop: "auto",
+                  <hr className="feature-line" style={{
+                    border: "none",
+                    height: "1px",
+                    background: "var(--color-border)",
+                    margin: "auto 0 16px 0"
+                  }} />
+                  <div className="feature-meta" style={{
                     fontFamily: "var(--font-primary)",
                     fontSize: "9px",
                     fontWeight: "600",
                     letterSpacing: "0.05em",
-                    color: "var(--color-text-muted)",
-                    textTransform: "uppercase"
+                    color: "var(--color-text-muted)"
                   }}>
-                    {art.meta}
+                    {feat.meta}
                   </div>
-                </div>
-              </article>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </section>
+
+        {/* D. Articles Grid with Interactive Category Switching Tabs */}
+        <MagazineArticlesSection
+          articles={displayArticles}
+          tabs={magazine.tabs}
+          magazineSlug={magazineSlug}
+          primaryColor={primaryColor}
+        />
 
         {/* E. Tools Section */}
         <section className="mag-tools" style={{
@@ -448,50 +373,107 @@ export default async function Page({ params }) {
             <div className="mag-tools-grid" style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "32px"
+              gap: "24px"
             }}>
-              {magazine.tools.map((tool, idx) => (
-                <div key={idx} className="mag-tool-item" style={{
-                  display: "flex",
-                  gap: "20px"
-                }}>
-                  <div className="mag-tool-icon" style={{
-                    width: "48px",
-                    height: "48px",
-                    background: "var(--color-bg)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "2px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: primaryColor,
-                    flexShrink: 0
-                  }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>
-                      {tool.icon || "build"}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="mag-tool-title" style={{
-                      fontFamily: "var(--font-secondary)",
-                      fontSize: "18px",
-                      fontWeight: "600",
-                      color: "var(--color-text)",
-                      marginBottom: "8px"
+              {magazine.tools.map((tool, idx) => {
+                // Determine appropriate redirect destination for each tool
+                let targetUrl = tool.url || tool.link || tool.href;
+                if (!targetUrl) {
+                  const tLower = `${tool.title || ''} ${tool.desc || ''}`.toLowerCase();
+                  if (tLower.includes("studio") || tLower.includes("direct") || tLower.includes("live") || tLower.includes("vidéo") || tLower.includes("broadcast")) {
+                    targetUrl = `/magazines/${magazineSlug}/studio`;
+                  } else if (tLower.includes("jeu") || tLower.includes("quiz") || tLower.includes("casse-tête") || tLower.includes("énigme")) {
+                    targetUrl = `/jeux`;
+                  } else if (tLower.includes("lecture") || tLower.includes("dossier") || tLower.includes("revue") || tLower.includes("pdf") || tLower.includes("rapport")) {
+                    targetUrl = `/espace-lecture`;
+                  } else if (tLower.includes("podcast") || tLower.includes("audio") || tLower.includes("écoute") || tLower.includes("voix")) {
+                    targetUrl = `/ecouter`;
+                  } else if (tLower.includes("abonnement") || tLower.includes("souscription") || tLower.includes("tarif")) {
+                    targetUrl = `/abonnement`;
+                  } else {
+                    // Strategic Universe Tools (Data Viz, Alertes, Veille, Simulation, Radar, Cartographie, Benchmarks, etc.)
+                    targetUrl = `/magazines/${magazineSlug}/vip`;
+                  }
+                }
+
+                return (
+                  <Link
+                    key={idx}
+                    href={targetUrl}
+                    className="mag-tool-item"
+                    style={{
+                      display: "flex",
+                      gap: "20px",
+                      background: "var(--color-bg)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "3px",
+                      padding: "24px",
+                      textDecoration: "none",
+                      color: "inherit",
+                      transition: "all 0.2s ease",
+                      cursor: "pointer",
+                      position: "relative"
+                    }}
+                  >
+                    <div className="mag-tool-icon" style={{
+                      width: "48px",
+                      height: "48px",
+                      background: "var(--color-bg-alt)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "2px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: primaryColor,
+                      flexShrink: 0
                     }}>
-                      {tool.title}
-                    </h3>
-                    <p className="mag-tool-desc" style={{
-                      fontFamily: "var(--font-primary)",
-                      fontSize: "14px",
-                      lineHeight: "1.6",
-                      color: "var(--color-text-muted)"
-                    }}>
-                      {tool.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                      <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>
+                        {tool.icon || "build"}
+                      </span>
+                    </div>
+                    <div style={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", marginBottom: "8px" }}>
+                        <h3 className="mag-tool-title" style={{
+                          fontFamily: "var(--font-secondary)",
+                          fontSize: "17px",
+                          fontWeight: "600",
+                          color: "var(--color-text)",
+                          margin: 0
+                        }}>
+                          {tool.title}
+                        </h3>
+                        <span className="material-symbols-outlined" style={{ fontSize: "16px", color: primaryColor, opacity: 0.8 }}>
+                          north_east
+                        </span>
+                      </div>
+                      <p className="mag-tool-desc" style={{
+                        fontFamily: "var(--font-primary)",
+                        fontSize: "13px",
+                        lineHeight: "1.6",
+                        color: "var(--color-text-muted)",
+                        margin: "0 0 14px 0",
+                        flexGrow: 1
+                      }}>
+                        {tool.desc}
+                      </p>
+                      <div style={{
+                        marginTop: "auto",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: primaryColor,
+                        letterSpacing: "0.05em",
+                        textTransform: "uppercase"
+                      }}>
+                        <span>Accéder à l&apos;outil</span>
+                        <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>arrow_forward</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -533,7 +515,7 @@ export default async function Page({ params }) {
                 }}>
                   Devenir Membre Premium
                 </Link>
-                <Link href={`/magazines/${magazineSlug}/vip`} style={{
+                <Link href={vipLoginUrl} style={{
                   fontFamily: "var(--font-primary)",
                   fontSize: "12px",
                   fontWeight: "700",

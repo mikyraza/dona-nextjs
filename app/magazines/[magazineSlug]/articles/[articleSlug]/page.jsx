@@ -1,18 +1,44 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { magazines } from '../../../data';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { fetchMagazineConfig, fetchArticleById } from '@/lib/wordpress';
+import { magazines as staticMagazines } from '../../../data';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function ArticlePage({ params }) {
   const resolvedParams = await params;
   const { magazineSlug, articleSlug } = resolvedParams;
 
-  const magazine = magazines.find(m => m.slug === magazineSlug || m.slug.replace(/^magazine-\d{2}-/, '') === magazineSlug);
-  if (!magazine) {
+  const session = await getServerSession(authOptions);
+  const isVipUser = Boolean(
+    session?.user?.role && 
+    ['VIP', 'Premium', 'Élite', 'Super-Admin', 'Éditeur', 'Journaliste', 'Traducteur', 'admin', 'Membre VIP'].includes(session.user.role)
+  );
+
+  const baseMag = staticMagazines.find(m => m.slug === magazineSlug || m.slug.replace(/^magazine-\d{2}-/, '') === magazineSlug);
+  const dynamicConfig = await fetchMagazineConfig(magazineSlug);
+
+  if (!baseMag && !dynamicConfig) {
     notFound();
   }
 
-  let article = magazine.articles.find(a => a.id === articleSlug);
+  const magazine = {
+    ...baseMag,
+    ...dynamicConfig
+  };
+
+  // Fetch article dynamically from database / WordPress
+  let article = await fetchArticleById(articleSlug);
+
+  // Fallback to magazine articles array if not found in db
+  if (!article && magazine.articles) {
+    article = magazine.articles.find(a => a.id === articleSlug || a.slug === articleSlug);
+  }
+
   if (!article) {
     article = {
       id: articleSlug,
@@ -20,11 +46,18 @@ export default async function ArticlePage({ params }) {
       desc: `Analyse approfondie au coeur des enjeux contemporains de l'univers ${magazine.title}.`,
       badge: "EXCLUSIF",
       meta: "RÉDACTION • 10 MIN DE LECTURE",
-      image: magazine.heroImage
+      image: magazine.heroImage || "/assets/core/img/mag_hero_03.png",
+      content: "<p>Contenu en cours de rédaction par le comité éditorial.</p>"
     };
   }
 
   const primaryColor = magazine.themePrimary || "#a31835";
+  const authorName = (article.author || "Elena Moretti").toUpperCase();
+  const displayBadge = (article.rubrique || article.badge || "ARTICLE").toUpperCase();
+  const coverImg = article.coverImage || article.image || magazine.heroImage;
+  const gallery = article.articleGallery || article.galerie_photos || [];
+  const currentPath = `/magazines/${magazineSlug}/articles/${articleSlug}`;
+  const loginUrl = `/login?callbackUrl=${encodeURIComponent(currentPath)}`;
 
   return (
     <main style={{ background: "var(--color-bg)", minHeight: "90vh", padding: "60px 0" }}>
@@ -37,102 +70,304 @@ export default async function ArticlePage({ params }) {
               <span className="material-symbols-outlined" style={{ color: primaryColor }}>person</span>
             </div>
             
-            <button style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}>
-              <span className="material-symbols-outlined">volume_up</span>
-              <span style={{ fontSize: "9px", fontWeight: "700" }}>ÉCOUTER</span>
-            </button>
-            
-            <button style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}>
-              <span className="material-symbols-outlined">bookmark</span>
-              <span style={{ fontSize: "9px", fontWeight: "700" }}>SAUVER</span>
-            </button>
+            {isVipUser ? (
+              <>
+                <button style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}>
+                  <span className="material-symbols-outlined">volume_up</span>
+                  <span style={{ fontSize: "9px", fontWeight: "700" }}>ÉCOUTER</span>
+                </button>
+                
+                <button style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}>
+                  <span className="material-symbols-outlined">bookmark</span>
+                  <span style={{ fontSize: "9px", fontWeight: "700" }}>SAUVER</span>
+                </button>
+              </>
+            ) : (
+              <Link href={loginUrl} style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: primaryColor, textDecoration: "none" }}>
+                <span className="material-symbols-outlined">lock</span>
+                <span style={{ fontSize: "9px", fontWeight: "700" }}>VIP</span>
+              </Link>
+            )}
+
+            <Link href={`/magazines/${magazineSlug}`} style={{ marginTop: "40px", border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text)", textDecoration: "none" }}>
+              <span className="material-symbols-outlined">arrow_back</span>
+              <span style={{ fontSize: "9px", fontWeight: "700" }}>RETOUR</span>
+            </Link>
           </div>
         </aside>
 
         {/* Center Main Article Column */}
         <div style={{ gridColumn: "2" }}>
           {/* Article Header */}
-          <header style={{ marginBottom: "40px" }}>
-            <span style={{ background: primaryColor, color: "#FFFFFF", fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "2px", letterSpacing: "0.15em", textTransform: "uppercase" }}>
-              {article.badge}
-            </span>
+          <header style={{ marginBottom: "32px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
+              <span style={{ background: primaryColor, color: "#FFFFFF", fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "2px", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                {magazine.title.toUpperCase()} • {displayBadge}
+              </span>
+              
+              {isVipUser ? (
+                <span style={{ background: "#DCFCE7", color: "#166534", fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "2px", letterSpacing: "0.1em", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>verified</span>
+                  ACCÈS VIP ACTIF
+                </span>
+              ) : (
+                <span style={{ background: "#FEF3C7", color: "#B45309", fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "2px", letterSpacing: "0.1em", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>lock</span>
+                  RÉSUMÉ PUBLIC • DÉTAILS VIP
+                </span>
+              )}
+            </div>
             
-            <h1 style={{ fontFamily: "var(--font-secondary)", fontSize: "40px", fontWeight: "700", color: "var(--color-text)", marginTop: "20px", marginBottom: "16px", lineHeight: "1.2", letterSpacing: "-0.02em" }}>
+            <h1 style={{ fontFamily: "var(--font-secondary)", fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "700", color: "var(--color-text)", marginBottom: "16px", lineHeight: "1.25", letterSpacing: "-0.02em" }}>
               {article.title}
             </h1>
             
-            <p style={{ fontFamily: "var(--font-primary)", fontSize: "18px", lineHeight: "1.5", color: "var(--color-text-muted)", marginBottom: "24px", fontStyle: "italic" }}>
-              {article.desc}
-            </p>
-            
-            <div style={{ fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", letterSpacing: "0.05em", color: "var(--color-text-muted)", borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)", padding: "12px 0" }}>
-              {article.meta}
+            <div style={{ fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", letterSpacing: "0.05em", color: "var(--color-text-muted)", borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)", padding: "12px 0", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <span>PAR <strong>{authorName}</strong></span>
+              <span>•</span>
+              <span>{article.updated || "RÉCENT"}</span>
+              {article.format === 'audio' && <><span>•</span><span>🎙 PODCAST</span></>}
+              {article.format === 'video' && <><span>•</span><span>▶ VIDÉO</span></>}
             </div>
           </header>
 
-          {/* Article Hero Image */}
-          {article.image && (
-            <div style={{ width: "100%", aspectRatio: "21/9", borderRadius: "2px", overflow: "hidden", border: "1px solid var(--color-border)", marginBottom: "48px" }}>
-              <img src={article.image} alt={article.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          {/* Résumé / Chapeau (Accessible to ALL users) */}
+          {(article.desc || article.summary) && (
+            <div style={{
+              background: "var(--color-bg-alt)",
+              borderLeft: `4px solid ${primaryColor}`,
+              borderRadius: "2px",
+              padding: "24px 26px",
+              marginBottom: "32px"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                <div style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: primaryColor, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>short_text</span>
+                  Résumé Éditorial (Extrait Public)
+                </div>
+                {!isVipUser && (
+                  <span style={{ fontSize: "10px", background: "#FEF3C7", color: "#B45309", padding: "2px 8px", borderRadius: "2px", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                    Détails Réservés aux Abonnés
+                  </span>
+                )}
+              </div>
+
+              <p style={{
+                fontFamily: "var(--font-primary)",
+                fontSize: "17px",
+                lineHeight: "1.7",
+                color: "var(--color-text)",
+                margin: "0 0 18px 0",
+                fontStyle: "italic"
+              }}>
+                {article.desc || article.summary}
+              </p>
+
+              {/* Direct Directory to Subscription page */}
+              {!isVipUser && (
+                <div style={{
+                  marginTop: "16px",
+                  paddingTop: "16px",
+                  borderTop: "1px solid var(--color-border)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                  background: "rgba(0,0,0,0.02)",
+                  padding: "12px 16px",
+                  borderRadius: "2px"
+                }}>
+                  <div style={{ fontSize: "13px", color: "var(--color-text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: "16px", color: primaryColor }}>auto_awesome</span>
+                    <span>Pour débloquer l&apos;intégralité de l&apos;article et accéder aux détails exclusifs :</span>
+                  </div>
+                  <Link
+                    href="/abonnement"
+                    style={{
+                      background: primaryColor,
+                      color: "#FFFFFF",
+                      textDecoration: "none",
+                      padding: "8px 18px",
+                      borderRadius: "2px",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    S&apos;abonner pour voir les détails
+                    <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>arrow_forward</span>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Article Content */}
-          <div className="article-body" style={{ fontFamily: "var(--font-primary)", fontSize: "16px", lineHeight: "1.8", color: "var(--color-text)" }}>
-            <p style={{ marginBottom: "24px" }}>
-              <span style={{ float: "left", fontSize: "48px", fontWeight: "700", color: primaryColor, fontFamily: "var(--font-secondary)", marginRight: "12px", lineHeight: "1" }}>L</span>
-              a complexité inhérente aux nouvelles structures informationnelles exige un recalibrage complet de nos modèles d'analyse stratégique. Dans un écosystème globalisé où le flux de données prime sur le territoire physique, la prise de décision stratégique ne peut plus reposer sur des paradigmes statiques.
-            </p>
-            
-            <p style={{ marginBottom: "32px" }}>
-              Les décideurs de premier plan constatent quotidiennement la convergence des risques. L'accélération technologique, loin d'apporter la clarté espérée, produit souvent un bruit informationnel complexe à l'intérieur duquel la détection des signaux faibles s'avère critique.
-            </p>
-
-            <blockquote style={{ borderLeft: `3px solid ${primaryColor}`, paddingLeft: "24px", fontFamily: "var(--font-secondary)", fontSize: "20px", fontStyle: "italic", margin: "40px 0", color: "var(--color-text-muted)", lineHeight: "1.6" }}>
-              "L'accès illimité à l'information ne produit pas l'intelligence ; c'est la rigueur de la structure d'analyse qui en extrait la valeur stratégique."
-            </blockquote>
-
-            {/* Key Takeaways Panel */}
-            <div style={{ background: "var(--color-bg-alt)", border: "1px solid var(--color-border)", borderRadius: "2px", padding: "32px", marginBottom: "48px" }}>
-              <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "18px", fontWeight: "600", margin: "0 0 16px 0", color: "var(--color-text)" }}>À Retenir</h3>
-              <ul style={{ paddingLeft: "20px", margin: 0, display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
-                <li>La souveraineté numérique redéfinit les frontières géopolitiques traditionnelles.</li>
-                <li>L'intelligence artificielle doit être perçue comme un outil d'augmentation cognitive et non comme un substitut décisionnel.</li>
-                <li>La résilience des organisations passe par des circuits de décision courts et décentralisés.</li>
-              </ul>
+          {/* Article Hero Image */}
+          {coverImg && (
+            <div style={{ width: "100%", aspectRatio: "21/9", borderRadius: "2px", overflow: "hidden", border: "1px solid var(--color-border)", marginBottom: "36px" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={coverImg} alt={article.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
+          )}
 
-            {/* Simulated VIP Paywall */}
-            <div style={{ position: "relative", marginTop: "40px", borderTop: "1px solid var(--color-border)", paddingTop: "40px" }}>
-              {/* Blurred Text Mock */}
-              <div style={{ opacity: 0.15, filter: "blur(4px)", pointerEvents: "none", userSelect: "none" }}>
-                <p style={{ marginBottom: "16px" }}>
-                  Pour aller plus loin, nos chercheurs ont modélisé l'impact sectoriel à l'horizon 2030. L'intégration de modèles prédictifs hybrides permet d'anticiper avec une probabilité de 87% les futures ruptures logistiques...
-                </p>
-                <p>
-                  Ce rapport spécial de 40 pages détaille le plan de transition recommandé pour les entreprises de taille intermédiaire et les grands groupes...
-                </p>
-              </div>
+          {/* IF VIP USER: FULL DETAILS (CONTENT, VIDEO, AUDIO, GALLERY) */}
+          {isVipUser ? (
+            <div className="article-body" style={{ fontFamily: "var(--font-primary)", fontSize: "16px", lineHeight: "1.8", color: "var(--color-text)" }}>
+              {/* Video Player if video format */}
+              {article.format === 'video' && article.videoUrl && (
+                <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: "4px", overflow: "hidden", marginBottom: "32px", background: "#000" }}>
+                  {article.videoUrl.includes("youtube.com") || article.videoUrl.includes("youtu.be") ? (
+                    <iframe
+                      src={article.videoUrl.replace("watch?v=", "embed/")}
+                      title={article.title}
+                      style={{ width: "100%", height: "100%", border: "none" }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video controls src={article.videoUrl} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  )}
+                </div>
+              )}
 
-              {/* Paywall Card Overlay */}
-              <div style={{ position: "absolute", top: "20px", inset: "0 0 0 0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "40px 24px", background: "linear-gradient(to bottom, transparent, var(--color-bg) 80%)", textAlign: "center" }}>
-                <span className="material-symbols-outlined" style={{ fontSize: "28px", color: primaryColor, marginBottom: "16px" }}>lock</span>
-                <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "20px", fontWeight: "600", color: "var(--color-text)", marginBottom: "12px" }}>
-                  Débloquez la suite de cet article
-                </h3>
-                <p style={{ fontSize: "14px", color: "var(--color-text-muted)", maxWidth: "450px", margin: "0 auto 24px" }}>
-                  Rejoignez l'Alliance DONA pour accéder à l'intégralité de nos analyses de fond et outils exclusifs.
+              {/* Audio Player if audio format */}
+              {article.format === 'audio' && article.audioFile && (
+                <div style={{ background: "var(--color-bg-alt)", border: "1px solid var(--color-border)", borderRadius: "4px", padding: "16px 20px", marginBottom: "32px", display: "flex", alignItems: "center", gap: "16px" }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "28px", color: primaryColor }}>podcasts</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", color: "var(--color-text-muted)" }}>Épisode Audio Exclusif</div>
+                    <audio controls src={article.audioFile} style={{ width: "100%", marginTop: "8px" }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Full Article Content */}
+              {article.content ? (
+                <div dangerouslySetInnerHTML={{ __html: article.content }} />
+              ) : (
+                <p style={{ marginBottom: "24px" }}>{article.desc}</p>
+              )}
+
+              {/* Photo Gallery if attached */}
+              {gallery && gallery.length > 0 && (
+                <div style={{ marginTop: "40px", borderTop: "1px solid var(--color-border)", paddingTop: "32px" }}>
+                  <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "20px", fontWeight: 700, marginBottom: "16px" }}>Galerie Photos</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+                    {gallery.map((photo, pIdx) => {
+                      const src = typeof photo === 'string' ? photo : photo.url;
+                      return (
+                        <div key={pIdx} style={{ borderRadius: "4px", overflow: "hidden", border: "1px solid var(--color-border)" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt={`Galerie ${pIdx + 1}`} style={{ width: "100%", height: "160px", objectFit: "cover" }} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* IF NORMAL USER: DETAILS LOCKED & REDIRECTION TO VIP LOGIN */
+            <div style={{ marginTop: "24px" }}>
+              <div style={{
+                position: "relative",
+                background: "linear-gradient(180deg, var(--color-bg-alt) 0%, var(--color-bg) 100%)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "4px",
+                padding: "48px 32px",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center"
+              }}>
+                <div style={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "50%",
+                  background: "#FEF3C7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "20px"
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "#B45309" }}>lock</span>
+                </div>
+
+                <h2 style={{
+                  fontFamily: "var(--font-secondary)",
+                  fontSize: "24px",
+                  fontWeight: "700",
+                  color: "var(--color-text)",
+                  marginBottom: "12px"
+                }}>
+                  Accès aux Détails Réservé aux Membres VIP
+                </h2>
+
+                <p style={{
+                  fontSize: "15px",
+                  lineHeight: "1.6",
+                  color: "var(--color-text-muted)",
+                  maxWidth: "520px",
+                  marginBottom: "32px"
+                }}>
+                  Vous visualisez actuellement le <strong>résumé public</strong> de cette publication. L&apos;analyse approfondie, les enquêtes complètes et les contenus exclusifs sont réservés aux membres abonnés du Cercle VIP DONA.
                 </p>
-                <Link href="/abonnement" style={{ background: primaryColor, color: "#FFFFFF", textDecoration: "none", padding: "14px 28px", borderRadius: "2px", fontSize: "11px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase" }}>
-                  S'abonner à l'Alliance
-                </Link>
+
+                <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", justifyContent: "center" }}>
+                  <Link
+                    href={loginUrl}
+                    style={{
+                      background: primaryColor,
+                      color: "#FFFFFF",
+                      textDecoration: "none",
+                      padding: "14px 28px",
+                      borderRadius: "2px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>login</span>
+                    Se connecter à mon compte VIP
+                  </Link>
+
+                  <Link
+                    href="/abonnement"
+                    style={{
+                      background: "transparent",
+                      color: "var(--color-text)",
+                      border: "1px solid var(--color-border)",
+                      textDecoration: "none",
+                      padding: "14px 24px",
+                      borderRadius: "2px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    Devenir Membre VIP
+                  </Link>
+                </div>
               </div>
             </div>
-            
-          </div>
+          )}
         </div>
 
-        {/* Right Empty Column (Balance spacer) */}
+        {/* Right Column (Balance spacer) */}
         <div style={{ gridColumn: "3" }}></div>
 
       </div>

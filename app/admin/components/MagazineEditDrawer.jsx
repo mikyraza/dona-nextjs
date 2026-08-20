@@ -330,7 +330,7 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
         className="drawer-panel" 
         onClick={e => e.stopPropagation()} 
         style={{ 
-          width: '1200px', 
+          width: '1440px', 
           maxWidth: '98vw', 
           height: '100%', 
           display: 'flex', 
@@ -469,10 +469,10 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
         </div>
 
         {/* SPLIT SCREEN BODY */}
-        <div className="article-editor-split" style={{ flex: 1, height: 'calc(100% - 110px)' }}>
+        <div className="article-editor-split" style={{ flex: 1, height: 'calc(100% - 110px)', width: '100%' }}>
 
           {/* ====== LEFT COLUMN: EDITING FORM ====== */}
-          <div className="editor-left-col" style={{ padding: '24px' }}>
+          <div className="editor-left-col" style={{ flex: '0 0 58%', padding: '24px 28px', overflowY: 'auto' }}>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
               {/* SUB-TAB 1: IDENTITÉ & HERO */}
@@ -533,12 +533,12 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
                     <div className="editor-meta-field" style={{ marginTop: '12px' }}>
                       <label>Description Stratégique Courte</label>
                       <textarea 
-                        rows={3}
+                        rows={5}
                         placeholder="Présentation synthétique de la vision éditoriale..."
                         value={formData.description} 
                         onChange={e => handleFieldChange('description', e.target.value)} 
                         className="drawer-textarea"
-                        style={{ minHeight: '80px' }}
+                        style={{ minHeight: '120px', width: '100%' }}
                       />
                     </div>
                   </div>
@@ -629,23 +629,26 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
                     </div>
 
                     <div className="editor-meta-field" style={{ marginBottom: '16px' }}>
-                      <label>Texte Éditorial Approfondi</label>
+                      <label>Texte Éditorial Approfondi (Manifeste & Vision)</label>
                       <textarea 
-                        rows={6}
+                        rows={12}
                         placeholder="Expliquez la mission éditoriale, l'ambition et la portée du magazine..."
                         value={formData.essenceText} 
                         onChange={e => handleFieldChange('essenceText', e.target.value)} 
                         className="drawer-textarea"
+                        style={{ minHeight: '260px', width: '100%', fontSize: '13px', lineHeight: '1.7' }}
                       />
                     </div>
 
                     <div className="editor-meta-field" style={{ marginBottom: '16px' }}>
                       <label>Citation Éditoriale en Exergue (Blockquote)</label>
-                      <input 
-                        type="text" 
-                        placeholder="Ex: L'intelligence n'est pas seulement l'accumulation de données..."
+                      <textarea 
+                        rows={3}
+                        placeholder="Ex: L'intelligence n'est pas seulement l'accumulation de données, c'est l'art de discerner le motif au milieu du chaos..."
                         value={formData.essenceQuote} 
                         onChange={e => handleFieldChange('essenceQuote', e.target.value)} 
+                        className="drawer-textarea"
+                        style={{ minHeight: '80px', width: '100%', fontStyle: 'italic' }}
                       />
                     </div>
 
@@ -727,11 +730,11 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
                     <div className="editor-meta-field">
                       <label>Code SVG Intégré</label>
                       <textarea 
-                        rows={4}
+                        rows={6}
                         value={formData.icon} 
                         onChange={e => handleFieldChange('icon', e.target.value)} 
                         className="drawer-textarea"
-                        style={{ fontFamily: 'monospace', fontSize: '11px' }}
+                        style={{ fontFamily: 'monospace', fontSize: '11px', minHeight: '130px', width: '100%' }}
                       />
                     </div>
                   </div>
@@ -994,7 +997,7 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
           </div>
 
           {/* ====== RIGHT COLUMN: REAL-TIME LIVE PREVIEW ====== */}
-          <div className="editor-right-col" style={{ background: '#FAF9F6', borderLeft: '1px solid #EAEAEA' }}>
+          <div className="editor-right-col" style={{ flex: '0 0 42%', background: '#FAF9F6', borderLeft: '1px solid #EAEAEA', overflowY: 'auto' }}>
             <div className="live-preview-header">
               <div className="preview-live-dot"></div>
               Aperçu en direct — Template Public DONA

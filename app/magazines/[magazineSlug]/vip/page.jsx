@@ -61,7 +61,7 @@ export default async function VipPage({ params }) {
             <Link href="/abonnement" style={{ background: primaryColor, color: "#FFFFFF", textDecoration: "none", padding: "16px 36px", borderRadius: "2px", fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase", display: "inline-block", transition: "background 0.2s" }}>
               S'abonner au Club
             </Link>
-            <Link href="/login" style={{ border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", padding: "16px 36px", borderRadius: "2px", fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase", display: "inline-block", transition: "all 0.2s" }}>
+            <Link href={`/login?callbackUrl=${encodeURIComponent(`/magazines/${magazineSlug}`)}`} style={{ border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", padding: "16px 36px", borderRadius: "2px", fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase", display: "inline-block", transition: "all 0.2s" }}>
               Déjà membre ? Se connecter
             </Link>
           </div>

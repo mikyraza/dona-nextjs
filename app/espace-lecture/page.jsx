@@ -196,8 +196,7 @@ export default function Page() {
         .vip-sidebar-item.active {
           background: var(--color-bg-alt);
           color: #A30626;
-          border-left: 3px solid #A30626;
-          padding-left: 17px;
+          font-weight: 700;
         }
 
         .vip-content {

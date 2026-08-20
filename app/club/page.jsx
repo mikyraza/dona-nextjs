@@ -16,7 +16,7 @@ export default function Page() {
                         <div className="club-login-header">Connexion Membre / Visiteur Autorisé</div>
                         <div className="club-login-input">Votre Clé d'Accès <span className="material-symbols-outlined">arrow_drop_down</span></div>
                         <div className="club-login-ref">Réf: DONA-CER-012</div>
-                        <a href="javascript:void(0)" className="club-login-btn">S'AUTHENTIFIER <span className="material-symbols-outlined">chevron_right</span></a>
+                        <Link href="/login?vip=1&callbackUrl=/club" className="club-login-btn">S'AUTHENTIFIER <span className="material-symbols-outlined">chevron_right</span></Link>
                     </div>
                 </div>
                 <div className="club-hero-right">
@@ -27,7 +27,6 @@ export default function Page() {
                         <circle cx="50" cy="50" r="45"></circle>
                         {/* Inner star / polygons */}
                         <polygon points="50,5 95,50 50,95 5,50"></polygon>
-                        {/* Secondary rotated polygon */}
                         <polygon points="50,5 95,50 50,95 5,50" transform="rotate(45 50 50)"></polygon>
                         {/* Inner circles intersecting */}
                         <circle cx="50" cy="27.5" r="22.5"></circle>
@@ -49,7 +48,7 @@ export default function Page() {
                         <h2 className="club-h2">Le Forum</h2>
                         <p className="club-subtitle">Débats, analyses et discussions entre pairs.</p>
                     </div>
-                    <a href="javascript:void(0)" className="club-btn-outline">REJOINDRE LE FORUM</a>
+                    <Link href="/login?vip=1&callbackUrl=/club" className="club-btn-outline">REJOINDRE LE FORUM</Link>
                 </div>
                 <div className="club-forum-grid">
                     <div className="forum-card forum-card-text">
@@ -87,23 +86,23 @@ export default function Page() {
                 <p className="masterclass-desc">Accédez à nos événements exclusifs et à nos sessions stratégiques, pensés pour affiner vos perspectives et optimiser la gestion de votre patrimoine matériel et immatériel.</p>
                 
                 <div className="masterclass-list">
-                    <a href="javascript:void(0)" className="masterclass-item">
+                    <Link href="/login?vip=1&callbackUrl=/club" className="masterclass-item">
                         <div className="masterclass-item-info">
                             <span className="masterclass-date">22 Mai 2026 — Paris</span>
                             <span className="masterclass-title">Gala d'Hiver : L'Art de l'Héritage</span>
                         </div>
                         <span className="material-symbols-outlined">arrow_forward</span>
-                    </a>
-                    <a href="javascript:void(0)" className="masterclass-item">
+                    </Link>
+                    <Link href="/login?vip=1&callbackUrl=/club" className="masterclass-item">
                         <div className="masterclass-item-info">
                             <span className="masterclass-date">05 Juin 2026 — Session Virtuelle</span>
                             <span className="masterclass-title">Briefing Stratégique : L'Avenir de l'Investissement</span>
                         </div>
                         <span className="material-symbols-outlined">arrow_forward</span>
-                    </a>
+                    </Link>
                 </div>
                 
-                <a href="javascript:void(0)" className="club-btn-white">VOIR L'AGENDA COMPLET</a>
+                <Link href="/login?vip=1&callbackUrl=/club" className="club-btn-white">VOIR L'AGENDA COMPLET</Link>
             </div>
         </section>
 
@@ -175,7 +174,7 @@ export default function Page() {
                             </div>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" className="avantages-link">Découvrir les avantages en détails</a>
+                    <Link href="/abonnement" className="avantages-link">Découvrir les avantages en détails</Link>
                 </div>
                 <div className="avantages-right">
                     <div className="avantages-masonry">
@@ -195,26 +194,13 @@ export default function Page() {
         <section className="club-join">
             <div className="container club-join-inner">
                 <img src="/assets/core/img/logo.png" className="club-join-logo" alt="DONA" style={{height: "24px", filter: "grayscale(100%) brightness(0) invert(0)", opacity: "0.8"}} />
-                <div style={{color: "var(--club-primary)", marginBottom: "2rem", display: "none"}} id="fallback-logo">
-                    <svg viewBox="0 0 100 100" width="32" height="32" stroke="currentColor" strokeWidth="2" fill="none">
-                        <circle cx="50" cy="50" r="45"></circle>
-                        <polygon points="50,5 95,50 50,95 5,50"></polygon>
-                        <polygon points="50,5 95,50 50,95 5,50" transform="rotate(45 50 50)"></polygon>
-                    </svg>
-                </div>
-                <script dangerouslySetInnerHTML={{ __html: `
-                    document.querySelector('.club-join-logo').onerror = function() {
-                        this.style.display = 'none';
-                        document.getElementById('fallback-logo').style.display = 'block';
-                    };
-                ` }} />
 
                 <h2 className="club-join-h2">Rejoindre le Cercle</h2>
                 <p className="club-join-desc">Cultivez votre unicité. Vivez l'expérience d'un luxe qui se vit de l'intérieur.</p>
                 <div className="club-join-box">
                     <div className="join-type">Adhésion Annuelle</div>
                     <div className="join-price">950 €</div>
-                    <a href="javascript:void(0)" className="join-link">S'inscrire et rejoindre le cercle <span className="material-symbols-outlined" style={{fontSize: "1.2rem"}}>arrow_forward</span></a>
+                    <Link href="/signup?plan=elite&billing=annual" className="join-link">S'inscrire et rejoindre le cercle <span className="material-symbols-outlined" style={{fontSize: "1.2rem"}}>arrow_forward</span></Link>
                 </div>
             </div>
             <div className="club-join-bottom">

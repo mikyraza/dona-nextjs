@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchArticles, createOrUpdateArticle } from '@/lib/wordpress';
+import { fetchArticles, createOrUpdateArticle, deleteArticle } from '@/lib/wordpress';
 import { getToken } from 'next-auth/jwt';
 
 async function checkAuth(req) {
@@ -43,5 +43,26 @@ export async function POST(req) {
   } catch (error) {
     console.error("POST articles proxy error:", error);
     return NextResponse.json({ error: "Erreur serveur lors de l'enregistrement" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    const isAuth = await checkAuth(req);
+    if (!isAuth) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ error: "ID de l'article manquant" }, { status: 400 });
+    }
+
+    const result = await deleteArticle(id);
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("DELETE article proxy error:", error);
+    return NextResponse.json({ error: "Erreur serveur lors de la suppression" }, { status: 500 });
   }
 }

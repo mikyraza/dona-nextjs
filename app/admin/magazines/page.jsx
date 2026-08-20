@@ -49,6 +49,14 @@ export default function MagazinesAdminPage() {
 
       if (res.ok) {
         const result = await res.json();
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('dona_content_updated', Date.now().toString());
+            const channel = new BroadcastChannel('dona_live_sync');
+            channel.postMessage({ type: 'CONTENT_UPDATED', timestamp: Date.now() });
+            channel.close();
+          } catch (e) {}
+        }
         alert(selectedMagazine ? "Magazine modifié avec succès !" : "Nouveau magazine créé avec succès !");
         setIsDrawerOpen(false);
         fetchMagazines();
@@ -71,6 +79,14 @@ export default function MagazinesAdminPage() {
         method: 'DELETE'
       });
       if (res.ok) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('dona_content_updated', Date.now().toString());
+            const channel = new BroadcastChannel('dona_live_sync');
+            channel.postMessage({ type: 'CONTENT_UPDATED', timestamp: Date.now() });
+            channel.close();
+          } catch (e) {}
+        }
         alert("Magazine supprimé avec succès.");
         fetchMagazines();
       } else {

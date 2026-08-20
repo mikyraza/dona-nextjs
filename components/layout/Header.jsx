@@ -2,13 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function Header() {
   const [activeMenu, setActiveMenu] = useState(null);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isThemeDark, setIsThemeDark] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const timeoutRef = useRef(null);
+  const headerRef = useRef(null);
+  const pathname = usePathname();
+  const router = useRouter();
 
   // Initialize theme from document element attribute
   useEffect(() => {
@@ -22,6 +25,11 @@ export default function Header() {
     }
   }, []);
 
+  // Close menus on page navigation
+  useEffect(() => {
+    closeAllMenus();
+  }, [pathname]);
+
   const toggleTheme = () => {
     const newTheme = !isThemeDark ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', newTheme);
@@ -34,31 +42,23 @@ export default function Header() {
     setIsThemeDark(!isThemeDark);
   };
 
-  const handleMouseEnter = (menuId) => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setActiveMenu(menuId);
-  };
-
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      setActiveMenu(null);
-    }, 250);
-  };
-
-  const handleLinkClick = (menuId, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (activeMenu === menuId) {
-      setActiveMenu(null);
-    } else {
-      setActiveMenu(menuId);
+  const toggleMenu = (menuId, targetHref, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
+    // If clicking an already open menu, navigate directly to that page
+    if (activeMenu === menuId && targetHref) {
+      closeAllMenus();
+      router.push(targetHref);
+      return;
+    }
+    setActiveMenu((prev) => (prev === menuId ? null : menuId));
   };
 
   const closeAllMenus = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setActiveMenu(null);
+    setIsLangOpen(false);
   };
 
   const closeMobileMenu = () => {
@@ -66,14 +66,38 @@ export default function Header() {
     closeAllMenus();
   };
 
+  // Close menus on click outside or Escape key
   useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (headerRef.current && !headerRef.current.contains(e.target)) {
+        closeAllMenus();
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closeAllMenus();
+      }
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      document.removeEventListener('click', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
+  // Determine if a nav item should show the active highlight
+  const isItemActive = (menuId, routeMatch) => {
+    if (activeMenu !== null) {
+      return activeMenu === menuId;
+    }
+    return Boolean(routeMatch);
+  };
+
   return (
-    <header className="site-header">
+    <header className="site-header" ref={headerRef}>
       <div className="container header-inner">
         {/* Logo */}
         <Link href="/" className="header-logo" aria-label="Page d'accueil" onClick={closeAllMenus}>
@@ -83,73 +107,63 @@ export default function Header() {
         {/* Main Navigation */}
         <nav className="main-nav">
           <ul className="nav-list">
-            <li className="nav-item">
+            <li className={`nav-item ${isItemActive(null, pathname === '/today') ? 'active' : ''}`}>
               <Link href="/today" className="nav-link" onClick={closeAllMenus}>TODAY</Link>
             </li>
-            <li 
-              className={`nav-item has-submenu ${activeMenu === 'magazines' ? 'submenu-active' : ''}`}
-              onMouseEnter={() => handleMouseEnter('magazines')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link 
-                href="/magazines" 
-                className="nav-link"
-                onClick={closeAllMenus}
+            <li className={`nav-item has-submenu ${activeMenu === 'magazines' ? 'submenu-active' : ''} ${isItemActive('magazines', pathname?.startsWith('/magazines') || pathname?.startsWith('/magazine-')) ? 'active' : ''}`}>
+              <button 
+                type="button"
+                className="nav-link nav-link-btn"
+                onClick={(e) => toggleMenu('magazines', '/magazines', e)}
+                aria-expanded={activeMenu === 'magazines'}
+                aria-haspopup="true"
               >
                 NOS MAGAZINES
-              </Link>
+              </button>
             </li>
-            <li 
-              className={`nav-item has-submenu ${activeMenu === 'studio' ? 'submenu-active' : ''}`}
-              onMouseEnter={() => handleMouseEnter('studio')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link 
-                href="/studio" 
-                className="nav-link"
-                onClick={closeAllMenus}
+            <li className={`nav-item has-submenu ${activeMenu === 'studio' ? 'submenu-active' : ''} ${isItemActive('studio', pathname?.startsWith('/studio')) ? 'active' : ''}`}>
+              <button 
+                type="button"
+                className="nav-link nav-link-btn"
+                onClick={(e) => toggleMenu('studio', '/studio', e)}
+                aria-expanded={activeMenu === 'studio'}
+                aria-haspopup="true"
               >
                 STUDIO
-              </Link>
+              </button>
             </li>
-            <li 
-              className={`nav-item has-submenu ${activeMenu === 'club' ? 'submenu-active' : ''}`}
-              onMouseEnter={() => handleMouseEnter('club')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link 
-                href="/club" 
-                className="nav-link"
-                onClick={closeAllMenus}
+            <li className={`nav-item has-submenu ${activeMenu === 'club' ? 'submenu-active' : ''} ${isItemActive('club', pathname?.startsWith('/club') || pathname?.startsWith('/abonnement')) ? 'active' : ''}`}>
+              <button 
+                type="button"
+                className="nav-link nav-link-btn"
+                onClick={(e) => toggleMenu('club', '/club', e)}
+                aria-expanded={activeMenu === 'club'}
+                aria-haspopup="true"
               >
                 CLUB
-              </Link>
+              </button>
             </li>
-            <li 
-              className={`nav-item has-submenu ${activeMenu === 'ecouter' ? 'submenu-active' : ''}`}
-              onMouseEnter={() => handleMouseEnter('ecouter')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link 
-                href="/ecouter" 
-                className="nav-link"
-                onClick={closeAllMenus}
+            <li className={`nav-item has-submenu ${activeMenu === 'ecouter' ? 'submenu-active' : ''} ${isItemActive('ecouter', pathname?.startsWith('/ecouter')) ? 'active' : ''}`}>
+              <button 
+                type="button"
+                className="nav-link nav-link-btn"
+                onClick={(e) => toggleMenu('ecouter', '/ecouter', e)}
+                aria-expanded={activeMenu === 'ecouter'}
+                aria-haspopup="true"
               >
                 ÉCOUTER
-              </Link>
+              </button>
             </li>
-            <li 
-              className={`nav-item has-submenu ${activeMenu === 'jeux' ? 'submenu-active' : ''}`}
-              onMouseEnter={() => handleMouseEnter('jeux')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link 
-                href="/jeux" 
-                className="nav-link"
-                onClick={closeAllMenus}
+            <li className={`nav-item has-submenu ${activeMenu === 'jeux' ? 'submenu-active' : ''} ${isItemActive('jeux', pathname?.startsWith('/jeux')) ? 'active' : ''}`}>
+              <button 
+                type="button"
+                className="nav-link nav-link-btn"
+                onClick={(e) => toggleMenu('jeux', '/jeux', e)}
+                aria-expanded={activeMenu === 'jeux'}
+                aria-haspopup="true"
               >
                 JEUX
-              </Link>
+              </button>
             </li>
           </ul>
         </nav>
@@ -169,7 +183,7 @@ export default function Header() {
             id="lang-trigger"
             onClick={() => setIsLangOpen(!isLangOpen)}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -182,7 +196,7 @@ export default function Header() {
             aria-label="Mode sombre/clair"
             onClick={toggleTheme}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
           </button>
@@ -232,10 +246,14 @@ export default function Header() {
       <div 
         id="mega-menu-magazines" 
         className={`mega-menu-panel ${activeMenu === 'magazines' ? 'open' : ''}`}
-        onMouseEnter={() => handleMouseEnter('magazines')}
-        onMouseLeave={handleMouseLeave}
       >
         <div className="container mega-menu-inner">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+            <span style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '0.08em', color: 'var(--color-text)' }}>LES 16 UNIVERS DONA</span>
+            <Link href="/magazines" onClick={closeAllMenus} style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              VOIR TOUS LES MAGAZINES <span style={{ fontSize: '14px' }}>→</span>
+            </Link>
+          </div>
           <div className="megamenu-grid">
             {/* Col 1 */}
             <div className="megamenu-col">
@@ -244,8 +262,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-01-intelligence" onClick={closeAllMenus}><span className="bullet">■</span> 01. Intelligence</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">La brève</a></li>
-                  <li><a href="#">Le pouls</a></li>
+                  <li><Link href="/magazines/magazine-01-intelligence#articles" onClick={closeAllMenus}>La brève</Link></li>
+                  <li><Link href="/magazines/magazine-01-intelligence#articles" onClick={closeAllMenus}>Le pouls</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -253,8 +271,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-07-academie" onClick={closeAllMenus}><span className="bullet">■</span> 07. Académie</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Parcours professionnel</a></li>
-                  <li><a href="#">Compétences</a></li>
+                  <li><Link href="/magazines/magazine-07-academie#articles" onClick={closeAllMenus}>Parcours professionnel</Link></li>
+                  <li><Link href="/magazines/magazine-07-academie#articles" onClick={closeAllMenus}>Compétences</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -262,8 +280,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-13-amour" onClick={closeAllMenus}><span className="bullet">■</span> 13. Amour</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Parcours professionnel</a></li>
-                  <li><a href="#">Compétences</a></li>
+                  <li><Link href="/magazines/magazine-13-amour#articles" onClick={closeAllMenus}>Parcours professionnel</Link></li>
+                  <li><Link href="/magazines/magazine-13-amour#articles" onClick={closeAllMenus}>Compétences</Link></li>
                 </ul>
               </div>
             </div>
@@ -274,8 +292,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-02-power-lab" onClick={closeAllMenus}><span className="bullet">■</span> 02. Power Lab</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Magazines d'exercices</a></li>
-                  <li><a href="#">La chambre forte</a></li>
+                  <li><Link href="/magazines/magazine-02-power-lab#articles" onClick={closeAllMenus}>Magazines d'exercices</Link></li>
+                  <li><Link href="/magazines/magazine-02-power-lab#articles" onClick={closeAllMenus}>La chambre forte</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -283,8 +301,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-08-patrimoine" onClick={closeAllMenus}><span className="bullet">■</span> 08. Patrimoine</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Richesse</a></li>
-                  <li><a href="#">L'héritage</a></li>
+                  <li><Link href="/magazines/magazine-08-patrimoine#articles" onClick={closeAllMenus}>Richesse</Link></li>
+                  <li><Link href="/magazines/magazine-08-patrimoine#articles" onClick={closeAllMenus}>L'héritage</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -292,8 +310,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-14-beaute" onClick={closeAllMenus}><span className="bullet">■</span> 14. Beauté</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Richesse</a></li>
-                  <li><a href="#">L'héritage</a></li>
+                  <li><Link href="/magazines/magazine-14-beaute#articles" onClick={closeAllMenus}>Richesse</Link></li>
+                  <li><Link href="/magazines/magazine-14-beaute#articles" onClick={closeAllMenus}>L'héritage</Link></li>
                 </ul>
               </div>
             </div>
@@ -304,8 +322,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-03-alliance" onClick={closeAllMenus}><span className="bullet">■</span> 03. L'Alliance</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Le pont</a></li>
-                  <li><a href="#">Annuaire</a></li>
+                  <li><Link href="/magazines/magazine-03-alliance#articles" onClick={closeAllMenus}>Le pont</Link></li>
+                  <li><Link href="/magazines/magazine-03-alliance#articles" onClick={closeAllMenus}>Annuaire</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -313,8 +331,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-09-longevity" onClick={closeAllMenus}><span className="bullet">■</span> 09. Longevity</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Bio-piratage</a></li>
-                  <li><a href="#">Neuro-Gym</a></li>
+                  <li><Link href="/magazines/magazine-09-longevity#articles" onClick={closeAllMenus}>Bio-piratage</Link></li>
+                  <li><Link href="/magazines/magazine-09-longevity#articles" onClick={closeAllMenus}>Neuro-Gym</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -322,8 +340,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-15-mariages" onClick={closeAllMenus}><span className="bullet">■</span> 15. Mariages</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Bio-piratage</a></li>
-                  <li><a href="#">Neuro-Gym</a></li>
+                  <li><Link href="/magazines/magazine-15-mariages#articles" onClick={closeAllMenus}>Bio-piratage</Link></li>
+                  <li><Link href="/magazines/magazine-15-mariages#articles" onClick={closeAllMenus}>Neuro-Gym</Link></li>
                 </ul>
               </div>
             </div>
@@ -334,8 +352,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-04-agenda" onClick={closeAllMenus}><span className="bullet">■</span> 04. L'Agenda</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Global Cal</a></li>
-                  <li><a href="#">Événements de Dona</a></li>
+                  <li><Link href="/magazines/magazine-04-agenda#articles" onClick={closeAllMenus}>Global Cal</Link></li>
+                  <li><Link href="/magazines/magazine-04-agenda#articles" onClick={closeAllMenus}>Événements de Dona</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -343,8 +361,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-10-impact" onClick={closeAllMenus}><span className="bullet">■</span> 10. Impact</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Laboratoire d'éthique</a></li>
-                  <li><a href="#">Causes</a></li>
+                  <li><Link href="/magazines/magazine-10-impact#articles" onClick={closeAllMenus}>Laboratoire d'éthique</Link></li>
+                  <li><Link href="/magazines/magazine-10-impact#articles" onClick={closeAllMenus}>Causes</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -352,8 +370,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-16-sante" onClick={closeAllMenus}><span className="bullet">■</span> 16. Santé</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Laboratoire d'éthique</a></li>
-                  <li><a href="#">Causes</a></li>
+                  <li><Link href="/magazines/magazine-16-sante#articles" onClick={closeAllMenus}>Laboratoire d'éthique</Link></li>
+                  <li><Link href="/magazines/magazine-16-sante#articles" onClick={closeAllMenus}>Causes</Link></li>
                 </ul>
               </div>
             </div>
@@ -364,8 +382,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-05-passions" onClick={closeAllMenus}><span className="bullet">■</span> 05. Passions</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Connexions</a></li>
-                  <li><a href="#">Nature</a></li>
+                  <li><Link href="/magazines/magazine-05-passions#articles" onClick={closeAllMenus}>Connexions</Link></li>
+                  <li><Link href="/magazines/magazine-05-passions#articles" onClick={closeAllMenus}>Nature</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -373,8 +391,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-11-culture-medias" onClick={closeAllMenus}><span className="bullet">■</span> 11. Culture & Médias</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">L'éditorial</a></li>
-                  <li><a href="#">Radiodiffusion</a></li>
+                  <li><Link href="/magazines/magazine-11-culture-medias#articles" onClick={closeAllMenus}>L'éditorial</Link></li>
+                  <li><Link href="/magazines/magazine-11-culture-medias#articles" onClick={closeAllMenus}>Radiodiffusion</Link></li>
                 </ul>
               </div>
             </div>
@@ -385,8 +403,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-06-art-de-vivre" onClick={closeAllMenus}><span className="bullet">■</span> 06. Art de Vivre</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Les grands voyages</a></li>
-                  <li><a href="#">La suite</a></li>
+                  <li><Link href="/magazines/magazine-06-art-de-vivre#articles" onClick={closeAllMenus}>Les grands voyages</Link></li>
+                  <li><Link href="/magazines/magazine-06-art-de-vivre#articles" onClick={closeAllMenus}>La suite</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -394,8 +412,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-12-cercle" onClick={closeAllMenus}><span className="bullet">■</span> 12. Le Cercle</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><a href="#">Le Forum</a></li>
-                  <li><a href="#">La vitrine</a></li>
+                  <li><Link href="/magazines/magazine-12-cercle#articles" onClick={closeAllMenus}>Le Forum</Link></li>
+                  <li><Link href="/magazines/magazine-12-cercle#articles" onClick={closeAllMenus}>La vitrine</Link></li>
                 </ul>
               </div>
             </div>
@@ -417,7 +435,7 @@ export default function Header() {
                   <span className="meta-label">TEXTE PAR</span>
                   <span className="meta-author">Alessandra Rossi</span>
                 </div>
-                <a href="#" className="featured-link">LIRE LE RÉCIT</a>
+                <Link href="/magazines/magazine-01-intelligence" className="featured-link" onClick={closeAllMenus}>LIRE LE RÉCIT</Link>
               </div>
             </div>
           </div>
@@ -428,33 +446,37 @@ export default function Header() {
       <div 
         id="mega-menu-studio" 
         className={`mega-menu-panel ${activeMenu === 'studio' ? 'open' : ''}`}
-        onMouseEnter={() => handleMouseEnter('studio')}
-        onMouseLeave={handleMouseLeave}
       >
         <div className="mega-menu-inner studio-menu-inner">
           <div className="container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+              <span style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '0.08em', color: 'var(--color-text)' }}>ESPACE STUDIO MULTIMÉDIA</span>
+              <Link href="/studio" onClick={closeAllMenus} style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                ACCÉDER À TOUT LE STUDIO <span style={{ fontSize: '14px' }}>→</span>
+              </Link>
+            </div>
             <div className="studio-menu-grid">
               {/* Colonne 1: Navigation Audio/Video */}
               <div className="studio-col-nav">
                 <span className="studio-section-title">CATÉGORIES AUDIOVISUELLES</span>
                 <ul className="studio-links-list">
-                  <li><a href="#" className="studio-link">Live Audio / Vidéo <span className="studio-live-dot"></span></a></li>
-                  <li><a href="#" className="studio-link">Les Podcasts</a></li>
-                  <li><a href="#" className="studio-link">Séries Documentaires</a></li>
-                  <li><a href="#" className="studio-link">Interviews Haute Définition</a></li>
-                  <li><a href="#" className="studio-link">Replays Intégraux</a></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Live Audio / Vidéo <span className="studio-live-dot"></span></Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Les Podcasts</Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Séries Documentaires</Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Interviews Haute Définition</Link></li>
+                  <li><Link href="/studio" className="studio-link" onClick={closeAllMenus}>Replays Intégraux</Link></li>
                 </ul>
                 <div className="studio-live-card">
                   <span className="live-badge"><span className="pulse-dot"></span> EN DIRECT</span>
                   <h4 className="live-title">Le Grand Entretien : Penser Demain</h4>
-                  <a href="#" className="live-action">Rejoindre la diffusion</a>
+                  <Link href="/studio" className="live-action" onClick={closeAllMenus}>Rejoindre la diffusion</Link>
                 </div>
               </div>
 
               {/* Colonne 2: Vidéo Feature (Center) */}
               <div className="studio-col-video">
                 <span className="studio-section-title">DERNIER DOCUMENTAIRE HD</span>
-                <a href="#" className="studio-video-card">
+                <Link href="/studio" className="studio-video-card" onClick={closeAllMenus}>
                   <div className="studio-video-img-container">
                     <img src="/assets/core/img/studio-video-featured.png" alt="Featured Video" className="studio-video-img" />
                     <div className="studio-video-overlay">
@@ -470,7 +492,7 @@ export default function Header() {
                     <h3 className="studio-video-title">Le Pouvoir du Design Intemporel</h3>
                     <p className="studio-video-desc">Plongez dans les secrets des créateurs de pointe à travers ce documentaire original DONA.</p>
                   </div>
-                </a>
+                </Link>
               </div>
 
               {/* Colonne 3: Podcasts (Right) */}
@@ -482,18 +504,18 @@ export default function Header() {
                   <img src="/assets/core/img/studio-podcast-brief.png" alt="The Brief" className="podcast-cover" />
                   <div className="podcast-info">
                     <h4 className="podcast-title">The Brief : L'Analyse Hebdomadaire</h4>
-                    <button className="btn-listen-podcast" data-audio-src="the-brief-latest.mp3">Écouter le dernier épisode</button>
+                    <Link href="/studio" className="btn-listen-podcast" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center' }} onClick={closeAllMenus}>Écouter le dernier épisode</Link>
                   </div>
                 </div>
 
                 <div className="studio-podcast-grid">
-                  <div className="studio-podcast-card secondary-podcast">
+                  <Link href="/studio" className="studio-podcast-card secondary-podcast" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
                     <img src="/assets/core/img/studio-podcast-chronique.png" alt="Chronique" className="podcast-cover" />
                     <div className="podcast-info">
                       <h4 className="podcast-title">Chroniques d'Avenir</h4>
                       <span className="podcast-meta">12 ÉPISODES</span>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -505,93 +527,99 @@ export default function Header() {
       <div 
         id="mega-menu-club" 
         className={`mega-menu-panel ${activeMenu === 'club' ? 'open' : ''}`}
-        onMouseEnter={() => handleMouseEnter('club')}
-        onMouseLeave={handleMouseLeave}
       >
         <div className="container mega-menu-inner club-menu-inner">
-          {/* Left Column: Connection */}
-          <div className="club-col-left">
-            <div className="club-connection-box">
-              <h2 className="club-title">Le Club <span className="dona-accent">DONA</span></h2>
-              <p className="club-desc">Accédez à l'exceptionnel. Un espace dédié à la curation architecturale et aux privilèges exclusifs.</p>
-              
-              <div className="club-action-group">
-                <span className="club-label">DÉJÀ MEMBRE ?</span>
-                <Link href="/login" className="club-action-link" onClick={closeAllMenus}>
-                  <span className="action-text">Connexion</span>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="action-arrow">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </Link>
-              </div>
-              
-              <div className="club-action-group password-reset">
-                <span className="club-label">MOT DE PASSE OUBLIÉ ?</span>
-                <a href="#" className="club-reset-link">Réinitialiser</a>
-              </div>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+            <span style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '0.08em', color: 'var(--color-text)' }}>LE DONA CLUB EXCLUSIF</span>
+            <Link href="/club" onClick={closeAllMenus} style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              ACCÉDER À LA PAGE DU CLUB <span style={{ fontSize: '14px' }}>→</span>
+            </Link>
           </div>
-
-          {/* Middle Column: Offers & Member Space */}
-          <div className="club-col-middle">
-            {/* Section 1: Offers */}
-            <div className="club-section">
-              <h4 className="club-section-title">OFFRES / ABONNEMENT</h4>
-              <div className="club-offers-list">
-                {/* Premium Offer */}
-                <div className="club-offer-item">
-                  <div className="offer-icon premium-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polygon points="12 8 13.09 11.36 16.59 11.36 13.75 13.43 14.84 16.79 12 14.73 9.16 16.79 10.25 13.43 7.41 11.36 10.91 11.36 12 8"></polygon>
+          <div className="club-menu-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px' }}>
+            {/* Left Column: Connection */}
+            <div className="club-col-left">
+              <div className="club-connection-box">
+                <h2 className="club-title">Le Club <span className="dona-accent">DONA</span></h2>
+                <p className="club-desc">Accédez à l'exceptionnel. Un espace dédié à la curation architecturale et aux privilèges exclusifs.</p>
+                
+                <div className="club-action-group">
+                  <span className="club-label">DÉJÀ MEMBRE ?</span>
+                  <Link href="/login" className="club-action-link" onClick={closeAllMenus}>
+                    <span className="action-text">Connexion</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="action-arrow">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
-                  </div>
-                  <div className="offer-details">
-                    <h5 className="offer-title">Abonnement Annuel Premium</h5>
-                    <p className="offer-desc">L'expérience totale : print, digital & événements privés.</p>
-                    <Link href="/abonnement" className="offer-link" onClick={closeAllMenus}>EN SAVOIR PLUS <span className="arrow">→</span></Link>
-                  </div>
+                  </Link>
                 </div>
-                {/* Digital Only Offer */}
-                <div className="club-offer-item">
-                  <div className="offer-icon digital-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                      <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                    </svg>
-                  </div>
-                  <div className="offer-details">
-                    <h5 className="offer-title">Digital Only</h5>
-                    <p className="offer-desc">Accès illimité aux archives et aux contenus Studio.</p>
-                    <Link href="/abonnement" className="offer-link link-secondary" onClick={closeAllMenus}>DÉTAILS DE L'OFFRE <span className="arrow">→</span></Link>
-                  </div>
+                
+                <div className="club-action-group password-reset">
+                  <span className="club-label">MOT DE PASSE OUBLIÉ ?</span>
+                  <Link href="/abonnement" className="club-reset-link" onClick={closeAllMenus}>Réinitialiser</Link>
                 </div>
               </div>
             </div>
 
-            {/* Section 2: Member Space */}
-            <div className="club-section space-section">
-              <h4 className="club-section-title">ESPACE MEMBRE</h4>
-              <ul className="club-member-grid">
-                <li><a href="#" className="member-grid-link">Mon Tableau de bord</a></li>
-                <li><a href="#" className="member-grid-link">Mes Favoris</a></li>
-                <li><a href="#" className="member-grid-link">Historique des commandes</a></li>
-                <li><a href="#" className="member-grid-link">Gérer mon profil</a></li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Right Column: Promo Banner */}
-          <div className="club-col-right">
-            <div className="club-promo-banner">
-              <div className="promo-bg-container">
-                <img src="/assets/core/img/club-promo.png" alt="Rejoindre la communauté" className="promo-bg-img" />
+            {/* Middle Column: Offers & Member Space */}
+            <div className="club-col-middle">
+              {/* Section 1: Offers */}
+              <div className="club-section">
+                <h4 className="club-section-title">OFFRES / ABONNEMENT</h4>
+                <div className="club-offers-list">
+                  {/* Premium Offer */}
+                  <div className="club-offer-item">
+                    <div className="offer-icon premium-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="12 8 13.09 11.36 16.59 11.36 13.75 13.43 14.84 16.79 12 14.73 9.16 16.79 10.25 13.43 7.41 11.36 10.91 11.36 12 8"></polygon>
+                      </svg>
+                    </div>
+                    <div className="offer-details">
+                      <h5 className="offer-title">Abonnement Annuel Premium</h5>
+                      <p className="offer-desc">L'expérience totale : print, digital & événements privés.</p>
+                      <Link href="/abonnement" className="offer-link" onClick={closeAllMenus}>EN SAVOIR PLUS <span className="arrow">→</span></Link>
+                    </div>
+                  </div>
+                  {/* Digital Only Offer */}
+                  <div className="club-offer-item">
+                    <div className="offer-icon digital-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                      </svg>
+                    </div>
+                    <div className="offer-details">
+                      <h5 className="offer-title">Digital Only</h5>
+                      <p className="offer-desc">Accès illimité aux archives et aux contenus Studio.</p>
+                      <Link href="/abonnement" className="offer-link link-secondary" onClick={closeAllMenus}>DÉTAILS DE L'OFFRE <span className="arrow">→</span></Link>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="promo-content">
-                <span className="promo-subtitle">Rejoindre la communauté</span>
-                <div className="promo-background-text">SAFE WORK</div>
-                <Link href="/abonnement" className="btn-club-subscribe" onClick={closeAllMenus}>INSCRIPTION AU CLUB</Link>
+
+              {/* Section 2: Member Space */}
+              <div className="club-section space-section">
+                <h4 className="club-section-title">ESPACE MEMBRE</h4>
+                <ul className="club-member-grid">
+                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>Mon Tableau de bord</Link></li>
+                  <li><Link href="/espace-lecture" className="member-grid-link" onClick={closeAllMenus}>Mes Favoris & Lectures</Link></li>
+                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>Historique des commandes</Link></li>
+                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>Gérer mon profil</Link></li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Right Column: Promo Banner */}
+            <div className="club-col-right">
+              <div className="club-promo-banner">
+                <div className="promo-bg-container">
+                  <img src="/assets/core/img/club-promo.png" alt="Rejoindre la communauté" className="promo-bg-img" />
+                </div>
+                <div className="promo-content">
+                  <span className="promo-subtitle">Rejoindre la communauté</span>
+                  <div className="promo-background-text">SAFE WORK</div>
+                  <Link href="/abonnement" className="btn-club-subscribe" onClick={closeAllMenus}>INSCRIPTION AU CLUB</Link>
+                </div>
               </div>
             </div>
           </div>
@@ -602,55 +630,60 @@ export default function Header() {
       <div 
         id="mega-menu-ecouter" 
         className={`mega-menu-panel ${activeMenu === 'ecouter' ? 'open' : ''}`}
-        onMouseEnter={() => handleMouseEnter('ecouter')}
-        onMouseLeave={handleMouseLeave}
       >
         <div className="container mega-menu-inner ecouter-menu-inner">
           {/* Top Header of Menu */}
-          <div className="ecouter-menu-header">
-            <h3 className="ecouter-header-title">Hub Écouter l'article</h3>
-            <span className="live-tag">LIVE NOW</span>
+          <div className="ecouter-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h3 className="ecouter-header-title" style={{ margin: 0 }}>Hub Écouter l'article</h3>
+              <span className="live-tag">LIVE NOW</span>
+            </div>
+            <Link href="/ecouter" onClick={closeAllMenus} style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              ACCÉDER AU HUB ÉCOUTER <span style={{ fontSize: '14px' }}>→</span>
+            </Link>
           </div>
 
           <div className="ecouter-menu-grid">
             {/* Left Column (Featured Content) */}
             <div className="ecouter-col-left">
-              <div className="ecouter-featured-card">
-                <div className="ecouter-featured-img-container">
-                  <img src="/assets/core/img/featured-audio.png" alt="Featured Audio" className="ecouter-featured-img" />
-                  <div className="audio-play-overlay">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
+              <Link href="/ecouter" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }} onClick={closeAllMenus}>
+                <div className="ecouter-featured-card">
+                  <div className="ecouter-featured-img-container">
+                    <img src="/assets/core/img/featured-audio.png" alt="Featured Audio" className="ecouter-featured-img" />
+                    <div className="audio-play-overlay">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                    </div>
                   </div>
+                  <div className="ecouter-featured-meta">LONG READ • 24 MIN</div>
+                  <h4 className="ecouter-featured-title">L’Architecture du Silence : Une immersion sonore dans le Brutalisme.</h4>
                 </div>
-                <div className="ecouter-featured-meta">LONG READ • 24 MIN</div>
-                <h4 className="ecouter-featured-title">L’Architecture du Silence : Une immersion sonore dans le Brutalisme.</h4>
-              </div>
+              </Link>
             </div>
 
             {/* Middle Column (À SUIVRE / Up Next) */}
             <div className="ecouter-col-middle">
               <div className="ecouter-section-header">
                 <h4 className="ecouter-section-title">À SUIVRE</h4>
-                <a href="#" className="ecouter-view-all">TOUT VOIR</a>
+                <Link href="/ecouter" className="ecouter-view-all" onClick={closeAllMenus}>TOUT VOIR</Link>
               </div>
               <div className="ecouter-playlist">
                 {/* Item 1 */}
-                <div className="playlist-item">
+                <Link href="/ecouter" className="playlist-item" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
                   <img src="/assets/core/img/audio-thumb-1.png" alt="Le Manifeste du Monochrome" className="playlist-thumb" />
                   <div className="playlist-details">
                     <h5 className="playlist-title">Le Manifeste du Monochrome</h5>
                     <span className="playlist-meta">12 MIN • NARRÉ PAR JULIANNE V.</span>
                   </div>
-                  <button className="playlist-play-btn">
+                  <button type="button" className="playlist-play-btn">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                       <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
                   </button>
-                </div>
+                </Link>
                 {/* Item 2 */}
-                <div className="playlist-item">
+                <Link href="/ecouter" className="playlist-item" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
                   <div className="playlist-thumb graphic-thumb thumb-black">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
@@ -660,14 +693,14 @@ export default function Header() {
                     <h5 className="playlist-title">Rythme et Rigueur : L'Éditorialisme</h5>
                     <span className="playlist-meta">08 MIN • STUDIO DONA</span>
                   </div>
-                  <button className="playlist-play-btn">
+                  <button type="button" className="playlist-play-btn">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                       <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
                   </button>
-                </div>
+                </Link>
                 {/* Item 3 */}
-                <div className="playlist-item">
+                <Link href="/ecouter" className="playlist-item" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
                   <div className="playlist-thumb graphic-thumb thumb-pink">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
@@ -678,12 +711,12 @@ export default function Header() {
                     <h5 className="playlist-title">Podcasts : La Voix des Créateurs</h5>
                     <span className="playlist-meta">SAISON 3 • ÉPISODE 12</span>
                   </div>
-                  <button className="playlist-play-btn">
+                  <button type="button" className="playlist-play-btn">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                       <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
                   </button>
-                </div>
+                </Link>
               </div>
             </div>
 
@@ -692,11 +725,11 @@ export default function Header() {
               <div className="formats-section">
                 <h4 className="ecouter-section-title">EXPLORER LES FORMATS</h4>
                 <ul className="formats-list">
-                  <li><a href="#" className="format-link">Grands Formats Audio</a></li>
-                  <li><a href="#" className="format-link">Conversations DONA</a></li>
-                  <li><a href="#" className="format-link">Lectures Littéraires</a></li>
-                  <li><a href="#" className="format-link">Critiques d'Art (Voix)</a></li>
-                  <li><a href="#" className="format-link">Archives Sonores</a></li>
+                  <li><Link href="/ecouter" className="format-link" onClick={closeAllMenus}>Grands Formats Audio</Link></li>
+                  <li><Link href="/ecouter" className="format-link" onClick={closeAllMenus}>Conversations DONA</Link></li>
+                  <li><Link href="/ecouter" className="format-link" onClick={closeAllMenus}>Lectures Littéraires</Link></li>
+                  <li><Link href="/ecouter" className="format-link" onClick={closeAllMenus}>Critiques d'Art (Voix)</Link></li>
+                  <li><Link href="/ecouter" className="format-link" onClick={closeAllMenus}>Archives Sonores</Link></li>
                 </ul>
               </div>
               
@@ -722,13 +755,16 @@ export default function Header() {
       <div 
         id="mega-menu-jeux" 
         className={`mega-menu-panel ${activeMenu === 'jeux' ? 'open' : ''}`}
-        onMouseEnter={() => handleMouseEnter('jeux')}
-        onMouseLeave={handleMouseLeave}
       >
         <div className="container mega-menu-inner jeux-menu-inner">
-          <div className="jeux-menu-header">
-            <h3 className="jeux-header-title">Espace Jeux & Distractions</h3>
-            <span className="live-tag">NOUVEAU</span>
+          <div className="jeux-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h3 className="jeux-header-title" style={{ margin: 0 }}>Espace Jeux & Distractions</h3>
+              <span className="live-tag">NOUVEAU</span>
+            </div>
+            <Link href="/jeux" onClick={closeAllMenus} style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              ACCÉDER À TOUS LES JEUX <span style={{ fontSize: '14px' }}>→</span>
+            </Link>
           </div>
 
           <div className="jeux-menu-grid">
@@ -737,11 +773,11 @@ export default function Header() {
               <div className="jeux-categories-section">
                 <h4 className="jeux-section-title">CATÉGORIES</h4>
                 <ul className="jeux-categories-list">
-                  <li><a href="#" className="jeux-category-link">Énigmes Littéraires</a></li>
-                  <li><a href="#" className="jeux-category-link">Puzzles Architecturaux</a></li>
-                  <li><a href="#" className="jeux-category-link active">Jeux de Logique</a></li>
-                  <li><a href="#" className="jeux-category-link">Culture G / DONA</a></li>
-                  <li><a href="#" className="jeux-category-link">Archives de Jeux</a></li>
+                  <li><Link href="/jeux" className="jeux-category-link" onClick={closeAllMenus}>Énigmes Littéraires</Link></li>
+                  <li><Link href="/jeux" className="jeux-category-link" onClick={closeAllMenus}>Puzzles Architecturaux</Link></li>
+                  <li><Link href="/jeux" className="jeux-category-link active" onClick={closeAllMenus}>Jeux de Logique</Link></li>
+                  <li><Link href="/jeux" className="jeux-category-link" onClick={closeAllMenus}>Culture G / DONA</Link></li>
+                  <li><Link href="/jeux" className="jeux-category-link" onClick={closeAllMenus}>Archives de Jeux</Link></li>
                 </ul>
               </div>
               <div className="jeux-promo-card">
@@ -759,33 +795,35 @@ export default function Header() {
               </div>
 
               <div className="jeux-featured-card">
-                <div className="jeux-featured-img-container">
-                  <img src="/assets/core/img/louvre-puzzle.png" alt="Le Puzzle du Louvre" className="jeux-featured-img" />
-                  <div className="jeux-featured-overlay">
-                    <span className="jeux-diff-tag">DIFFICULTÉ : EXPERT</span>
-                    <p className="jeux-featured-desc">Reconstituez la structure de I.M. Pei dans ce défi de logique architecturale pure.</p>
-                    <button className="btn-play-game">JOUER MAINTENANT</button>
+                <Link href="/jeux" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }} onClick={closeAllMenus}>
+                  <div className="jeux-featured-img-container">
+                    <img src="/assets/core/img/louvre-puzzle.png" alt="Le Puzzle du Louvre" className="jeux-featured-img" />
+                    <div className="jeux-featured-overlay">
+                      <span className="jeux-diff-tag">DIFFICULTÉ : EXPERT</span>
+                      <p className="jeux-featured-desc">Reconstituez la structure de I.M. Pei dans ce défi de logique architecturale pure.</p>
+                      <span className="btn-play-game" style={{ display: 'inline-block' }}>JOUER MAINTENANT</span>
+                    </div>
                   </div>
-                </div>
+                </Link>
               </div>
 
               <div className="jeux-secondary-grid">
                 {/* Game 1 */}
-                <div className="jeux-secondary-card">
+                <Link href="/jeux" className="jeux-secondary-card" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
                   <div className="jeux-secondary-img-container">
                     <img src="/assets/core/img/chess-game.png" alt="Échecs Modulables" className="jeux-secondary-img" />
                   </div>
                   <h4 className="jeux-secondary-title">Échecs Modulables</h4>
                   <span className="jeux-secondary-desc">Variantes exclusives DONA</span>
-                </div>
+                </Link>
                 {/* Game 2 */}
-                <div className="jeux-secondary-card">
+                <Link href="/jeux" className="jeux-secondary-card" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
                   <div className="jeux-secondary-img-container">
                     <img src="/assets/core/img/paper-maze.png" alt="Labyrinthe de Papier" className="jeux-secondary-img" />
                   </div>
                   <h4 className="jeux-secondary-title">Labyrinthe de Papier</h4>
                   <span className="jeux-secondary-desc">Design géométrique minimaliste</span>
-                </div>
+                </Link>
               </div>
             </div>
 
@@ -798,7 +836,7 @@ export default function Header() {
                   <span className="jeux-score-label">AUJOUR'HUI</span>
                   <div className="jeux-score-value">1 420</div>
                   <div className="jeux-stars">★★★★☆</div>
-                  <button className="btn-share-score">
+                  <button type="button" className="btn-share-score">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="18" cy="5" r="3"></circle>
                       <circle cx="6" cy="12" r="3"></circle>

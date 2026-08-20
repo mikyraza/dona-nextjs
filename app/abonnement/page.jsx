@@ -5,10 +5,38 @@ import Link from 'next/link';
 
 export default function Page() {
   const [billingPeriod, setBillingPeriod] = useState('annual'); // 'monthly' or 'annual'
+  const [openFaq, setOpenFaq] = useState(null);
 
   const toggleBilling = () => {
     setBillingPeriod(prev => prev === 'monthly' ? 'annual' : 'monthly');
   };
+
+  const toggleFaq = (index) => {
+    setOpenFaq(prev => prev === index ? null : index);
+  };
+
+  const faqs = [
+    {
+      q: "Puis-je changer de forfait en cours de route ?",
+      a: "Oui, vous pouvez upgrader ou modifier votre abonnement à tout moment depuis votre espace membre. La différence sera calculée au prorata temporis."
+    },
+    {
+      q: "Comment fonctionne l'engagement annuel ?",
+      a: "L'abonnement annuel est facturé en un paiement unique et vous fait bénéficier d'une remise immédiate de 20% par rapport au tarif mensuel."
+    },
+    {
+      q: "Quels sont les modes de paiement acceptés ?",
+      a: "Nous acceptons toutes les principales cartes bancaires (Visa, Mastercard, American Express) ainsi que le paiement sécurisé par Apple Pay et Google Pay."
+    },
+    {
+      q: "Les événements physiques sont-ils inclus ?",
+      a: "Les événements physiques et masterclasses privées sont inclus en accès prioritaire pour les membres de l'offre Élite, et accessibles avec un tarif préférentiel pour les membres Premium."
+    },
+    {
+      q: "Comment puis-je annuler mon abonnement ?",
+      a: "Vous pouvez résilier votre abonnement en un clic depuis votre espace membre. L'accès reste actif jusqu'à la fin de la période de facturation en cours."
+    }
+  ];
 
   return (
     <main className="abonnement-main" style={{background: "var(--color-bg)", minHeight: "100vh", padding: "80px 20px"}}>
@@ -165,7 +193,7 @@ export default function Page() {
                 <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Profil membre basique</li>
             </ul>
             
-            <a href="javascript:void(0)" className="pricing-btn-outline">S'inscrire gratuitement</a>
+            <Link href="/signup?plan=essentiel" className="pricing-btn-outline">S'inscrire gratuitement</Link>
         </div>
 
         {/* Plan 2: Premium */}
@@ -188,7 +216,7 @@ export default function Page() {
                 <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Réductions sur les masterclasses</li>
             </ul>
             
-            <a href="javascript:void(0)" className="pricing-btn-accent">Devenir Premium</a>
+            <Link href={`/signup?plan=premium&billing=${billingPeriod}`} className="pricing-btn-accent">Devenir Premium</Link>
         </div>
 
         {/* Plan 3: Élite */}
@@ -208,7 +236,7 @@ export default function Page() {
                 <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Mise en avant sur le réseau</li>
             </ul>
             
-            <a href="javascript:void(0)" className="pricing-btn-dark">Rejoindre l'Élite</a>
+            <Link href={`/signup?plan=elite&billing=${billingPeriod}`} className="pricing-btn-dark">Rejoindre l'Élite</Link>
         </div>
       </section>
 
@@ -279,27 +307,59 @@ export default function Page() {
         <h2 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "600", textAlign: "center", marginBottom: "40px", color: "var(--color-text)", letterSpacing: "-0.02em"}}>Questions fréquentes</h2>
         
         <div style={{display: "flex", flexDirection: "column", gap: "16px"}}>
-            {/* FAQ Items */}
-            <div className="faq-item">
-                Puis-je changer de forfait en cours de route ?
-                <span className="material-symbols-outlined" style={{fontWeight: "300"}}>add</span>
-            </div>
-            <div className="faq-item">
-                Comment fonctionne l'engagement annuel ?
-                <span className="material-symbols-outlined" style={{fontWeight: "300"}}>add</span>
-            </div>
-            <div className="faq-item">
-                Quels sont les modes de paiement acceptés ?
-                <span className="material-symbols-outlined" style={{fontWeight: "300"}}>add</span>
-            </div>
-            <div className="faq-item">
-                Les événements physiques sont-ils inclus ?
-                <span className="material-symbols-outlined" style={{fontWeight: "300"}}>add</span>
-            </div>
-            <div className="faq-item">
-                Comment puis-je annuler mon abonnement ?
-                <span className="material-symbols-outlined" style={{fontWeight: "300"}}>add</span>
-            </div>
+            {/* Interactive FAQ Items */}
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div 
+                  key={idx}
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "2px",
+                    background: "var(--color-bg)",
+                    overflow: "hidden",
+                    transition: "all 0.3s ease"
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleFaq(idx)}
+                    style={{
+                      width: "100%",
+                      padding: "20px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontFamily: "var(--font-primary)",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "var(--color-text)",
+                      background: isOpen ? "var(--color-bg-alt)" : "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left"
+                    }}
+                  >
+                    <span>{faq.q}</span>
+                    <span className="material-symbols-outlined" style={{ fontWeight: "300", color: isOpen ? "var(--color-accent)" : "inherit", transition: "transform 0.2s ease" }}>
+                      {isOpen ? "remove" : "add"}
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <div style={{
+                      padding: "0 20px 20px 20px",
+                      background: "var(--color-bg-alt)",
+                      fontFamily: "var(--font-primary)",
+                      fontSize: "13px",
+                      lineHeight: "1.6",
+                      color: "var(--color-text-muted)"
+                    }}>
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
       </section>
 

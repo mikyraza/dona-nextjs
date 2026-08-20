@@ -49,8 +49,7 @@ export default function Page() {
         .vip-sidebar-item.active {
           background: var(--color-bg-alt);
           color: var(--color-accent);
-          border-left: 3px solid var(--color-accent);
-          padding-left: 17px;
+          font-weight: 700;
         }
         .vip-content {
           background: var(--color-bg);

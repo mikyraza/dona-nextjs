@@ -1,9 +1,40 @@
 import React from 'react';
 import Link from 'next/link';
-import { fetchArticles } from '@/lib/wordpress';
+import { fetchArticles, fetchMagazinesConfig } from '@/lib/wordpress';
+import { magazines as defaultMagazines } from './magazines/data';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function Home() {
-  const articles = await fetchArticles();
+  const [articles, dynamicConfigs] = await Promise.all([
+    fetchArticles(),
+    fetchMagazinesConfig()
+  ]);
+
+  // Merge dynamic magazine configurations
+  const seenSlugs = new Set();
+  const magazines = [];
+
+  [...dynamicConfigs, ...defaultMagazines].forEach(m => {
+    const cleanSlug = m.slug?.replace(/^magazine-\d{2}-/, '') || m.slug;
+    if (!seenSlugs.has(cleanSlug)) {
+      seenSlugs.add(cleanSlug);
+      const conf = dynamicConfigs.find(c => c.slug === m.slug || c.slug?.replace(/^magazine-\d{2}-/, '') === cleanSlug) || {};
+      magazines.push({
+        num: String(conf.id || m.id || 1).padStart(2, '0'),
+        title: conf.title || m.title,
+        slug: m.slug,
+        vol: "Vol. I",
+        desc: conf.description || conf.subtitle || m.description || m.subtitle || "",
+        img: conf.heroImage || m.heroImage || m.img || "/assets/core/img/home_mag_01_1782125759189.png",
+        grad: conf.gradient || m.gradient || m.grad || "linear-gradient(135deg, #2b1126, #411d3d)",
+        icon: conf.icon || m.icon || ""
+      });
+    }
+  });
+
+  magazines.sort((a, b) => (parseInt(a.num, 10) || 0) - (parseInt(b.num, 10) || 0));
   
   const mainFeature = articles.find(a => a.placementTarget === 'HERO_MAIN') || articles[0] || {
     id: "hero-main-default",
@@ -12,7 +43,7 @@ export default async function Home() {
     desc: "Dans un monde en mutation constante, la capacité à naviguer dans l'incertitude devient le premier levier de puissance souveraine.",
     author: "HÉLÈNE GIRARD",
     updated: "8 MIN DE LECTURE",
-    coverImage: "assets/core/img/home_alaune_main_1782125698619.png"
+    coverImage: "/assets/core/img/home_alaune_main_1782125698619.png"
   };
 
   const sideFeatures = articles.filter(a => a.id !== mainFeature.id).slice(0, 2);
@@ -20,19 +51,30 @@ export default async function Home() {
     title: "L'Art de la Transmission",
     category: "HÉRITAGE",
     desc: "Comment préserver les valeurs au-delà du succès matériel.",
-    coverImage: "assets/core/img/home_alaune_side1_1782125709654.png"
+    coverImage: "/assets/core/img/home_alaune_side1_1782125709654.png"
   };
   const side2 = sideFeatures[1] || {
     title: "Le Rituel du Matin Solaire",
     category: "AGENDA",
     desc: "Trois étapes pour aligner votre intention quotidienne.",
-    coverImage: "assets/core/img/home_alaune_side2_1782125722981.png"
+    coverImage: "/assets/core/img/home_alaune_side2_1782125722981.png"
+  };
+
+  // Find magazine slug for an article category
+  const getMagSlugForCat = (cat) => {
+    const clean = (cat || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const found = magazines.find(m => {
+      const mClean = m.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const sClean = m.slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return clean.includes(mClean) || clean.includes(sClean);
+    });
+    return found ? found.slug : "magazine-01-intelligence";
   };
 
   return (
     <>
       <section className="home-hero">
-        <img src="assets/core/img/home_hero_1782125665964.png" alt="Femme Solaire" className="home-hero-bg" />
+        <img src="/assets/core/img/home_hero_1782125665964.png" alt="Femme Solaire" className="home-hero-bg" />
         <div className="home-hero-content">
             <span className="home-hero-overline">ÉDITORIAL • PRINTEMPS 2024</span>
             <h1 className="home-hero-title">DONA :<br />L'Aube de la<br />Femme Solaire</h1>
@@ -44,118 +86,35 @@ export default async function Home() {
     <section className="home-magazines container section-padding">
         <div className="section-header">
             <div className="sh-left">
-                <h2 className="section-title">Les 16 Magazines</h2>
-                <p className="section-desc">L'encyclopédie de la souveraineté moderne, déclinée en<br />douze dimensions fondamentales.</p>
+                <h2 className="section-title">Les {magazines.length} Magazines</h2>
+                <p className="section-desc">L'encyclopédie de la souveraineté moderne, déclinée en<br />dimensions fondamentales.</p>
             </div>
             <div className="sh-right">
                 <Link href="/magazines" className="link-arrow">Voir tous les magazines</Link>
             </div>
         </div>
         <div className="magazines-grid">
-            {/* 01 */}
-            <Link  href="/magazine-01-intelligence" className="mag-card" style={{textDecoration: "none"}}><div className="mag-card-top" style={{background: "linear-gradient(135deg, #2b1126, #411d3d)"}}>
-                    <div className="mag-num">01</div>
-                    <div className="mag-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20m0-20a9 9 0 019 9m-9-9a9 9 0 00-9 9m9 11a9 9 0 01-9-9m9 9a9 9 0 009-9M2 12h20"></path></svg>
-                    </div>
-                    <h3 className="mag-title">Intelligence</h3>
-                    <p className="mag-desc">Stratégies et analyses pour un esprit affûté.</p>
+            {magazines.map((mag) => (
+              <Link key={mag.slug} href={`/magazines/${mag.slug}`} className="mag-card" style={{ textDecoration: "none" }}>
+                <div className="mag-card-top" style={{ background: mag.grad }}>
+                  <div className="mag-num">{mag.num}</div>
+                  <div className="mag-icon">
+                    {typeof mag.icon === 'string' && mag.icon.startsWith('<svg') ? (
+                      <div dangerouslySetInnerHTML={{ __html: mag.icon }} />
+                    ) : typeof mag.icon === 'string' && mag.icon ? (
+                      <span className="material-symbols-outlined">{mag.icon}</span>
+                    ) : (
+                      mag.icon || <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"></circle></svg>
+                    )}
+                  </div>
+                  <h3 className="mag-title">{mag.title}</h3>
+                  <p className="mag-desc">{mag.desc}</p>
                 </div>
                 <div className="mag-card-img">
-                    <img src="assets/core/img/home_mag_01_1782125759189.png" alt="Intelligence" />
+                  <img src={mag.img} alt={mag.title} />
                 </div>
-            </Link>
-            {/* 02 */}
-            <Link  href="/magazine-02-power-lab" className="mag-card" style={{textDecoration: "none"}}><div className="mag-card-top" style={{background: "linear-gradient(135deg, #a33827, #cf5c49)"}}>
-                    <div className="mag-num">02</div>
-                    <div className="mag-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-                    </div>
-                    <h3 className="mag-title">Power Lab</h3>
-                    <p className="mag-desc">L'innovation et la performance redéfinies.</p>
-                </div>
-                <div className="mag-card-img">
-                    <img src="assets/core/img/home_mag_02_1782125769846.png" alt="Power Lab" />
-                </div>
-            </Link>
-            {/* 03 */}
-            <Link  href="/magazine-03-alliance" className="mag-card" style={{textDecoration: "none"}}><div className="mag-card-top" style={{background: "linear-gradient(135deg, #6c1626, #9c2741)"}}>
-                    <div className="mag-num">03</div>
-                    <div className="mag-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m16-10a4 4 0 11-8 0 4 4 0 018 0zm6 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"></path></svg>
-                    </div>
-                    <h3 className="mag-title">L'Alliance</h3>
-                    <p className="mag-desc">Le pouvoir des réseaux et des connexions.</p>
-                </div>
-                <div className="mag-card-img">
-                    <img src="assets/core/img/home_mag_03_1782125780328.png" alt="Alliance" />
-                </div>
-            </Link>
-            {/* 04 */}
-            <Link  href="/magazine-04-agenda" className="mag-card" style={{textDecoration: "none"}}><div className="mag-card-top" style={{background: "linear-gradient(135deg, #b09159, #cfb17d)"}}>
-                    <div className="mag-num">04</div>
-                    <div className="mag-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
-                    </div>
-                    <h3 className="mag-title">L'Agenda</h3>
-                    <p className="mag-desc">Maîtrisez votre temps, orchestrez votre succès.</p>
-                </div>
-                <div className="mag-card-img">
-                    <img src="assets/core/img/home_mag_04_1782125793170.png" alt="Agenda" />
-                </div>
-            </Link>
-            {/* 05 */}
-            <Link  href="/magazine-05-passions" className="mag-card" style={{textDecoration: "none"}}><div className="mag-card-top" style={{background: "linear-gradient(135deg, #c3847e, #dfa29d)"}}>
-                    <div className="mag-num">05</div>
-                    <div className="mag-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path></svg>
-                    </div>
-                    <h3 className="mag-title">Passions</h3>
-                    <p className="mag-desc">Ce qui nous anime au plus profond.</p>
-                </div>
-                <div className="mag-card-img">
-                    <img src="assets/core/img/home_mag_05_1782125844017.png" alt="Passions" />
-                </div>
-            </Link>
-            {/* 06 */}
-            <Link  href="/magazine-06-art-de-vivre" className="mag-card" style={{textDecoration: "none"}}><div className="mag-card-top" style={{background: "linear-gradient(135deg, #c37b56, #e4976f)"}}>
-                    <div className="mag-num">06</div>
-                    <div className="mag-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path></svg>
-                    </div>
-                    <h3 className="mag-title">Art de Vivre</h3>
-                    <p className="mag-desc">L'élégance dans chaque détail du quotidien.</p>
-                </div>
-                <div className="mag-card-img">
-                    <img src="assets/core/img/home_mag_06_1782125858971.png" alt="Art de vivre" />
-                </div>
-            </Link>
-            {/* 07 */}
-            <Link  href="/magazine-07-academie" className="mag-card" style={{textDecoration: "none"}}><div className="mag-card-top" style={{background: "linear-gradient(135deg, #7c4c47, #a1645e)"}}>
-                    <div className="mag-num">07</div>
-                    <div className="mag-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>
-                    </div>
-                    <h3 className="mag-title">Académie</h3>
-                    <p className="mag-desc">L'apprentissage continu pour les esprits exigeants.</p>
-                </div>
-                <div className="mag-card-img">
-                    <img src="assets/core/img/france_1.png" alt="Academie" />
-                </div>
-            </Link>
-            {/* 08 */}
-            <Link  href="/magazine-08-patrimoine" className="mag-card" style={{textDecoration: "none"}}><div className="mag-card-top" style={{background: "linear-gradient(135deg, #998357, #bdab7d)"}}>
-                    <div className="mag-num">08</div>
-                    <div className="mag-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
-                    </div>
-                    <h3 className="mag-title">Patrimoine</h3>
-                    <p className="mag-desc">Construire et préserver pour demain.</p>
-                </div>
-                <div className="mag-card-img">
-                    <img src="assets/core/img/france_2.png" alt="Patrimoine" />
-                </div>
-            </Link>
+              </Link>
+            ))}
         </div>
     </section>
 
@@ -166,33 +125,39 @@ export default async function Home() {
             <div className="alaune-grid">
                 {/* Main Feature */}
                 <article className="alaune-main">
-                    <div className="alaune-main-img">
-                        <span className="badge badge-red">{mainFeature.category?.toUpperCase() || 'INTELLIGENCE'}</span>
-                        <img src={mainFeature.coverImage || "assets/core/img/home_alaune_main_1782125698619.png"} alt={mainFeature.title} />
-                    </div>
-                    <h3 className="alaune-main-title">{mainFeature.title}</h3>
-                    <p className="alaune-main-desc">{mainFeature.desc}</p>
-                    <div className="alaune-meta">PAR {mainFeature.author?.toUpperCase() || 'ÉLÉNA MORETTI'} • {mainFeature.updated || 'RÉCENT'}</div>
+                    <Link href={`/magazines/${getMagSlugForCat(mainFeature.category)}/articles/${mainFeature.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <div className="alaune-main-img">
+                          <span className="badge badge-red">{mainFeature.category?.toUpperCase() || 'INTELLIGENCE'}</span>
+                          <img src={mainFeature.coverImage || "/assets/core/img/home_alaune_main_1782125698619.png"} alt={mainFeature.title} />
+                      </div>
+                      <h3 className="alaune-main-title">{mainFeature.title}</h3>
+                      <p className="alaune-main-desc">{mainFeature.desc}</p>
+                      <div className="alaune-meta">PAR {mainFeature.author?.toUpperCase() || 'ÉLÉNA MORETTI'} • {mainFeature.updated || 'RÉCENT'}</div>
+                    </Link>
                 </article>
                 
                 {/* Side Features */}
                 <div className="alaune-side">
                     <article className="alaune-side-item">
-                        <img src={side1.coverImage || "assets/core/img/home_alaune_side1_1782125709654.png"} alt={side1.title} className="alaune-side-img" />
-                        <div className="alaune-side-content">
-                            <span className="alaune-side-cat">{side1.category?.toUpperCase() || 'HÉRITAGE'}</span>
-                            <h4 className="alaune-side-title">{side1.title}</h4>
-                            <p className="alaune-side-desc">{side1.desc}</p>
-                        </div>
+                        <Link href={`/magazines/${getMagSlugForCat(side1.category)}/articles/${side1.id || 'art-1'}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: '16px' }}>
+                          <img src={side1.coverImage || "/assets/core/img/home_alaune_side1_1782125709654.png"} alt={side1.title} className="alaune-side-img" />
+                          <div className="alaune-side-content">
+                              <span className="alaune-side-cat">{side1.category?.toUpperCase() || 'HÉRITAGE'}</span>
+                              <h4 className="alaune-side-title">{side1.title}</h4>
+                              <p className="alaune-side-desc">{side1.desc}</p>
+                          </div>
+                        </Link>
                     </article>
                     
                     <article className="alaune-side-item">
-                        <img src={side2.coverImage || "assets/core/img/home_alaune_side2_1782125722981.png"} alt={side2.title} className="alaune-side-img" />
-                        <div className="alaune-side-content">
-                            <span className="alaune-side-cat">{side2.category?.toUpperCase() || 'AGENDA'}</span>
-                            <h4 className="alaune-side-title">{side2.title}</h4>
-                            <p className="alaune-side-desc">{side2.desc}</p>
-                        </div>
+                        <Link href={`/magazines/${getMagSlugForCat(side2.category)}/articles/${side2.id || 'art-2'}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: '16px' }}>
+                          <img src={side2.coverImage || "/assets/core/img/home_alaune_side2_1782125722981.png"} alt={side2.title} className="alaune-side-img" />
+                          <div className="alaune-side-content">
+                              <span className="alaune-side-cat">{side2.category?.toUpperCase() || 'AGENDA'}</span>
+                              <h4 className="alaune-side-title">{side2.title}</h4>
+                              <p className="alaune-side-desc">{side2.desc}</p>
+                          </div>
+                        </Link>
                     </article>
                     
                     <div className="alaune-podcast">
@@ -201,10 +166,10 @@ export default async function Home() {
                             <span>PODCAST • EPISODE 24</span>
                         </div>
                         <h4 className="podcast-title">"Le Silence est un Levier de Force"</h4>
-                        <a href="#" className="podcast-link">
+                        <Link href="/studio" className="podcast-link">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg>
                             ÉCOUTER MAINTENANT
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
