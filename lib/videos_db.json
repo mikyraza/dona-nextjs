@@ -12,7 +12,7 @@
     "isFeatured": true,
     "source": "url",
     "videoUrl": "",
-    "thumbnailUrl": "https://picsum.photos/seed/vid-001/800/450",
+    "thumbnailUrl": "/assets/core/img/ecouter-1.png",
     "publishedAt": "2026-08-15T18:00:00Z",
     "status": "Published"
   },
@@ -29,7 +29,7 @@
     "isFeatured": false,
     "source": "url",
     "videoUrl": "",
-    "thumbnailUrl": "https://picsum.photos/seed/vid-002/800/450",
+    "thumbnailUrl": "/assets/core/img/ecouter-2.png",
     "publishedAt": "2026-08-10T10:00:00Z",
     "status": "Published"
   },
@@ -46,7 +46,7 @@
     "isFeatured": false,
     "source": "url",
     "videoUrl": "",
-    "thumbnailUrl": "https://picsum.photos/seed/vid-003/800/450",
+    "thumbnailUrl": "/assets/core/img/ecouter-3.png",
     "publishedAt": "2026-08-08T14:00:00Z",
     "status": "Published"
   },
@@ -63,7 +63,7 @@
     "isFeatured": false,
     "source": "url",
     "videoUrl": "",
-    "thumbnailUrl": "https://picsum.photos/seed/vid-004/800/450",
+    "thumbnailUrl": "/assets/core/img/ecouter-4.png",
     "publishedAt": "2026-08-05T09:00:00Z",
     "status": "Published"
   },
@@ -80,7 +80,7 @@
     "isFeatured": false,
     "source": "url",
     "videoUrl": "",
-    "thumbnailUrl": "https://picsum.photos/seed/vid-005/800/450",
+    "thumbnailUrl": "/assets/core/img/ecouter-hero.png",
     "publishedAt": "2026-08-01T11:00:00Z",
     "status": "Published"
   },
@@ -97,7 +97,7 @@
     "isFeatured": false,
     "source": "url",
     "videoUrl": "",
-    "thumbnailUrl": "https://picsum.photos/seed/vid-006/800/450",
+    "thumbnailUrl": "/assets/core/img/ecouter-lock-1.png",
     "publishedAt": "2026-07-28T08:00:00Z",
     "status": "Published"
   },
@@ -114,7 +114,7 @@
     "isFeatured": false,
     "source": "url",
     "videoUrl": "",
-    "thumbnailUrl": "https://picsum.photos/seed/vid-007/800/450",
+    "thumbnailUrl": "/assets/core/img/ecouter-lock-2.png",
     "publishedAt": "2026-07-20T16:00:00Z",
     "status": "Published",
     "isReplay": true
@@ -132,7 +132,7 @@
     "isFeatured": false,
     "source": "url",
     "videoUrl": "",
-    "thumbnailUrl": "https://picsum.photos/seed/vid-008/800/450",
+    "thumbnailUrl": "/assets/core/img/ecouter-lock-3.png",
     "publishedAt": "2026-07-15T10:00:00Z",
     "status": "Published"
   }
