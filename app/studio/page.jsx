@@ -42,22 +42,15 @@ function VideoCard({ video, featured = false, onPlay }) {
     >
       {/* Thumbnail */}
       <div className="vh-card__thumb">
-        {/* Cinematic SVG placeholder */}
+        {/* SVG placeholder éditorial */}
         <div className="vh-card__art">
           <svg viewBox="0 0 400 225" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}>
-            <rect width="400" height="225" fill="#0D0D0D" />
-            <rect x="0" y="0" width="400" height="225" fill="url(#cardGrad)" opacity="0.6" />
-            <line x1="0" y1="112" x2="400" y2="112" stroke="#A30626" strokeWidth="0.5" opacity="0.3" />
-            <line x1="200" y1="0" x2="200" y2="225" stroke="#A30626" strokeWidth="0.5" opacity="0.3" />
-            <circle cx="200" cy="112" r="60" stroke="#A30626" strokeWidth="0.4" opacity="0.25" />
-            <circle cx="200" cy="112" r="30" stroke="#A30626" strokeWidth="0.4" opacity="0.2" />
-            <polygon points="185,99 185,126 215,112" fill="#A30626" opacity="0.5" />
-            <defs>
-              <linearGradient id="cardGrad" x1="0" y1="0" x2="400" y2="225" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#1C1B1B" />
-                <stop offset="1" stopColor="#0D0D0D" />
-              </linearGradient>
-            </defs>
+            <rect width="400" height="225" fill="#F4F3F0" />
+            <line x1="0" y1="112" x2="400" y2="112" stroke="#EAEAEA" strokeWidth="1" />
+            <line x1="200" y1="0" x2="200" y2="225" stroke="#EAEAEA" strokeWidth="1" />
+            <circle cx="200" cy="112" r="55" stroke="#DDDDDD" strokeWidth="0.8" />
+            <circle cx="200" cy="112" r="26" stroke="#DDDDDD" strokeWidth="0.8" />
+            <polygon points="189,99 189,126 217,112" fill="#A30626" opacity="0.5" />
           </svg>
         </div>
 
@@ -283,12 +276,11 @@ export default function StudioPage() {
                     controls
                     autoPlay
                     playsInline
-                    poster=""
                   />
                 ) : (
-                  /* Cinematic placeholder when offline */
+                  /* Placeholder éditorial quand le flux est offline */
                   <div className="vh-player-placeholder">
-                    <svg className="vh-player-emblem" viewBox="0 0 200 200" fill="none" stroke="#A30626" strokeWidth="0.8">
+                    <svg className="vh-player-emblem" viewBox="0 0 200 200" fill="none" stroke="#CCCCCC" strokeWidth="0.8">
                       <circle cx="100" cy="100" r="90" />
                       <polygon points="100,10 190,100 100,190 10,100" />
                       <polygon points="100,10 190,100 100,190 10,100" transform="rotate(45 100 100)" />
@@ -297,7 +289,7 @@ export default function StudioPage() {
                     </svg>
                     <div className="vh-player-status">
                       <span className="vh-player-status-text">
-                        {liveTv.isLive ? 'CONNEXION AU FLUX LIVE…' : 'PROCHAINEMENT EN DIRECT'}
+                        {liveTv.isLive ? 'CONNEXION AU FLUX…' : 'PROCHAINEMENT EN DIRECT'}
                       </span>
                     </div>
                   </div>
