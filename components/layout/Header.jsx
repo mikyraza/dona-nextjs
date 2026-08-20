@@ -8,7 +8,21 @@ export default function Header() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isThemeDark, setIsThemeDark] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [hubData, setHubData] = useState({ liveTv: null, featuredVideo: null });
   const timeoutRef = useRef(null);
+
+  // Load video hub data for the Studio Mega Menu
+  useEffect(() => {
+    fetch('/api/videos')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const featured = data.videos.find(v => v.isFeatured) || data.videos[0];
+          setHubData({ liveTv: data.liveTv, featuredVideo: featured });
+        }
+      })
+      .catch(err => console.error("Failed to fetch hub data", err));
+  }, []);
 
   // Initialize theme from document element attribute
   useEffect(() => {
@@ -445,8 +459,12 @@ export default function Header() {
                   <li><a href="/studio" className="studio-link" data-swup-ignore>Replays (Exclusif VIP)</a></li>
                 </ul>
                 <div className="studio-live-card">
-                  <span className="live-badge"><span className="pulse-dot"></span> EN DIRECT</span>
-                  <h4 className="live-title">Dona TV Live — Hub Premium</h4>
+                  {hubData.liveTv?.isLive ? (
+                    <span className="live-badge"><span className="pulse-dot"></span> EN DIRECT</span>
+                  ) : (
+                    <span className="live-badge" style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--color-border)' }}>HORS ANTENNE</span>
+                  )}
+                  <h4 className="live-title">{hubData.liveTv?.currentTitle || 'Dona TV Live — Hub Premium'}</h4>
                   <a href="/studio" className="live-action" data-swup-ignore>Rejoindre la diffusion</a>
                 </div>
               </div>
@@ -456,7 +474,7 @@ export default function Header() {
                 <span className="studio-section-title">À LA UNE</span>
                 <a href="/studio" className="studio-video-card" data-swup-ignore>
                   <div className="studio-video-img-container">
-                    <img src="/assets/core/img/ecouter-1.png" alt="Featured Video" className="studio-video-img" />
+                    <img src={hubData.featuredVideo?.thumbnailUrl || "/assets/core/img/ecouter-1.png"} alt="Featured Video" className="studio-video-img" />
                     <div className="studio-video-overlay">
                       <div className="play-btn-circle">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -464,11 +482,11 @@ export default function Header() {
                         </svg>
                       </div>
                     </div>
-                    <span className="studio-video-duration">VIDÉO • HD</span>
+                    <span className="studio-video-duration">{hubData.featuredVideo?.duration || 'VIDÉO • HD'}</span>
                   </div>
                   <div className="studio-video-info">
-                    <h3 className="studio-video-title">The Global Intelligence Summit</h3>
-                    <p className="studio-video-desc">Keynote du Grand Palais — Jean Nouvel en conversation.</p>
+                    <h3 className="studio-video-title">{hubData.featuredVideo?.title || 'Chargement...'}</h3>
+                    <p className="studio-video-desc">{hubData.featuredVideo?.subtitle || 'Veuillez patienter'}</p>
                   </div>
                 </a>
               </div>
