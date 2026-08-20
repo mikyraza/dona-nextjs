@@ -436,27 +436,27 @@ export default function Header() {
             <div className="studio-menu-grid">
               {/* Colonne 1: Navigation Audio/Video */}
               <div className="studio-col-nav">
-                <span className="studio-section-title">CATÉGORIES AUDIOVISUELLES</span>
+                <span className="studio-section-title">MULTIMEDIA VIDEO HUB</span>
                 <ul className="studio-links-list">
-                  <li><a href="#" className="studio-link">Live Audio / Vidéo <span className="studio-live-dot"></span></a></li>
-                  <li><a href="#" className="studio-link">Les Podcasts</a></li>
-                  <li><a href="#" className="studio-link">Séries Documentaires</a></li>
-                  <li><a href="#" className="studio-link">Interviews Haute Définition</a></li>
-                  <li><a href="#" className="studio-link">Replays Intégraux</a></li>
+                  <li><a href="/studio" className="studio-link" data-swup-ignore>TV en Direct <span className="studio-live-dot"></span></a></li>
+                  <li><a href="/studio" className="studio-link" data-swup-ignore>VOD : À la Une</a></li>
+                  <li><a href="/studio" className="studio-link" data-swup-ignore>Dernières Sorties</a></li>
+                  <li><a href="/studio" className="studio-link" data-swup-ignore>Par Catégories</a></li>
+                  <li><a href="/studio" className="studio-link" data-swup-ignore>Replays (Exclusif VIP)</a></li>
                 </ul>
                 <div className="studio-live-card">
                   <span className="live-badge"><span className="pulse-dot"></span> EN DIRECT</span>
-                  <h4 className="live-title">Le Grand Entretien : Penser Demain</h4>
-                  <a href="#" className="live-action">Rejoindre la diffusion</a>
+                  <h4 className="live-title">Dona TV Live — Hub Premium</h4>
+                  <a href="/studio" className="live-action" data-swup-ignore>Rejoindre la diffusion</a>
                 </div>
               </div>
 
               {/* Colonne 2: Vidéo Feature (Center) */}
               <div className="studio-col-video">
-                <span className="studio-section-title">DERNIER DOCUMENTAIRE HD</span>
-                <a href="#" className="studio-video-card">
+                <span className="studio-section-title">À LA UNE</span>
+                <a href="/studio" className="studio-video-card" data-swup-ignore>
                   <div className="studio-video-img-container">
-                    <img src="/assets/core/img/studio-video-featured.png" alt="Featured Video" className="studio-video-img" />
+                    <img src="/assets/core/img/ecouter-1.png" alt="Featured Video" className="studio-video-img" />
                     <div className="studio-video-overlay">
                       <div className="play-btn-circle">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -464,11 +464,11 @@ export default function Header() {
                         </svg>
                       </div>
                     </div>
-                    <span className="studio-video-duration">VIDÉO • 45 MIN</span>
+                    <span className="studio-video-duration">VIDÉO • HD</span>
                   </div>
                   <div className="studio-video-info">
-                    <h3 className="studio-video-title">Le Pouvoir du Design Intemporel</h3>
-                    <p className="studio-video-desc">Plongez dans les secrets des créateurs de pointe à travers ce documentaire original DONA.</p>
+                    <h3 className="studio-video-title">The Global Intelligence Summit</h3>
+                    <p className="studio-video-desc">Keynote du Grand Palais — Jean Nouvel en conversation.</p>
                   </div>
                 </a>
               </div>
