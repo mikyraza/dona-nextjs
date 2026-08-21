@@ -502,10 +502,13 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                   </div>
                 </div>
 
-                {/* Auteur */}
-                <div className="editor-meta-row" style={{ marginBottom: '14px' }}>
-                  <div className="editor-meta-field">
-                    <label htmlFor="ed-author">Auteur de la publication</label>
+                {/* Auteur & Résumé / Chapeau */}
+                <div className="editor-meta-row" style={{ marginBottom: '14px', alignItems: 'stretch' }}>
+                  <div className="editor-meta-field" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                    <label htmlFor="ed-author">
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px', verticalAlign: 'middle', marginRight: '4px' }}>person</span>
+                      Auteur de la publication
+                    </label>
                     <input
                       id="ed-author"
                       type="text"
@@ -515,36 +518,34 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                       required
                     />
                   </div>
-                </div>
-
-                {/* Résumé / Chapeau */}
-                <div className="editor-meta-row" style={{ marginBottom: '14px' }}>
-                  <div className="editor-meta-field" style={{ width: '100%' }}>
+                  <div className="editor-meta-field" style={{ display: 'flex', flexDirection: 'column' }}>
                     <label htmlFor="ed-summary" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>short_text</span>
                         Résumé / Chapeau
                       </span>
-                      <span style={{ fontSize: '10px', color: '#888888', fontWeight: 500 }}>
-                        Visible par tous les utilisateurs (Extrait public)
+                      <span style={{ fontSize: '9px', color: '#888888', fontWeight: 500 }}>
+                        Extrait public
                       </span>
                     </label>
                     <textarea
                       id="ed-summary"
                       value={summary}
                       onChange={(e) => setSummary(e.target.value)}
-                      placeholder="Saisissez un résumé ou chapeau éditorial clair (accessible aux utilisateurs standards avant le déblocage VIP)..."
+                      placeholder="Saisissez un résumé ou chapeau éditorial clair..."
                       rows={3}
                       style={{
                         width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '4px',
+                        flex: 1,
+                        padding: '8px 10px',
+                        border: '1px solid var(--admin-border-color, #E5E7EB)',
+                        borderRadius: '2px',
                         fontSize: '13px',
-                        lineHeight: '1.5',
+                        lineHeight: '1.4',
                         fontFamily: 'inherit',
                         resize: 'vertical',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        minHeight: '68px'
                       }}
                     />
                   </div>

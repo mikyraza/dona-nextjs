@@ -112,7 +112,7 @@ export default function Header() {
   };
 
   return (
-    <header className="site-header" ref={headerRef}>
+    <header className="site-header" ref={headerRef} onMouseLeave={closeAllMenus}>
       <div className="container header-inner">
         {/* Logo */}
         <Link href="/" className="header-logo" aria-label="Page d'accueil" onClick={closeAllMenus}>
@@ -122,63 +122,58 @@ export default function Header() {
         {/* Main Navigation */}
         <nav className="main-nav">
           <ul className="nav-list">
-            <li className={`nav-item ${isItemActive(null, pathname === '/today') ? 'active' : ''}`}>
-              <Link href="/today" className="nav-link" onClick={closeAllMenus}>TODAY</Link>
+            <li className={`nav-item ${isItemActive(null, pathname === '/today' || pathname?.startsWith('/today')) ? 'active' : ''}`}>
+              <Link href="/today" className="nav-link" onClick={closeAllMenus} onMouseEnter={closeAllMenus}>TODAY</Link>
             </li>
             <li className={`nav-item has-submenu ${activeMenu === 'magazines' ? 'submenu-active' : ''} ${isItemActive('magazines', pathname?.startsWith('/magazines') || pathname?.startsWith('/magazine-')) ? 'active' : ''}`}>
-              <button 
-                type="button"
-                className="nav-link nav-link-btn"
-                onClick={(e) => toggleMenu('magazines', '/magazines', e)}
-                aria-expanded={activeMenu === 'magazines'}
-                aria-haspopup="true"
+              <Link 
+                href="/magazines"
+                className="nav-link"
+                onClick={closeAllMenus}
+                onMouseEnter={() => setActiveMenu('magazines')}
               >
                 NOS MAGAZINES
-              </button>
+              </Link>
             </li>
-            <li className={`nav-item has-submenu ${activeMenu === 'studio' ? 'submenu-active' : ''} ${isItemActive('studio', pathname?.startsWith('/studio')) ? 'active' : ''}`}>
-              <button 
-                type="button"
-                className="nav-link nav-link-btn"
-                onClick={(e) => toggleMenu('studio', '/studio', e)}
-                aria-expanded={activeMenu === 'studio'}
-                aria-haspopup="true"
+            <li className={`nav-item has-submenu ${activeMenu === 'studio' ? 'submenu-active' : ''} ${isItemActive('studio', pathname === '/studio' || pathname?.startsWith('/studio')) ? 'active' : ''}`}>
+              <Link 
+                href="/studio"
+                className="nav-link"
+                onClick={closeAllMenus}
+                onMouseEnter={() => setActiveMenu('studio')}
               >
                 STUDIO
-              </button>
+              </Link>
             </li>
-            <li className={`nav-item has-submenu ${activeMenu === 'club' ? 'submenu-active' : ''} ${isItemActive('club', pathname?.startsWith('/club') || pathname?.startsWith('/abonnement')) ? 'active' : ''}`}>
-              <button 
-                type="button"
-                className="nav-link nav-link-btn"
-                onClick={(e) => toggleMenu('club', '/club', e)}
-                aria-expanded={activeMenu === 'club'}
-                aria-haspopup="true"
+            <li className={`nav-item has-submenu ${activeMenu === 'club' ? 'submenu-active' : ''} ${isItemActive('club', pathname === '/club' || pathname?.startsWith('/club')) ? 'active' : ''}`}>
+              <Link 
+                href="/club"
+                className="nav-link"
+                onClick={closeAllMenus}
+                onMouseEnter={() => setActiveMenu('club')}
               >
                 CLUB
-              </button>
+              </Link>
             </li>
             <li className={`nav-item has-submenu ${activeMenu === 'ecouter' ? 'submenu-active' : ''} ${isItemActive('ecouter', pathname?.startsWith('/ecouter')) ? 'active' : ''}`}>
-              <button 
-                type="button"
-                className="nav-link nav-link-btn"
-                onClick={(e) => toggleMenu('ecouter', '/ecouter', e)}
-                aria-expanded={activeMenu === 'ecouter'}
-                aria-haspopup="true"
+              <Link 
+                href="/ecouter"
+                className="nav-link"
+                onClick={closeAllMenus}
+                onMouseEnter={() => setActiveMenu('ecouter')}
               >
                 ÉCOUTER
-              </button>
+              </Link>
             </li>
             <li className={`nav-item has-submenu ${activeMenu === 'jeux' ? 'submenu-active' : ''} ${isItemActive('jeux', pathname?.startsWith('/jeux')) ? 'active' : ''}`}>
-              <button 
-                type="button"
-                className="nav-link nav-link-btn"
-                onClick={(e) => toggleMenu('jeux', '/jeux', e)}
-                aria-expanded={activeMenu === 'jeux'}
-                aria-haspopup="true"
+              <Link 
+                href="/jeux"
+                className="nav-link"
+                onClick={closeAllMenus}
+                onMouseEnter={() => setActiveMenu('jeux')}
               >
                 JEUX
-              </button>
+              </Link>
             </li>
           </ul>
         </nav>
