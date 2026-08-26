@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -13,11 +13,15 @@ function SignupForm() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [avatar, setAvatar] = useState(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const fileInputRef = useRef(null);
 
   const planLabels = {
     essentiel: { name: 'Essentiel', price: '0€ / Gratuit', color: 'var(--color-text)' },
@@ -26,6 +30,21 @@ function SignupForm() {
   };
 
   const selectedPlan = planLabels[plan.toLowerCase()] || planLabels.essentiel;
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('La photo est trop lourde (max 5 Mo).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        setAvatar(uploadEvent.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -48,13 +67,15 @@ function SignupForm() {
       id: `mem-${Date.now()}`,
       name: `${firstName} ${lastName}`.trim() || 'Nouveau Membre',
       email: email,
+      phone: phone,
+      avatar: avatar,
       plan: selectedPlan.name,
       status: 'Active',
       joined: todayStr
     };
 
     try {
-      // 1. Add to Admin Members list
+      // 1. Add to Admin Members DB
       const existing = localStorage.getItem('dona_admin_members_db');
       const membersList = existing ? JSON.parse(existing) : [];
       localStorage.setItem('dona_admin_members_db', JSON.stringify([newMember, ...membersList]));
@@ -64,8 +85,8 @@ function SignupForm() {
         firstName: firstName || 'Ernest',
         lastName: lastName || 'Dupont',
         email: email || 'ernest@example.com',
-        phone: '',
-        avatar: null
+        phone: phone || '',
+        avatar: avatar || null
       }));
     } catch (e) {
       console.error('Error saving registration data:', e);
@@ -78,7 +99,7 @@ function SignupForm() {
   };
 
   return (
-    <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "520px", width: "100%", borderRadius: "2px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center"}}>
+    <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "540px", width: "100%", borderRadius: "2px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center"}}>
       
       {/* Logo */}
       <Link href="/" style={{marginBottom: "32px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
@@ -88,7 +109,7 @@ function SignupForm() {
       {/* Heading */}
       <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "700", color: "var(--color-text)", marginBottom: "12px", textAlign: "center", letterSpacing: "-0.02em"}}>Rejoindre le Cercle DONA</h1>
       <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", textAlign: "center", marginBottom: "24px"}}>
-          Créez votre compte pour accéder aux 16 Cahiers et outils exclusifs
+          Créez votre compte pour accéder aux 16 Magazines et outils exclusifs
       </p>
 
       {/* Selected Plan Banner */}
@@ -125,6 +146,41 @@ function SignupForm() {
       {/* Form */}
       <form style={{width: "100%", display: "flex", flexDirection: "column", gap: "24px"}} onSubmit={handleSubmit}>
           
+          {/* Avatar Upload (Optionnel) */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                width: "80px",
+                height: "80px",
+                borderRadius: "50%",
+                background: "var(--color-bg-alt)",
+                border: "2px dashed var(--color-border)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                overflow: "hidden",
+                position: "relative",
+                transition: "border-color 0.3s ease"
+              }}
+              title="Ajouter une photo de profil"
+            >
+              {avatar ? (
+                <img src={avatar} alt="Aperçu" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <>
+                  <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "var(--color-text-muted)" }}>photo_camera</span>
+                </>
+              )}
+            </div>
+            <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--color-text-muted)", letterSpacing: "0.04em" }}>
+              {avatar ? "Changer la photo" : "Photo de profil (Optionnel)"}
+            </span>
+            <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" style={{ display: "none" }} />
+          </div>
+
           {/* Name Columns */}
           <div className="name-grid">
               <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
@@ -174,6 +230,22 @@ function SignupForm() {
               </div>
           </div>
 
+          {/* Phone */}
+          <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
+              <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Téléphone</label>
+              <div className="login-input-container">
+                  <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)"}}>call</span>
+                  <input 
+                    type="tel" 
+                    placeholder="+33 6 12 34 56 78" 
+                    className="login-input" 
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    disabled={loading}
+                  />
+              </div>
+          </div>
+
           {/* Password */}
           <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
               <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Mot de passe</label>
@@ -218,57 +290,39 @@ function SignupForm() {
               </div>
           </div>
 
-          {/* Checkboxes */}
-          <div style={{display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px", fontFamily: "var(--font-primary)", fontSize: "13px", color: "var(--color-text-muted)"}}>
-              <label style={{display: "flex", alignItems: "flex-start", gap: "12px", cursor: "pointer", lineHeight: "1.4"}}>
-                  <input type="checkbox" style={{width: "18px", height: "18px", marginTop: "1px", accentColor: "var(--color-accent)", border: "1px solid var(--color-border)"}} />
-                  <span>Recevoir The Brief DONA (optionnel)</span>
-              </label>
-              <label style={{display: "flex", alignItems: "flex-start", gap: "12px", cursor: "pointer", lineHeight: "1.4"}}>
-                  <input type="checkbox" required style={{width: "18px", height: "18px", marginTop: "1px", accentColor: "var(--color-accent)", border: "1px solid var(--color-border)"}} />
-                  <span>J'accepte les <Link href="#" className="login-link" style={{textDecoration: "underline", textUnderlineOffset: "2px", fontWeight: "600"}}>Conditions Générales</Link> et la <Link href="#" className="login-link" style={{textDecoration: "underline", textUnderlineOffset: "2px", fontWeight: "600"}}>Politique de Confidentialité</Link></span>
-              </label>
-          </div>
-
-          {/* Submit */}
+          {/* Submit Button */}
           <button 
             type="submit" 
-            disabled={loading}
+            className="btn-crimson"
             style={{
               width: "100%", 
-              background: "var(--color-accent)", 
-              color: "#FFFFFF", 
-              border: "none", 
-              padding: "16px", 
-              borderRadius: "2px", 
-              fontFamily: "var(--font-primary)", 
-              fontSize: "14px", 
-              fontWeight: "600", 
-              letterSpacing: "0.15em", 
-              textTransform: "uppercase", 
-              cursor: loading ? "not-allowed" : "pointer", 
-              opacity: loading ? 0.7 : 1,
-              transition: "background 0.2s", 
-              marginTop: "16px"
+              marginTop: "12px", 
+              padding: "16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
             }}
+            disabled={loading}
           >
-            {loading ? "Création en cours..." : "Créer mon compte"}
+            {loading ? (
+              <span>CRÉATION DU COMPTE...</span>
+            ) : (
+              <>
+                <span>CRÉER MON COMPTE</span>
+                <span className="material-symbols-outlined" style={{fontSize: "18px"}}>arrow_forward</span>
+              </>
+            )}
           </button>
-
-          {/* Login Link */}
-          <div style={{textAlign: "center", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)"}}>
-              Déjà membre ? <Link href="/login" className="login-link" style={{fontWeight: "600"}}>Se connecter</Link>
-          </div>
 
       </form>
 
-      {/* Divider line */}
-      <div style={{width: "100%", height: "1px", background: "var(--color-border)", margin: "32px 0"}}></div>
-
-      {/* Security text */}
-      <div style={{display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-primary)", fontSize: "11px", color: "var(--color-text-muted)"}}>
-          <span className="material-symbols-outlined" style={{fontSize: "14px"}}>lock</span>
-          Vos données sont protégées et chiffrées selon les standards de sécurité les plus stricts.
+      {/* Footer link */}
+      <div style={{marginTop: "32px", textAlign: "center", borderTop: "1px solid var(--color-border)", paddingTop: "24px", width: "100%"}}>
+        <span style={{fontFamily: "var(--font-primary)", fontSize: "13px", color: "var(--color-text-muted)"}}>Déjà membre ? </span>
+        <Link href="/login" style={{fontFamily: "var(--font-primary)", fontSize: "13px", fontWeight: "700", color: "var(--color-accent)", textDecoration: "none"}}>
+          Se connecter
+        </Link>
       </div>
 
     </div>
@@ -277,68 +331,52 @@ function SignupForm() {
 
 export default function Page() {
   return (
-    <main style={{display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh", padding: "40px 20px", background: "var(--color-bg)"}}>
-      
+    <main style={{
+      background: "var(--color-bg)",
+      minHeight: "90vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "60px 20px"
+    }}>
       <style>{`
-        .login-link {
-          color: var(--color-text-muted);
-          font-weight: 500;
-          text-decoration: none;
-          transition: color 0.3s ease, opacity 0.3s ease;
-        }
-        .login-link:hover {
-          color: var(--color-accent);
-          opacity: 0.9;
+        .name-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
         }
         .login-input-container {
           display: flex;
           align-items: center;
-          gap: 12px;
-          border: 1px solid var(--color-border);
+          gap: 10px;
           background: var(--color-bg-alt);
-          padding: 12px 16px;
+          border: 1px solid var(--color-border);
           border-radius: 2px;
+          padding: 12px 16px;
           transition: border-color 0.3s ease;
         }
         .login-input-container:focus-within {
           border-color: var(--color-accent);
         }
         .login-input {
-          flex-grow: 1;
-          border: none;
           background: transparent;
-          font-family: var(--font-primary);
-          font-size: 15px;
-          color: var(--color-text);
+          border: none;
           outline: none;
-        }
-        .name-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
+          font-family: var(--font-primary);
+          font-size: 14px;
+          color: var(--color-text);
+          width: 100%;
         }
         @media (max-width: 500px) {
-          .login-card {
-            padding: 32px 20px !important;
-          }
-          .login-card img {
-            height: 90px !important;
-          }
-          .login-card h1 {
-            font-size: 22px !important;
-          }
           .name-grid {
             grid-template-columns: 1fr;
-            gap: 12px;
+          }
+          .login-card {
+            padding: 24px !important;
           }
         }
       `}</style>
-
-      <Suspense fallback={
-        <div style={{ textAlign: "center", padding: "40px", color: "var(--color-text-muted)" }}>
-          Chargement du formulaire...
-        </div>
-      }>
+      <Suspense fallback={<div style={{ color: "var(--color-text)" }}>Chargement...</div>}>
         <SignupForm />
       </Suspense>
     </main>
