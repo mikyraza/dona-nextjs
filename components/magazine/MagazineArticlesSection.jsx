@@ -9,15 +9,27 @@ export default function MagazineArticlesSection({
   magazineSlug,
   primaryColor = "#a31835"
 }) {
-  // Build normalized list of tabs with a "TOUS" option if not present
-  const availableTabs = (tabs && tabs.length > 0)
-    ? tabs.filter(t => !t.hidden)
-    : [
-        { id: 'all', name: 'Tous' },
-        { id: 'brief', name: 'The Brief' },
-        { id: 'pulse', name: 'The Pulse' },
-        { id: 'deep', name: 'Deep-Dive' }
-      ];
+  const customTabs = (tabs && tabs.length > 0) ? tabs.filter(t => !t.hidden) : [];
+  
+  let availableTabs = [];
+  if (tabs && tabs.length > 0) {
+    // S'il y a des onglets définis (même tous masqués), on utilise ceux-là
+    if (customTabs.length > 0) {
+      const hasTous = customTabs.some(t => t.name.toLowerCase() === 'tous' || t.name.toLowerCase() === 'all');
+      availableTabs = hasTous ? customTabs : [{ id: 'all', name: 'Tous' }, ...customTabs];
+    } else {
+      // S'ils sont TOUS masqués, on ne montre rien du tout
+      availableTabs = [];
+    }
+  } else {
+    // S'il n'y a absolument aucun onglet défini en base, on met les valeurs par défaut
+    availableTabs = [
+      { id: 'all', name: 'Tous' },
+      { id: 'brief', name: 'The Brief' },
+      { id: 'pulse', name: 'The Pulse' },
+      { id: 'deep', name: 'Deep-Dive' }
+    ];
+  }
 
   const [activeTab, setActiveTab] = useState(availableTabs[0]?.name || 'Tous');
 
