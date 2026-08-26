@@ -22,19 +22,25 @@ export default function SubscriptionSimulatorBar() {
   }, []);
 
   const setPlanMode = (newPlan) => {
+    let existing = {};
+    try {
+      const stored = localStorage.getItem('dona_member_profile');
+      if (stored) existing = JSON.parse(stored);
+    } catch (e) {}
+
     const profile = {
+      ...existing,
       plan: newPlan,
       status: 'Active',
-      email: 'membre.test@dona-magazine.com',
-      firstName: 'Membre',
-      lastName: 'Test',
-      phone: '+33 6 12 34 56 78'
+      email: existing.email || 'membre.test@dona-magazine.com',
+      name: existing.name || 'Membre',
+      isGuest: false
     };
     try {
       localStorage.setItem('dona_member_profile', JSON.stringify(profile));
       window.dispatchEvent(new Event('dona_subscription_changed'));
       setCurrentPlan(newPlan);
-      setToast(`Mode abonné basculé sur : ${newPlan}`);
+      setToast(`Formule active basculée sur : ${newPlan}`);
       setTimeout(() => setToast(null), 2500);
     } catch (e) {
       console.error('Error switching simulation plan:', e);

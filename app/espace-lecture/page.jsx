@@ -139,10 +139,10 @@ export default function Page() {
 
   const handleCardClick = (e, card) => {
     const cardType = (card.type || card.docType || '').toUpperCase();
-    if (cardType === 'MAGAZINE') {
+    if (cardType === 'MAGAZINE' || cardType === 'ARTICLE') {
       const magId = card.magId || (card.id ? parseInt(String(card.id).replace(/\D/g, ''), 10) : 1);
       const access = canAccessMagazine(magId, userSub.plan, userSub.status);
-      if (!access.allowed) {
+      if (!access.allowed && cardType === 'MAGAZINE') {
         e.preventDefault();
         setPaywallModal({
           isOpen: true,
