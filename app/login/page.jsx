@@ -44,7 +44,7 @@ function LoginForm() {
             email: session?.user?.email || email,
             name: session?.user?.name || "Membre",
             role: userRole,
-            plan: allowedAdminRoles.includes(userRole) ? "Élite" : "Premium",
+            plan: allowedAdminRoles.includes(userRole) ? "Élite" : "Essentiel",
             status: "Active",
             isGuest: false
           };

@@ -58,16 +58,12 @@ const authOptions = {
         }
 
         const mockUsers = [
-          { id: "u-owner", name: "Miky Raza", email: "mikyraza@gmail.com", role: "Super-Admin", active: true },
           { id: "u-1", name: "Elena Moretti", email: "elena@donamagazine.com", role: "Super-Admin", active: true },
           { id: "u-2", name: "Marc Dubois", email: "marc@donamagazine.com", role: "Éditeur", active: true },
           { id: "u-3", name: "Sophie Laurent", email: "sophie@donamagazine.com", role: "Journaliste", active: true },
           { id: "u-4", name: "Ahmed Al-Farsi", email: "ahmed@donamagazine.com", role: "Traducteur", active: true },
           { id: "u-5", name: "Thomas Bernard", email: "thomas@donamagazine.com", role: "Journaliste", active: false },
-          { id: "usr-admin-1", name: "Nora Patrius", email: "admin@dona.com", role: "Super-Admin", active: true },
-          { id: "u-vip-1", name: "Claire Delorme", email: "vip@dona.com", role: "VIP", active: true },
-          { id: "u-vip-2", name: "Membre Club VIP", email: "membre@dona.com", role: "VIP", active: true },
-          { id: "u-vip-3", name: "Abonné Premium", email: "premium@dona.com", role: "Premium", active: true }
+          { id: "usr-admin-1", name: "Nora Patrius", email: "admin@dona.com", role: "Super-Admin", active: true }
         ];
 
         const matchedUser = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -81,9 +77,9 @@ const authOptions = {
           };
         }
 
-        // Generic user authentication fallback for any valid user email
+        // Generic user authentication fallback for any regular user testing the platform
         const userName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const userRole = (email.toLowerCase().includes("admin") || email.toLowerCase().includes("mikyraza")) ? "Super-Admin" : "VIP";
+        const userRole = email.toLowerCase().includes("admin@dona.com") ? "Super-Admin" : "USER";
 
         return {
           id: `u-gen-${Date.now()}`,
