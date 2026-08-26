@@ -64,7 +64,7 @@ export default function SaveArticleButton({ articleId, title, meta, image, ctaHr
           boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
           zIndex: 99999,
           display: 'flex',
-          align-items: 'center',
+          alignItems: 'center',
           gap: '8px',
           borderLeft: `4px solid ${primaryColor}`
         }}>
