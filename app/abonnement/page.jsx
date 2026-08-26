@@ -1,11 +1,17 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getFeaturesForPlanFromMatrix, getServicesMatrixConfig, ALL_SUBSCRIBER_SERVICES } from '@/lib/subscriptionPermissions';
 
 export default function Page() {
   const [billingPeriod, setBillingPeriod] = useState('annual'); // 'monthly' or 'annual'
   const [openFaq, setOpenFaq] = useState(null);
+  const [matrix, setMatrix] = useState({});
+
+  useEffect(() => {
+    setMatrix(getServicesMatrixConfig());
+  }, []);
 
   const toggleBilling = () => {
     setBillingPeriod(prev => prev === 'monthly' ? 'annual' : 'monthly');
@@ -38,6 +44,10 @@ export default function Page() {
     }
   ];
 
+  const essentielFeatures = getFeaturesForPlanFromMatrix('Essentiel', matrix);
+  const premiumFeatures = getFeaturesForPlanFromMatrix('Premium', matrix);
+  const eliteFeatures = getFeaturesForPlanFromMatrix('Élite', matrix);
+
   return (
     <main className="abonnement-main" style={{background: "var(--color-bg)", minHeight: "100vh", padding: "80px 20px"}}>
       
@@ -58,115 +68,65 @@ export default function Page() {
         }
         .pricing-btn-outline:hover {
           background: var(--color-bg-alt);
-          border-color: var(--color-text);
         }
         .pricing-btn-accent {
           display: block;
           text-align: center;
           padding: 14px;
-          background: var(--color-accent);
+          border: 1px solid var(--color-accent);
           font-family: var(--font-primary);
           font-size: 14px;
           font-weight: 600;
           text-decoration: none;
-          color: #FFFFFF;
-          transition: background 0.3s ease;
+          color: #fff;
+          background: var(--color-accent);
+          transition: all 0.3s ease;
           border-radius: 2px;
         }
         .pricing-btn-accent:hover {
-          background: #8B002A;
+          background: #87051f;
         }
         .pricing-btn-dark {
           display: block;
           text-align: center;
           padding: 14px;
-          background: var(--color-text);
+          border: 1px solid var(--color-text);
           font-family: var(--font-primary);
           font-size: 14px;
           font-weight: 600;
           text-decoration: none;
-          color: var(--color-bg);
-          transition: opacity 0.3s ease;
-          border-radius: 2px;
-        }
-        .pricing-btn-dark:hover {
-          opacity: 0.9;
-        }
-        .faq-item {
-          border: 1px solid var(--color-border);
-          padding: 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-family: var(--font-primary);
-          font-size: 14px;
-          font-weight: 500;
-          color: var(--color-text);
-          cursor: pointer;
-          background: var(--color-bg);
+          color: #fff;
+          background: var(--color-text);
           transition: all 0.3s ease;
           border-radius: 2px;
         }
-        .faq-item:hover {
-          background: var(--color-bg-alt);
-          border-color: var(--color-text-muted);
+        .pricing-btn-dark:hover {
+          background: #333;
         }
+        
         .pricing-matrix {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 32px;
           align-items: stretch;
         }
-        .premium-card {
-          transform: translateY(-16px);
-        }
+        
         .table-scroll-container {
           overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          border-radius: 2px;
         }
         .table-min-width {
-          min-width: 700px;
-        }
-        .trust-badges {
-          display: flex;
-          justify-content: center;
-          gap: 40px;
-          flex-wrap: wrap;
-        }
-        @media (max-width: 992px) {
-          .pricing-matrix {
-            grid-template-columns: 1fr;
-            gap: 40px;
-            max-width: 500px !important;
-            margin: 0 auto 60px auto !important;
-          }
-          .premium-card {
-            transform: none !important;
-          }
-        }
-        @media (max-width: 600px) {
-          .abonnement-main {
-            padding: 40px 16px !important;
-          }
-          .abonnement-main h1 {
-            font-size: 28px !important;
-          }
-          .trust-badges {
-            gap: 16px 24px;
-          }
+          min-width: 600px;
         }
       `}</style>
 
-      {/* Hero Section */}
-      <section style={{maxWidth: "800px", margin: "0 auto", textAlign: "center", marginBottom: "60px"}}>
-        <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "42px", fontWeight: "700", marginBottom: "24px", color: "var(--color-text)", letterSpacing: "-0.02em"}}>Choisissez votre niveau d'excellence</h1>
-        <p style={{fontFamily: "var(--font-primary)", fontSize: "16px", color: "var(--color-text-muted)", lineHeight: "1.6"}}>
-            Accédez aux outils, au réseau et aux contenus qui alignent ambition et épanouissement.
-        </p>
+      {/* Header */}
+      <section style={{textAlign: "center", maxWidth: "800px", margin: "0 auto 60px auto"}}>
+        <span style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", display: "block", marginBottom: "16px"}}>TARIFICATION CLAIRE & TRANSPARENTE</span>
+        <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "clamp(36px, 5vw, 56px)", fontWeight: "700", color: "var(--color-text)", letterSpacing: "-0.02em", marginBottom: "24px"}}>Rejoignez le Cercle DONA</h1>
+        <p style={{fontFamily: "var(--font-primary)", fontSize: "18px", color: "var(--color-text-muted)", lineHeight: "1.6"}}>Choisissez la formule adaptée à vos ambitions et accédez immédiatement à nos publications, analyses et événements VIP.</p>
         
-        {/* Toggle Switcher */}
-        <div style={{display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", marginTop: "40px", fontFamily: "var(--font-primary)", fontSize: "14px"}}>
+        {/* Billing Switcher */}
+        <div style={{display: "inline-flex", alignItems: "center", gap: "16px", marginTop: "32px", background: "var(--color-bg)", padding: "8px 16px", borderRadius: "30px", border: "1px solid var(--color-border)"}}>
             <span style={{color: billingPeriod === 'monthly' ? 'var(--color-text)' : 'var(--color-text-muted)', fontWeight: billingPeriod === 'monthly' ? '600' : '400'}}>Mensuel</span>
             
             <div onClick={toggleBilling} style={{width: "48px", height: "24px", background: "var(--color-bg-alt)", border: "1px solid var(--color-border)", borderRadius: "12px", position: "relative", cursor: "pointer"}}>
@@ -188,16 +148,18 @@ export default function Page() {
             <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Formule de découverte pour accéder aux médias en direct.</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Accès aux extraits, aperçus et magazines publics</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Accès à la télé en direct</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Accès à la radio en streaming</li>
+              {essentielFeatures.map((feat, idx) => (
+                <li key={idx} style={{display: "flex", gap: "12px", alignItems: "center"}}>
+                  <span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> {feat}
+                </li>
+              ))}
             </ul>
             
             <Link href="/signup?plan=essentiel" className="pricing-btn-outline">S'inscrire gratuitement</Link>
         </div>
 
         {/* Plan 2: Premium */}
-        <div className="premium-card" style={{background: "var(--color-bg)", padding: "40px 32px", border: "2px solid var(--color-accent)", position: "relative", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.03)", borderRadius: "2px"}}>
+        <div style={{background: "var(--color-bg)", padding: "40px 32px", border: "2px solid var(--color-accent)", position: "relative", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.03)", borderRadius: "2px"}}>
             <div style={{position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "var(--color-accent)", color: "#fff", fontFamily: "var(--font-primary)", fontSize: "10px", fontWeight: "700", padding: "6px 16px", borderRadius: "2px", letterSpacing: "0.1em", whiteSpace: "nowrap"}}>LE PLUS CHOISI</div>
             
             <h3 style={{fontFamily: "var(--font-secondary)", fontSize: "24px", fontWeight: "600", marginBottom: "12px", color: "var(--color-text)"}}>Premium</h3>
@@ -206,13 +168,14 @@ export default function Page() {
                 <span style={{fontFamily: "var(--font-primary)", fontSize: "14px", fontWeight: "400", color: "var(--color-text-muted)"}}>/mois</span>
             </div>
             {billingPeriod === 'annual' && <div style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-accent)", marginTop: "-12px", marginBottom: "16px", fontWeight: "600"}}>Facturé 278€/an</div>}
-            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Accès illimité aux 10 premiers magazines et aux audios/replays.</p>
+            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Accès aux magazines autorisés, audios, replays et archives.</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
-                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Tout de l'offre Essentiel</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Accès illimité aux 10 premiers Magazines numériques DONA (HD)</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Accès aux audios et au replay</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Accès aux archives du Cercle DONA</li>
+              {premiumFeatures.map((feat, idx) => (
+                <li key={idx} style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}>
+                  <span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> {feat}
+                </li>
+              ))}
             </ul>
             
             <Link href={`/signup?plan=premium&billing=${billingPeriod}`} className="pricing-btn-accent">Devenir Premium</Link>
@@ -229,10 +192,11 @@ export default function Page() {
             <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Accès intégral à l'ensemble du contenu et privilèges VIP.</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Tout de l'offre Premium</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Accès à tout le contenu (Tous les 16 Magazines)</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Invitations exclusives aux événements et galas privés</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Service de conciergerie éditoriale et accès anticipé</li>
+              {eliteFeatures.map((feat, idx) => (
+                <li key={idx} style={{display: "flex", gap: "12px", alignItems: "center"}}>
+                  <span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> {feat}
+                </li>
+              ))}
             </ul>
             
             <Link href={`/signup?plan=elite&billing=${billingPeriod}`} className="pricing-btn-dark">Rejoindre l'Élite</Link>

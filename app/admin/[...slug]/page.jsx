@@ -11,7 +11,7 @@ import ReplayDrawer from '../components/ReplayDrawer';
 import PlanDrawer from '../components/PlanDrawer';
 import MemberDrawer from '../components/MemberDrawer';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
-import { ALL_SUBSCRIBER_SERVICES, getServicesMatrixConfig, saveServicesMatrixConfig } from '@/lib/subscriptionPermissions';
+import { ALL_SUBSCRIBER_SERVICES, getServicesMatrixConfig, saveServicesMatrixConfig, getFeaturesForPlanFromMatrix } from '@/lib/subscriptionPermissions';
 // The 16 official magazine universes for category matching
 const UNIVERSES = [
   { id: "intelligence", name: "01. Intelligence" },
@@ -3191,9 +3191,13 @@ export default function AdminCatchAllPage({ params }) {
                         Avantages Inclus
                       </label>
                       <ul style={{ paddingLeft: '16px', margin: 0, fontSize: '13px', color: '#555555', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {plan.features.map((feat, index) => (
-                          <li key={index} style={{ listStyleType: 'square' }}>{feat}</li>
-                        ))}
+                        {(() => {
+                          const activeFeatures = getFeaturesForPlanFromMatrix(plan.name, servicesMatrix);
+                          const displayFeatures = activeFeatures.length > 0 ? activeFeatures : (plan.features || []);
+                          return displayFeatures.map((feat, index) => (
+                            <li key={index} style={{ listStyleType: 'square' }}>{feat}</li>
+                          ));
+                        })()}
                       </ul>
                     </div>
 
