@@ -206,26 +206,31 @@ export default function AdminCatchAllPage({ params }) {
           if (profile) {
             const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
             const profEmail = (profile.email || '').toLowerCase().trim();
+            const profName = fullName.toLowerCase();
 
-            const matchIndex = currentMembers.findIndex(m => 
-              (profEmail && m.email && m.email.toLowerCase().trim() === profEmail) || 
-              m.id === 'mem-1' || 
-              (fullName && m.name && m.name.toLowerCase() === fullName.toLowerCase())
-            );
+            let matchedAny = false;
+            currentMembers = currentMembers.map(m => {
+              const mEmail = (m.email || '').toLowerCase().trim();
+              const mName = (m.name || '').toLowerCase().trim();
 
-            if (matchIndex !== -1) {
-              currentMembers[matchIndex] = {
-                ...currentMembers[matchIndex],
-                name: fullName || currentMembers[matchIndex].name,
-                email: profile.email || currentMembers[matchIndex].email,
-                phone: profile.phone || currentMembers[matchIndex].phone,
-                avatar: profile.avatar || currentMembers[matchIndex].avatar
-              };
-            } else if (fullName || profile.email) {
+              if ((profEmail && mEmail === profEmail) || (profName && mName === profName)) {
+                matchedAny = true;
+                return {
+                  ...m,
+                  name: fullName || m.name,
+                  email: profile.email || m.email,
+                  phone: profile.phone !== undefined ? profile.phone : m.phone,
+                  avatar: profile.avatar !== undefined ? profile.avatar : m.avatar
+                };
+              }
+              return m;
+            });
+
+            if (!matchedAny && (fullName || profEmail)) {
               currentMembers.unshift({
                 id: `mem-profile`,
-                name: fullName || 'Ernest Dupont',
-                email: profile.email || 'ernest@example.com',
+                name: fullName || 'Ernest Raza',
+                email: profile.email || 'mikyraza@gmail.com',
                 phone: profile.phone || '',
                 avatar: profile.avatar || null,
                 plan: 'Premium',
@@ -267,6 +272,30 @@ export default function AdminCatchAllPage({ params }) {
       setMembers(prev => prev.map(m => m.id === savedMember.id ? savedMember : m));
     } else {
       setMembers(prev => [savedMember, ...prev]);
+    }
+
+    try {
+      const storedProfile = localStorage.getItem('dona_member_profile');
+      if (storedProfile) {
+        const profile = JSON.parse(storedProfile);
+        const pEmail = (profile.email || '').toLowerCase().trim();
+        const sEmail = (savedMember.email || '').toLowerCase().trim();
+        if (profile && (pEmail === sEmail || savedMember.id === 'mem-profile')) {
+          const parts = (savedMember.name || '').split(' ');
+          const fName = parts[0] || profile.firstName;
+          const lName = parts.slice(1).join(' ') || profile.lastName;
+          localStorage.setItem('dona_member_profile', JSON.stringify({
+            ...profile,
+            firstName: fName,
+            lastName: lName,
+            email: savedMember.email || profile.email,
+            phone: savedMember.phone !== undefined ? savedMember.phone : profile.phone,
+            avatar: savedMember.avatar !== undefined ? savedMember.avatar : profile.avatar
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Error syncing saved member to profile:', e);
     }
   };
 

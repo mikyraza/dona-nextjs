@@ -78,29 +78,40 @@ export default function Page() {
         const storedAdmin = localStorage.getItem('dona_admin_members_db');
         const adminMembers = storedAdmin ? JSON.parse(storedAdmin) : [];
         const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+        const profEmail = (profile.email || '').toLowerCase().trim();
+        const profName = fullName.toLowerCase();
 
-        const memberIndex = adminMembers.findIndex(m => m.email === profile.email || m.id === 'mem-1');
-        if (memberIndex !== -1) {
-          adminMembers[memberIndex] = {
-            ...adminMembers[memberIndex],
-            name: fullName || adminMembers[memberIndex].name,
-            email: profile.email,
-            phone: profile.phone,
-            avatar: profile.avatar
-          };
-        } else {
-          adminMembers.unshift({
+        let updated = false;
+        const nextAdminMembers = adminMembers.map(m => {
+          const mEmail = (m.email || '').toLowerCase().trim();
+          const mName = (m.name || '').toLowerCase().trim();
+          if ((profEmail && mEmail === profEmail) || (profName && mName === profName)) {
+            updated = true;
+            return {
+              ...m,
+              name: fullName || m.name,
+              email: profile.email || m.email,
+              phone: profile.phone || m.phone,
+              avatar: profile.avatar || m.avatar
+            };
+          }
+          return m;
+        });
+
+        if (!updated) {
+          nextAdminMembers.unshift({
             id: `mem-${Date.now()}`,
-            name: fullName || 'Ernest Dupont',
-            email: profile.email,
-            phone: profile.phone,
-            avatar: profile.avatar,
+            name: fullName || 'Ernest Raza',
+            email: profile.email || 'mikyraza@gmail.com',
+            phone: profile.phone || '',
+            avatar: profile.avatar || null,
             plan: 'Premium',
             status: 'Active',
             joined: new Date().toLocaleDateString('fr-FR')
           });
         }
-        localStorage.setItem('dona_admin_members_db', JSON.stringify(adminMembers));
+
+        localStorage.setItem('dona_admin_members_db', JSON.stringify(nextAdminMembers));
       } catch (err) {
         console.error('Error syncing member profile to admin DB:', err);
       }
