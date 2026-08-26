@@ -14,6 +14,8 @@ export default function Header() {
   const [hubData, setHubData] = useState({ liveTv: null, featuredVideo: null });
   const timeoutRef = useRef(null);
   const headerRef = useRef(null);
+  const pathname = usePathname();
+  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [userProfile, setUserProfile] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
