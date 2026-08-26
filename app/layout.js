@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 import { AudioPlayerProvider } from '../contexts/AudioPlayerContext';
 import ConditionalLayout from '../components/layout/ConditionalLayout';
+import AuthProvider from '../components/providers/AuthProvider';
 import Script from 'next/script';
 
 export const metadata = {
@@ -49,11 +50,13 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning>
-        <AudioPlayerProvider>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
-        </AudioPlayerProvider>
+        <AuthProvider>
+          <AudioPlayerProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+          </AudioPlayerProvider>
+        </AuthProvider>
       </body>
     </html>
   );
