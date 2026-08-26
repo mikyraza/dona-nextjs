@@ -26,6 +26,20 @@ function LoginForm() {
   const userName = session?.user?.name || activeSub.name || activeSub.email?.split('@')[0] || "Membre";
   const userPlan = activeSub.plan || "Essentiel";
 
+  const targetDest = (callbackUrl && callbackUrl !== '/' && !callbackUrl.includes('/login') && !callbackUrl.includes('/vip'))
+    ? callbackUrl 
+    : '/espace-lecture';
+
+  // Auto redirect already logged in users after 1 second
+  useEffect(() => {
+    if (isLoggedIn) {
+      const timer = setTimeout(() => {
+        window.location.href = targetDest;
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn, targetDest]);
+
   const handleSignOut = async () => {
     try {
       localStorage.removeItem('dona_member_profile');
@@ -65,9 +79,9 @@ function LoginForm() {
         try {
           const profile = {
             email: session?.user?.email || email,
-            name: session?.user?.name || "Membre",
+            name: session?.user?.name || email.split('@')[0] || "Membre",
             role: userRole,
-            plan: allowedAdminRoles.includes(userRole) ? "Élite" : "Essentiel",
+            plan: allowedAdminRoles.includes(userRole) ? "Élite" : (activeSub.plan || "Essentiel"),
             status: "Active",
             isGuest: false
           };
@@ -77,12 +91,12 @@ function LoginForm() {
           console.error("Error saving session profile:", e);
         }
 
+        let destination = targetDest;
         if (session?.user?.role && allowedAdminRoles.includes(session.user.role)) {
-          router.push("/admin/dashboard");
-        } else {
-          router.push(res?.url || callbackUrl);
+          destination = "/admin/dashboard";
         }
-        router.refresh();
+
+        window.location.href = destination;
       }
     } catch (err) {
       setError("Une erreur de connexion est survenue.");
