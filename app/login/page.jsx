@@ -22,23 +22,9 @@ function LoginForm() {
     setActiveSub(sub);
   }, [session]);
 
-  const isLoggedIn = mounted && (session?.user || !activeSub.isGuest);
+  const isLoggedIn = mounted && (session?.user || (!activeSub.isGuest && activeSub.email));
   const userName = session?.user?.name || activeSub.name || activeSub.email?.split('@')[0] || "Membre";
   const userPlan = activeSub.plan || "Essentiel";
-
-  const targetDest = (callbackUrl && callbackUrl !== '/' && !callbackUrl.includes('/login') && !callbackUrl.includes('/vip'))
-    ? callbackUrl 
-    : '/espace-lecture';
-
-  // Auto redirect already logged in users after 1 second
-  useEffect(() => {
-    if (isLoggedIn) {
-      const timer = setTimeout(() => {
-        window.location.href = targetDest;
-      }, 1200);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoggedIn, targetDest]);
 
   const handleSignOut = async () => {
     try {
@@ -75,7 +61,6 @@ function LoginForm() {
         const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur"];
         const userRole = session?.user?.role || "VIP";
 
-        // Sync member profile & subscription status for frontend paywall access
         try {
           const profile = {
             email: session?.user?.email || email,
@@ -91,12 +76,16 @@ function LoginForm() {
           console.error("Error saving session profile:", e);
         }
 
-        let destination = targetDest;
+        let destination = "/espace-lecture";
+        if (callbackUrl && callbackUrl !== '/' && !callbackUrl.includes('/login') && !callbackUrl.includes('/vip')) {
+          destination = callbackUrl;
+        }
         if (session?.user?.role && allowedAdminRoles.includes(session.user.role)) {
           destination = "/admin/dashboard";
         }
 
-        window.location.href = destination;
+        router.push(destination);
+        router.refresh();
       }
     } catch (err) {
       setError("Une erreur de connexion est survenue.");
@@ -106,7 +95,8 @@ function LoginForm() {
     }
   };
 
-  if (isLoggedIn) {
+  // If already logged in, render clean static member card without timer loops or flicker
+  if (mounted && isLoggedIn) {
     const targetUrl = (callbackUrl && callbackUrl !== '/' && !callbackUrl.includes('/login') && !callbackUrl.includes('/vip'))
       ? callbackUrl 
       : '/espace-lecture';
@@ -145,12 +135,8 @@ function LoginForm() {
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
-          <a
+          <Link
             href={targetUrl}
-            onClick={(e) => {
-              e.preventDefault();
-              window.location.href = targetUrl;
-            }}
             style={{
               background: "var(--color-accent)",
               color: "#FFF",
@@ -167,9 +153,9 @@ function LoginForm() {
             }}
           >
             Continuer vers mon espace lecture →
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/member-profile"
             style={{
               background: "var(--color-bg)",
@@ -186,7 +172,7 @@ function LoginForm() {
             }}
           >
             Mon Profil Membre
-          </a>
+          </Link>
 
           <button
             type="button"
@@ -241,229 +227,182 @@ function LoginForm() {
         </div>
       )}
 
-      {/* Heading */}
-      <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "700", color: "var(--color-text)", marginBottom: "12px", textAlign: "center", letterSpacing: "-0.02em"}}>
-        {isVipIntent ? "Accès à la Zone VIP" : "Bienvenue parmi l'Alliance"}
+      {/* Title */}
+      <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "700", color: "var(--color-text)", marginBottom: "8px", textAlign: "center", letterSpacing: "-0.01em"}}>
+        Bienvenue parmi l&apos;Alliance
       </h1>
-      <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", textAlign: "center", marginBottom: "30px"}}>
-        {isVipIntent 
-          ? "Identifiez-vous pour débloquer les analyses exclusives et les dossiers réservés."
-          : "Connectez-vous pour accéder à votre espace membre"}
+      <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", marginBottom: "32px", textAlign: "center"}}>
+        Connectez-vous pour accéder à votre espace membre
       </p>
 
       {/* Error Message */}
       {error && (
-        <div style={{width: "100%", background: "#FDF2F2", borderLeft: "4px solid #F05252", padding: "12px 16px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px", borderRadius: "2px"}}>
-          <span className="material-symbols-outlined" style={{color: "#F05252", fontSize: "20px"}}>error</span>
-          <span style={{fontFamily: "var(--font-primary)", fontSize: "13px", color: "#C81E1E", fontWeight: "500"}}>{error}</span>
+        <div style={{background: "#FDE8E8", border: "1px solid #F8B4B4", color: "#9B1C1C", padding: "12px 16px", borderRadius: "2px", fontSize: "13px", width: "100%", marginBottom: "24px", display: "flex", alignItems: "center", gap: "8px"}}>
+          <span className="material-symbols-outlined" style={{fontSize: "18px"}}>error</span>
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} style={{width: "100%", display: "flex", flexDirection: "column", gap: "24px"}}>
-          
-          {/* Email */}
-          <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
-              <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Adresse Email</label>
-              <div className="login-input-container">
-                  <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)"}}>mail</span>
-                  <input 
-                    type="email" 
-                    placeholder="votre@email.com" 
-                    className="login-input" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required 
-                    disabled={loading}
-                  />
-              </div>
+      {/* Login Form */}
+      <form onSubmit={handleSubmit} style={{width: "100%", display: "flex", flexDirection: "column", gap: "20px"}}>
+        
+        {/* Email */}
+        <div style={{display: "flex", flexDirection: "column", gap: "6px"}}>
+          <label htmlFor="email" style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.05em", color: "var(--color-text)", textTransform: "uppercase"}}>
+            Adresse Email
+          </label>
+          <div style={{position: "relative", display: "flex", alignItems: "center"}}>
+            <span className="material-symbols-outlined" style={{position: "absolute", left: "14px", color: "var(--color-text-muted)", fontSize: "20px"}}>mail</span>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="votre@email.com"
+              style={{
+                width: "100%",
+                padding: "12px 14px 12px 44px",
+                background: "var(--color-bg-alt)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "2px",
+                fontSize: "14px",
+                color: "var(--color-text)",
+                outline: "none",
+                transition: "border-color 0.2s"
+              }}
+            />
           </div>
+        </div>
 
-          {/* Password */}
-          <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
-              <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Mot de passe</label>
-              <div className="login-input-container">
-                  <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)"}}>lock</span>
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="••••••••" 
-                    className="login-input" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required 
-                    disabled={loading}
-                  />
-                  <span 
-                    className="material-symbols-outlined" 
-                    style={{fontSize: "20px", color: "var(--color-text-muted)", cursor: "pointer", userSelect: "none"}}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? "visibility_off" : "visibility"}
-                  </span>
-              </div>
+        {/* Password */}
+        <div style={{display: "flex", flexDirection: "column", gap: "6px"}}>
+          <label htmlFor="password" style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.05em", color: "var(--color-text)", textTransform: "uppercase"}}>
+            Mot de passe
+          </label>
+          <div style={{position: "relative", display: "flex", alignItems: "center"}}>
+            <span className="material-symbols-outlined" style={{position: "absolute", left: "14px", color: "var(--color-text-muted)", fontSize: "20px"}}>lock</span>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              style={{
+                width: "100%",
+                padding: "12px 44px 12px 44px",
+                background: "var(--color-bg-alt)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "2px",
+                fontSize: "14px",
+                color: "var(--color-text)",
+                outline: "none",
+                transition: "border-color 0.2s"
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              style={{position: "absolute", right: "14px", background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer", display: "flex", alignItems: "center"}}
+            >
+              <span className="material-symbols-outlined" style={{fontSize: "20px"}}>
+                {showPassword ? "visibility_off" : "visibility"}
+              </span>
+            </button>
           </div>
+        </div>
 
-          {/* Remember me & Forgot Password */}
-          <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: "var(--font-primary)", fontSize: "13px"}}>
-              <label style={{display: "flex", alignItems: "center", gap: "8px", color: "var(--color-text-muted)", cursor: "pointer"}}>
-                  <input type="checkbox" style={{width: "16px", height: "16px", accentColor: "var(--color-accent)", border: "1px solid var(--color-border)"}} /> Se souvenir de moi
-              </label>
-              <Link href="/forgot-password" className="login-link">Mot de passe oublié ?</Link>
-          </div>
+        {/* Remember me & Forgot password */}
+        <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px"}}>
+          <label style={{display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", color: "var(--color-text-muted)"}}>
+            <input type="checkbox" style={{accentColor: "var(--color-accent)"}} />
+            <span>Se souvenir de moi</span>
+          </label>
+          <Link href="/abonnement" style={{color: "var(--color-text-muted)", textDecoration: "none"}}>
+            Mot de passe oublié ?
+          </Link>
+        </div>
 
-          {/* Submit */}
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{
-              width: "100%", 
-              background: loading ? "var(--color-text-muted)" : "var(--color-accent)", 
-              color: "#FFFFFF", 
-              border: "none", 
-              padding: "16px", 
-              borderRadius: "2px", 
-              fontFamily: "var(--font-primary)", 
-              fontSize: "14px", 
-              fontWeight: "600", 
-              letterSpacing: "0.15em", 
-              textTransform: "uppercase", 
-              cursor: loading ? "not-allowed" : "pointer", 
-              transition: "background 0.2s", 
-              marginTop: "8px"
-            }}
-          >
-              {loading ? "Connexion en cours..." : "Se connecter"}
-          </button>
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            background: "var(--color-accent)",
+            color: "#FFFFFF",
+            border: "none",
+            borderRadius: "2px",
+            padding: "14px",
+            fontFamily: "var(--font-primary)",
+            fontSize: "12px",
+            fontWeight: "700",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.7 : 1,
+            marginTop: "12px",
+            transition: "background 0.2s"
+          }}
+        >
+          {loading ? "Connexion en cours..." : "SE CONNECTER"}
+        </button>
 
       </form>
 
       {/* Divider */}
-      <div style={{width: "100%", display: "flex", alignItems: "center", gap: "16px", margin: "32px 0"}}>
-          <div style={{flexGrow: "1", height: "1px", background: "var(--color-border)"}}></div>
-          <span style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Ou continuer avec</span>
-          <div style={{flexGrow: "1", height: "1px", background: "var(--color-border)"}}></div>
+      <div style={{width: "100%", display: "flex", alignItems: "center", margin: "24px 0", gap: "12px"}}>
+        <div style={{flex: 1, height: "1px", background: "var(--color-border)"}}></div>
+        <span style={{fontSize: "10px", color: "var(--color-text-muted)", fontWeight: "700", letterSpacing: "0.1em"}}>OU CONTINUER AVEC</span>
+        <div style={{flex: 1, height: "1px", background: "var(--color-border)"}}></div>
       </div>
 
-      {/* Social Auth */}
-      <div style={{width: "100%", display: "flex", gap: "16px"}}>
-          <button type="button" className="login-btn-social">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" className="login-apple-logo" style={{width: "16px", height: "16px"}} /> Apple
-          </button>
-          <button type="button" className="login-btn-social">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style={{width: "16px", height: "16px"}} /> Google
-          </button>
+      {/* Social Login */}
+      <div style={{width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px"}}>
+        <button
+          type="button"
+          onClick={() => signIn("apple", { callbackUrl })}
+          style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "2px", padding: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontSize: "12px", fontWeight: "600", color: "var(--color-text)", cursor: "pointer"}}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.54c.64-.78 1.08-1.85.96-2.93-.93.04-2.07.62-2.74 1.4-.6.7-.1.13-1.73 1.84.99-.04 2.12-.53 2.75-1.31z"/></svg>
+          Apple
+        </button>
+
+        <button
+          type="button"
+          onClick={() => signIn("google", { callbackUrl })}
+          style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "2px", padding: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontSize: "12px", fontWeight: "600", color: "var(--color-text)", cursor: "pointer"}}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>
+          Google
+        </button>
       </div>
 
-      {/* Signup / Subscribe Link */}
-      <div style={{marginTop: "32px", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", textAlign: "center"}}>
-        {isVipIntent ? (
-          <>Pas encore abonné VIP ? <Link href="/abonnement" className="login-link" style={{fontWeight: "700", color: "var(--color-accent)"}}>Découvrir les offres d'abonnement</Link></>
-        ) : (
-          <>Pas encore membre ? <Link href="/signup" className="login-link" style={{fontWeight: "600"}}>Devenir membre</Link></>
-        )}
+      {/* Register Footer */}
+      <div style={{marginTop: "32px", textAlign: "center", fontSize: "13px", color: "var(--color-text-muted)"}}>
+        Pas encore abonné VIP ?{" "}
+        <Link href="/abonnement" style={{color: "var(--color-accent)", fontWeight: "700", textDecoration: "none"}}>
+          Découvrir les offres d&apos;abonnement
+        </Link>
       </div>
 
-      {/* Admin Link Distinction */}
-      <div style={{marginTop: "16px", textAlign: "center", fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-text-muted)"}}>
-        Équipe éditoriale & rédaction ? <Link href="/admin/login" className="login-link" style={{textDecoration: "underline"}}>Accès Portail Admin</Link>
-      </div>
-
-      {/* Back to Home Link */}
-      <div style={{marginTop: "16px"}}>
-          <Link href="/" className="login-link" style={{fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "600"}}>
-              Retour à l'accueil
-          </Link>
-      </div>
-
-      {/* Security text */}
-      <div style={{marginTop: "32px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-primary)", fontSize: "11px", color: "var(--color-text-muted)"}}>
-          <span className="material-symbols-outlined" style={{fontSize: "14px"}}>security</span>
-          Connexion sécurisée par chiffrement SSL 256-bit
+      {/* Admin Portal Shortcut */}
+      <div style={{marginTop: "16px", textAlign: "center", fontSize: "11px", color: "var(--color-text-muted)"}}>
+        Équipe éditoriale & rédaction ?{" "}
+        <Link href="/admin/login" style={{color: "var(--color-text)", fontWeight: "600", textDecoration: "underline"}}>
+          Accès Portail Admin
+        </Link>
       </div>
 
     </div>
   );
 }
 
-export default function Page() {
+export default function LoginPage() {
   return (
-    <main style={{display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh", padding: "40px 20px", background: "var(--color-bg)"}}>
-      
-      <style>{`
-        .login-link {
-          color: var(--color-text-muted);
-          font-weight: 500;
-          text-decoration: none;
-          transition: color 0.3s ease, opacity 0.3s ease;
-        }
-        .login-link:hover {
-          color: var(--color-accent);
-          opacity: 0.9;
-        }
-        .login-input-container {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          border: 1px solid var(--color-border);
-          background: var(--color-bg-alt);
-          padding: 12px 16px;
-          border-radius: 2px;
-          transition: border-color 0.3s ease;
-        }
-        .login-input-container:focus-within {
-          border-color: var(--color-accent);
-        }
-        .login-input {
-          flex-grow: 1;
-          border: none;
-          background: transparent;
-          font-family: var(--font-primary);
-          font-size: 15px;
-          color: var(--color-text);
-          outline: none;
-        }
-        .login-btn-social {
-          flex: 1;
-          background: transparent;
-          border: 1px solid var(--color-border);
-          border-radius: 2px;
-          padding: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          font-family: var(--font-primary);
-          font-size: 14px;
-          font-weight: 500;
-          color: var(--color-text);
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .login-btn-social:hover {
-          background: var(--color-bg-alt);
-          border-color: var(--color-text-muted);
-        }
-        [data-theme="dark"] .login-apple-logo {
-          filter: invert(1);
-        }
-        @media (max-width: 500px) {
-          .login-card {
-            padding: 32px 20px !important;
-          }
-          .login-card img {
-            height: 90px !important;
-          }
-          .login-card h1 {
-            font-size: 22px !important;
-          }
-        }
-      `}</style>
-
-      <Suspense fallback={
-        <div style={{fontFamily: "var(--font-primary)", color: "var(--color-text-muted)"}}>
-          Chargement de l'Alliance...
-        </div>
-      }>
+    <main style={{background: "var(--color-bg-alt)", minHeight: "85vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px"}}>
+      <Suspense fallback={<div style={{color: "var(--color-text-muted)"}}>Chargement...</div>}>
         <LoginForm />
       </Suspense>
     </main>
