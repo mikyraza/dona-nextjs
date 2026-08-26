@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { fetchMagazineConfig, fetchArticleById } from '@/lib/wordpress';
 import { magazines as staticMagazines } from '../../../data';
+import SaveArticleButton from '@/components/article/SaveArticleButton';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -77,10 +78,14 @@ export default async function ArticlePage({ params }) {
                   <span style={{ fontSize: "9px", fontWeight: "700" }}>ÉCOUTER</span>
                 </button>
                 
-                <button style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}>
-                  <span className="material-symbols-outlined">bookmark</span>
-                  <span style={{ fontSize: "9px", fontWeight: "700" }}>SAUVER</span>
-                </button>
+                <SaveArticleButton
+                  articleId={article.id || articleSlug}
+                  title={article.title}
+                  meta={article.meta || displayBadge}
+                  image={coverImg}
+                  ctaHref={currentPath}
+                  primaryColor={primaryColor}
+                />
               </>
             ) : (
               <Link href={loginUrl} style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: primaryColor, textDecoration: "none" }}>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import SaveArticleButton from '@/components/article/SaveArticleButton';
 
 export default function TodayArticlePage() {
   const params = useParams();
@@ -72,10 +73,14 @@ export default function TodayArticlePage() {
               <span style={{ fontSize: "9px", fontWeight: "700" }}>ÉCOUTER</span>
             </button>
             
-            <button style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}>
-              <span className="material-symbols-outlined">bookmark</span>
-              <span style={{ fontSize: "9px", fontWeight: "700" }}>SAUVER</span>
-            </button>
+            <SaveArticleButton
+              articleId={article.id || articleSlug}
+              title={article.title}
+              meta={article.meta || displayBadge}
+              image={article.image}
+              ctaHref={`/today/${articleSlug}`}
+              primaryColor={primaryColor}
+            />
             
             <Link href="/today" style={{ marginTop: "40px", border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text)", textDecoration: "none" }}>
               <span className="material-symbols-outlined">arrow_back</span>
