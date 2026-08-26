@@ -1,15 +1,38 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
+import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const isVipIntent = searchParams.get("vip") === "1" || callbackUrl.includes("/magazines/") || callbackUrl.includes("/espace-lecture") || callbackUrl.includes("vip");
+
+  const { data: session } = useSession();
+  const [activeSub, setActiveSub] = useState({ isGuest: true, plan: 'Essentiel' });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const sub = getActiveUserSubscription();
+    setActiveSub(sub);
+  }, [session]);
+
+  const isLoggedIn = mounted && (session?.user || !activeSub.isGuest);
+  const userName = session?.user?.name || activeSub.name || activeSub.email?.split('@')[0] || "Membre";
+  const userPlan = activeSub.plan || "Essentiel";
+
+  const handleSignOut = async () => {
+    try {
+      localStorage.removeItem('dona_member_profile');
+      window.dispatchEvent(new Event('dona_subscription_changed'));
+    } catch (e) {}
+    signOut({ callbackUrl: '/login' });
+  };
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,6 +91,77 @@ function LoginForm() {
       setLoading(false);
     }
   };
+
+  if (isLoggedIn) {
+    return (
+      <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "500px", width: "100%", borderRadius: "4px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center"}}>
+        <Link href="/" style={{marginBottom: "24px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
+          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" style={{height: "120px", width: "auto", objectFit: "contain"}} />
+        </Link>
+
+        <div style={{
+          width: "56px",
+          height: "56px",
+          borderRadius: "50%",
+          background: "rgba(163, 6, 38, 0.08)",
+          border: "1px solid rgba(163, 6, 38, 0.2)",
+          color: "var(--color-accent)",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "16px"
+        }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>account_circle</span>
+        </div>
+
+        <span style={{ fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "800", letterSpacing: "0.15em", color: "var(--color-accent)", textTransform: "uppercase", marginBottom: "8px" }}>
+          VOUS ÊTES DÉJÀ CONNECTÉ
+        </span>
+
+        <h2 style={{ fontFamily: "var(--font-secondary)", fontSize: "24px", fontWeight: "700", color: "var(--color-text)", marginBottom: "8px" }}>
+          Bonjour, {userName}
+        </h2>
+
+        <p style={{ fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", marginBottom: "28px", lineHeight: "1.5" }}>
+          Vous êtes identifié avec un compte <strong>{userPlan}</strong>.
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+          <Link href={callbackUrl !== "/" ? callbackUrl : "/espace-lecture"} style={{
+            background: "var(--color-accent)",
+            color: "#FFF",
+            padding: "14px 24px",
+            borderRadius: "2px",
+            fontWeight: "700",
+            fontSize: "12px",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            textDecoration: "none",
+            display: "block"
+          }}>
+            Continuer vers mon espace →
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            style={{
+              background: "none",
+              border: "1px solid var(--color-border)",
+              color: "#C81E1E",
+              padding: "12px 24px",
+              borderRadius: "2px",
+              fontWeight: "600",
+              fontSize: "12px",
+              cursor: "pointer"
+            }}
+          >
+            Se déconnecter de ce compte
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "500px", width: "100%", borderRadius: "2px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center"}}>
