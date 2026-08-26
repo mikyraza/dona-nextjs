@@ -277,28 +277,28 @@ export default function Page() {
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>10 premiers Magazines numériques HD (N°01 à N°10)</div>
+                    <div style={{fontWeight: "500"}}>Magazines numériques (N°01 à N°04)</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
-                
+
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Contenus Audio & Replays</div>
+                    <div style={{fontWeight: "500"}}>Magazines numériques (N°05 à N°08)</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Archives du Cercle DONA</div>
+                    <div style={{fontWeight: "500"}}>Magazines numériques (N°09 à N°12)</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
-                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Accès à TOUT le contenu (16 Magazines complets)</div>
+                    <div style={{fontWeight: "500"}}>Magazines numériques (N°13 à N°16)</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
