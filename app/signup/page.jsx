@@ -42,7 +42,35 @@ function SignupForm() {
     }
 
     setLoading(true);
-    // Simulate user registration & redirect
+
+    const todayStr = new Date().toLocaleDateString('fr-FR');
+    const newMember = {
+      id: `mem-${Date.now()}`,
+      name: `${firstName} ${lastName}`.trim() || 'Nouveau Membre',
+      email: email,
+      plan: selectedPlan.name,
+      status: 'Active',
+      joined: todayStr
+    };
+
+    try {
+      // 1. Add to Admin Members list
+      const existing = localStorage.getItem('dona_admin_members_db');
+      const membersList = existing ? JSON.parse(existing) : [];
+      localStorage.setItem('dona_admin_members_db', JSON.stringify([newMember, ...membersList]));
+
+      // 2. Set active member profile for member-profile page
+      localStorage.setItem('dona_member_profile', JSON.stringify({
+        firstName: firstName || 'Ernest',
+        lastName: lastName || 'Dupont',
+        email: email || 'ernest@example.com',
+        phone: '',
+        avatar: null
+      }));
+    } catch (e) {
+      console.error('Error saving registration data:', e);
+    }
+
     setTimeout(() => {
       setLoading(false);
       router.push('/member-profile');

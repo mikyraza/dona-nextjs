@@ -176,17 +176,42 @@ export default function AdminCatchAllPage({ params }) {
   ]);
 
   // 4. Members State (Phase 4.5)
-  const [members, setMembers] = useState([
+  const DEFAULT_MEMBERS = [
     { id: "mem-1", name: "Marc Aubry", email: "marc@aubry.com", plan: "Premium", status: "Active", joined: "12/03/2026" },
     { id: "mem-2", name: "Hélène de Ségur", email: "vip@dona.com", plan: "Élite", status: "Active", joined: "01/05/2026" },
     { id: "mem-3", name: "Claire Martin", email: "free@dona.com", plan: "Essentiel", status: "Inactive", joined: "10/06/2026" }
-  ]);
+  ];
+
+  const [members, setMembers] = useState(DEFAULT_MEMBERS);
   const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
 
+  // Load from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('dona_members_count', (1281 + members.length).toString());
+      try {
+        const stored = localStorage.getItem('dona_admin_members_db');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMembers(parsed);
+          }
+        }
+      } catch (e) {
+        console.error('Error loading admin members from localStorage:', e);
+      }
+    }
+  }, []);
+
+  // Save to localStorage when members state changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('dona_admin_members_db', JSON.stringify(members));
+        localStorage.setItem('dona_members_count', (1281 + members.length).toString());
+      } catch (e) {
+        console.error('Error saving admin members to localStorage:', e);
+      }
     }
   }, [members]);
 
@@ -196,9 +221,6 @@ export default function AdminCatchAllPage({ params }) {
   const [memberStatusFilter, setMemberStatusFilter] = useState('all');
 
   const handleSaveMember = (savedMember) => {
-    // API BRIDGE INTEGRATION BLUEPRINT:
-    // To bridge these member profiles to MongoDB / custom Node APIs:
-    // fetch('/api/members', { method: savedMember.id.startsWith('mem-') ? 'PUT' : 'POST', body: JSON.stringify(savedMember) })
     const isEdit = members.some(m => m.id === savedMember.id);
     if (isEdit) {
       setMembers(prev => prev.map(m => m.id === savedMember.id ? savedMember : m));
