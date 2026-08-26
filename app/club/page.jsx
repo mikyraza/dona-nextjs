@@ -9,25 +9,21 @@ export default function ClubPage() {
     <main className="cn-club">
 
       {/* ═══════════════════════════════════════════════
-          HERO — Full-screen dark cinematic
+          HERO — Fond ivoire, typographie grande échelle
       ═══════════════════════════════════════════════ */}
       <section className="cn-hero">
-        {/* Background texture */}
-        <div className="cn-hero-noise" />
-        <div className="cn-hero-grid-lines" />
-
         <div className="cn-hero-inner container">
-          {/* Top label */}
+          {/* Eyebrow */}
           <div className="cn-hero-label">
             <span className="cn-dot" />
             LE CERCLE DONA — ACCÈS RESTREINT
           </div>
 
-          {/* Main title */}
+          {/* Titre + desc en grid 2 colonnes */}
           <div className="cn-hero-title-block">
             <h1 className="cn-h1">
               Le Club<br />
-              <span className="cn-h1-red">DONA</span>
+              <em className="cn-h1-accent">DONA</em>
             </h1>
             <div className="cn-hero-side">
               <p className="cn-hero-desc">
@@ -70,25 +66,25 @@ export default function ClubPage() {
           </div>
         </div>
 
-        {/* Décoratif : seal géométrique */}
+        {/* Sceau décoratif */}
         <div className="cn-hero-seal">
           <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="95" stroke="#A30626" strokeWidth="0.5" strokeDasharray="4 4" />
-            <circle cx="100" cy="100" r="78" stroke="#A30626" strokeWidth="0.5" opacity="0.5" />
-            <polygon points="100,10 190,100 100,190 10,100" stroke="#A30626" strokeWidth="0.5" opacity="0.6" />
-            <polygon points="100,10 190,100 100,190 10,100" stroke="#A30626" strokeWidth="0.5" opacity="0.4" transform="rotate(45 100 100)" />
-            <circle cx="100" cy="55" r="45" stroke="#A30626" strokeWidth="0.5" opacity="0.3" />
-            <circle cx="100" cy="145" r="45" stroke="#A30626" strokeWidth="0.5" opacity="0.3" />
-            <circle cx="55" cy="100" r="45" stroke="#A30626" strokeWidth="0.5" opacity="0.3" />
-            <circle cx="145" cy="100" r="45" stroke="#A30626" strokeWidth="0.5" opacity="0.3" />
-            <circle cx="100" cy="100" r="20" stroke="#A30626" strokeWidth="1" opacity="0.8" />
-            <text x="100" y="105" textAnchor="middle" fill="#A30626" fontSize="8" fontFamily="Inter" letterSpacing="3" opacity="0.9">DONA</text>
+            <circle cx="100" cy="100" r="95" stroke="#A30626" strokeWidth="0.8" strokeDasharray="4 4" />
+            <circle cx="100" cy="100" r="78" stroke="#A30626" strokeWidth="0.5" opacity="0.4" />
+            <polygon points="100,10 190,100 100,190 10,100" stroke="#A30626" strokeWidth="0.5" opacity="0.5" />
+            <polygon points="100,10 190,100 100,190 10,100" stroke="#A30626" strokeWidth="0.5" opacity="0.3" transform="rotate(45 100 100)" />
+            <circle cx="100" cy="55" r="45" stroke="#A30626" strokeWidth="0.5" opacity="0.2" />
+            <circle cx="100" cy="145" r="45" stroke="#A30626" strokeWidth="0.5" opacity="0.2" />
+            <circle cx="55" cy="100" r="45" stroke="#A30626" strokeWidth="0.5" opacity="0.2" />
+            <circle cx="145" cy="100" r="45" stroke="#A30626" strokeWidth="0.5" opacity="0.2" />
+            <circle cx="100" cy="100" r="20" stroke="#A30626" strokeWidth="1" opacity="0.6" />
+            <text x="100" y="105" textAnchor="middle" fill="#A30626" fontSize="8" fontFamily="Inter" letterSpacing="3" opacity="0.7">DONA</text>
           </svg>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════
-          AVANTAGES — 3 colonnes avec icônes
+          AVANTAGES — Fond blanc, 3 cartes
       ═══════════════════════════════════════════════ */}
       <section className="cn-avantages" id="avantages">
         <div className="container">
@@ -106,12 +102,12 @@ export default function ClubPage() {
             </div>
 
             <div className="cn-avantage-card cn-avantage-card--featured">
-              <div className="cn-av-icon">
+              <div className="cn-av-icon cn-av-icon--light">
                 <span className="material-symbols-outlined">stars</span>
               </div>
-              <h3 className="cn-av-title">Événements & Galas</h3>
-              <p className="cn-av-desc">Invitations personnelles aux galas privés, masterclass fermées et soirées de réseau organisées dans les lieux les plus confidentiels d'Europe.</p>
-              <div className="cn-av-meta">12 ÉVÉNEMENTS / AN</div>
+              <h3 className="cn-av-title cn-av-title--light">Événements & Galas</h3>
+              <p className="cn-av-desc cn-av-desc--light">Invitations personnelles aux galas privés, masterclass fermées et soirées de réseau organisées dans les lieux les plus confidentiels d'Europe.</p>
+              <div className="cn-av-meta cn-av-meta--light">12 ÉVÉNEMENTS / AN</div>
             </div>
 
             <div className="cn-avantage-card">
@@ -127,7 +123,7 @@ export default function ClubPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          FORUM — Carte éditoriale large
+          FORUM — Fond ivoire alt
       ═══════════════════════════════════════════════ */}
       <section className="cn-forum">
         <div className="container">
@@ -165,9 +161,9 @@ export default function ClubPage() {
             {/* Threads secondaires */}
             <div className="cn-forum-side">
               {[
-                { tag: "DEEP-DIVE", title: "Le Minimalisme comme Déclaration Politique", meta: "14 participants · 1j", color: "var(--club-cn-red)" },
-                { tag: "ANALYSE", title: "Investissement en Art : Les Nouvelles Règles du Marché", meta: "9 participants · 2j", color: "" },
-                { tag: "DÉBAT", title: "Paris vs. Dubaï : Où se Construit le Luxe de Demain ?", meta: "32 participants · 3j", color: "" },
+                { tag: "DEEP-DIVE", title: "Le Minimalisme comme Déclaration Politique", meta: "14 participants · 1j" },
+                { tag: "ANALYSE", title: "Investissement en Art : Les Nouvelles Règles du Marché", meta: "9 participants · 2j" },
+                { tag: "DÉBAT", title: "Paris vs. Dubaï : Où se Construit le Luxe de Demain ?", meta: "32 participants · 3j" },
               ].map((thread, i) => (
                 <Link href="/login?vip=1&callbackUrl=/club" className="cn-forum-thread" key={i}>
                   <div className="cn-thread-content">
@@ -188,7 +184,7 @@ export default function ClubPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          MASTERCLASS — Fond rouge
+          MASTERCLASS — Section accent rouge (volontaire)
       ═══════════════════════════════════════════════ */}
       <section className="cn-masterclass">
         <div className="container cn-mc-inner">
@@ -225,7 +221,7 @@ export default function ClubPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          VAULT — Grille de contenus
+          VAULT — Fond ivoire alt, cartes sombres
       ═══════════════════════════════════════════════ */}
       <section className="cn-vault">
         <div className="container">
@@ -239,19 +235,19 @@ export default function ClubPage() {
 
           <div className="cn-vault-grid">
             {[
-              { tag: "RAPPORT", date: "22 AVR 2026", title: "L'Influence des Cercles Tangibles", bg: "#1A1A1A" },
-              { tag: "ANALYSE", date: "10 AVR 2026", title: "La Discrétion comme Nouvelle Monnaie de Pouvoir", bg: "#111111" },
-              { tag: "GALERIE", date: "02 MARS 2026", title: "L'Esthétique du Cercle : Portraits de Membres", bg: "#0D0D0D" },
+              { tag: "RAPPORT", date: "22 AVR 2026", title: "L'Influence des Cercles Tangibles" },
+              { tag: "ANALYSE", date: "10 AVR 2026", title: "La Discrétion comme Nouvelle Monnaie de Pouvoir" },
+              { tag: "GALERIE", date: "02 MARS 2026", title: "L'Esthétique du Cercle : Portraits de Membres" },
             ].map((item, i) => (
-              <Link href="/login?vip=1&callbackUrl=/club" className="cn-vault-card" key={i} style={{ background: item.bg }}>
+              <Link href="/login?vip=1&callbackUrl=/club" className="cn-vault-card" key={i}>
                 <div className="cn-vault-card-top">
-                  <span className="cn-badge cn-badge--outline">{item.tag}</span>
+                  <span className="cn-badge">{item.tag}</span>
                   <span className="cn-vault-date">{item.date}</span>
                 </div>
                 <h4 className="cn-vault-title">{item.title}</h4>
                 <div className="cn-vault-read">
                   <span>LIRE LE DOCUMENT</span>
-                  <span className="material-symbols-outlined">lock</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>arrow_forward</span>
                 </div>
               </Link>
             ))}
@@ -272,7 +268,7 @@ export default function ClubPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          OFFRES — Cards avec hover
+          OFFRES — Fond blanc, 3 colonnes
       ═══════════════════════════════════════════════ */}
       <section className="cn-offres">
         <div className="container">
@@ -282,7 +278,7 @@ export default function ClubPage() {
           </div>
 
           <div className="cn-offres-grid">
-            {/* Plan Premium */}
+            {/* Plan Premium — seule carte sombre (mise en avant intentionnelle) */}
             <div
               className={`cn-plan ${hoveredPlan === 'premium' ? 'cn-plan--active' : ''}`}
               onMouseEnter={() => setHoveredPlan('premium')}
@@ -298,7 +294,7 @@ export default function ClubPage() {
                 <p className="cn-plan-desc">L'expérience totale : éditions print collector, accès digital intégral et invitations aux galas privés.</p>
               </div>
               <ul className="cn-plan-features">
-                {["Accès intégral aux 16 magazines", "Éditions Print Collector livrées", "Invitations aux Galas & Événements", "Intelligence Vault illimitée", "Forum Privé & Masterclass", "Badge Membre Privilège"].map((f, i) => (
+                {["Accès intégral aux 16 magazines", "Éditions Print Collector livrées", "Invitations Galas & Événements", "Intelligence Vault illimitée", "Forum Privé & Masterclass", "Badge Membre Privilège"].map((f, i) => (
                   <li key={i}>
                     <span className="material-symbols-outlined">check</span>
                     {f}
@@ -319,7 +315,7 @@ export default function ClubPage() {
             >
               <div className="cn-plan-top">
                 <span className="cn-plan-badge cn-plan-badge--gray">DIGITAL</span>
-                <h3 className="cn-plan-name">Accès Digital</h3>
+                <h3 className="cn-plan-name cn-plan-name--dark">Accès Digital</h3>
                 <div className="cn-plan-price">
                   <span className="cn-plan-price-num cn-plan-price-num--dark">290</span>
                   <span className="cn-plan-price-unit cn-plan-price-unit--dark">€ / an</span>
@@ -344,7 +340,7 @@ export default function ClubPage() {
             <div className="cn-plan cn-plan--member">
               <div className="cn-plan-top">
                 <span className="cn-plan-badge cn-plan-badge--gray">MEMBRES</span>
-                <h3 className="cn-plan-name">Espace Membre</h3>
+                <h3 className="cn-plan-name cn-plan-name--dark">Espace Membre</h3>
                 <p className="cn-plan-desc cn-plan-desc--dark">Accédez directement à votre espace personnalisé.</p>
               </div>
               <ul className="cn-member-links">
@@ -373,22 +369,22 @@ export default function ClubPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          CTA FINAL — Dark avec citation
+          CTA FINAL — Fond ivoire avec bordure rouge
       ═══════════════════════════════════════════════ */}
       <section className="cn-final-cta">
         <div className="container cn-final-inner">
           <div className="cn-final-seal">
-            <svg viewBox="0 0 60 60" fill="none">
-              <circle cx="30" cy="30" r="28" stroke="#A30626" strokeWidth="0.5" />
-              <circle cx="30" cy="30" r="22" stroke="#A30626" strokeWidth="0.5" opacity="0.5" />
-              <text x="30" y="31" textAnchor="middle" fill="#A30626" fontSize="5" fontFamily="Inter" letterSpacing="1">DONA CLUB</text>
-              <text x="30" y="38" textAnchor="middle" fill="#A30626" fontSize="3.5" fontFamily="Inter" letterSpacing="0.5" opacity="0.7">EST. MMXXIV</text>
+            <svg viewBox="0 0 80 80" fill="none">
+              <circle cx="40" cy="40" r="37" stroke="#A30626" strokeWidth="0.8" strokeDasharray="3 3" />
+              <circle cx="40" cy="40" r="28" stroke="#A30626" strokeWidth="0.5" opacity="0.4" />
+              <text x="40" y="41" textAnchor="middle" fill="#A30626" fontSize="5" fontFamily="Inter" letterSpacing="2">DONA CLUB</text>
+              <text x="40" y="48" textAnchor="middle" fill="#A30626" fontSize="3.5" fontFamily="Inter" letterSpacing="1" opacity="0.6">EST. MMXXIV</text>
             </svg>
           </div>
           <blockquote className="cn-final-quote">
-            "Cultivez votre unicité.<br />Vivez l'expérience d'un luxe qui se vit de l'intérieur."
+            "Cultivez votre unicité. Vivez l'expérience<br />d'un luxe qui se vit de l'intérieur."
           </blockquote>
-          <Link href="/signup?plan=elite&billing=annual" className="cn-btn-primary cn-btn-primary--lg">
+          <Link href="/signup?plan=elite&billing=annual" className="cn-btn-primary">
             REJOINDRE LE CERCLE — 950 € / AN
             <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
