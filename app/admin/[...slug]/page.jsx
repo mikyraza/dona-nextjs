@@ -289,11 +289,11 @@ export default function AdminCatchAllPage({ params }) {
   const [memberStatusFilter, setMemberStatusFilter] = useState('all');
 
   const handleSaveMember = (savedMember) => {
-    const isEdit = members.some(m => m.id === savedMember.id);
+    const isEdit = (members || []).some(m => m.id === savedMember.id);
     if (isEdit) {
-      setMembers(prev => prev.map(m => m.id === savedMember.id ? savedMember : m));
+      setMembers(prev => (prev || []).map(m => m.id === savedMember.id ? savedMember : m));
     } else {
-      setMembers(prev => [savedMember, ...prev]);
+      setMembers(prev => [savedMember, ...(prev || [])]);
     }
 
     try {
@@ -1344,9 +1344,9 @@ export default function AdminCatchAllPage({ params }) {
         });
 
         // Compute luxury stats reflecting the local state additions/mutations
-        const totalCount = 1281 + members.length;
-        const premiumCount = 841 + members.filter(m => m.status === 'Active' && m.plan === 'Premium').length;
-        const eliteCount = 42 + members.filter(m => m.plan === 'Élite').length;
+        const totalCount = 1281 + membersList.length;
+        const premiumCount = 841 + membersList.filter(m => m.status === 'Active' && m.plan === 'Premium').length;
+        const eliteCount = 42 + membersList.filter(m => m.plan === 'Élite').length;
 
         return (
           <>
@@ -1509,7 +1509,7 @@ export default function AdminCatchAllPage({ params }) {
                           </button>
                           <span className="table-action-divider">|</span>
                           <button 
-                            onClick={() => setMembers(prev => prev.map(m => m.id === mem.id ? { ...m, status: m.status === 'Active' ? 'Inactive' : 'Active' } : m))} 
+                            onClick={() => setMembers(prev => (prev || []).map(m => m.id === mem.id ? { ...m, status: m.status === 'Active' ? 'Inactive' : 'Active' } : m))} 
                             className="table-action-btn" 
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                           >
@@ -1519,7 +1519,7 @@ export default function AdminCatchAllPage({ params }) {
                           <button 
                             onClick={() => {
                               if (confirm(`Supprimer le membre ${mem.name} ?`)) {
-                                setMembers(prev => prev.filter(m => m.id !== mem.id));
+                                setMembers(prev => (prev || []).filter(m => m.id !== mem.id));
                               }
                             }} 
                             className="table-action-btn secondary" 
