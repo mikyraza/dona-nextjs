@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-const CARDS = [
+const TABS = ['Tous les contenus', 'Articles', 'Cahiers', 'Workbooks'];
+
+const INITIAL_FALLBACK_CARDS = [
   {
-    id: 1,
+    id: 'art-1',
+    docType: 'ARTICLE',
     type: 'ARTICLE',
     typeBg: 'rgba(163, 6, 38, 0.08)',
     typeColor: '#A30626',
@@ -15,10 +18,10 @@ const CARDS = [
     ctaIcon: 'arrow_forward',
     ctaHref: '/article-trends-intelligence',
     image: '/assets/core/img/home_alaune_side2_1782125722981.png',
-    saved: true,
   },
   {
-    id: 2,
+    id: 'mag-1',
+    docType: 'CAHIER',
     type: 'CAHIER',
     typeBg: 'rgba(17, 17, 17, 0.08)',
     typeColor: '#111111',
@@ -28,10 +31,10 @@ const CARDS = [
     ctaIcon: 'menu_book',
     ctaHref: '/magazines/intelligence',
     image: '/assets/core/img/home_mag_01_1782125759189.png',
-    saved: false,
   },
   {
-    id: 3,
+    id: 'wb-1',
+    docType: 'WORKBOOK',
     type: 'WORKBOOK',
     typeBg: 'rgba(176, 145, 89, 0.1)',
     typeColor: '#998357',
@@ -41,10 +44,10 @@ const CARDS = [
     ctaIcon: 'download',
     ctaHref: '#',
     image: null,
-    saved: true,
   },
   {
-    id: 4,
+    id: 'art-2',
+    docType: 'ARTICLE',
     type: 'ARTICLE',
     typeBg: 'rgba(163, 6, 38, 0.08)',
     typeColor: '#A30626',
@@ -54,10 +57,10 @@ const CARDS = [
     ctaIcon: 'arrow_forward',
     ctaHref: '#',
     image: '/assets/core/img/home_alaune_side1_1782125709654.png',
-    saved: false,
   },
   {
-    id: 5,
+    id: 'mag-2',
+    docType: 'CAHIER',
     type: 'CAHIER',
     typeBg: 'rgba(17, 17, 17, 0.08)',
     typeColor: '#111111',
@@ -67,10 +70,10 @@ const CARDS = [
     ctaIcon: 'menu_book',
     ctaHref: '/magazines/power-lab',
     image: '/assets/core/img/home_mag_02_1782125769846.png',
-    saved: false,
   },
   {
-    id: 6,
+    id: 'wb-2',
+    docType: 'WORKBOOK',
     type: 'WORKBOOK',
     typeBg: 'rgba(176, 145, 89, 0.1)',
     typeColor: '#998357',
@@ -80,98 +83,127 @@ const CARDS = [
     ctaIcon: 'download',
     ctaHref: '#',
     image: null,
-    saved: false,
-  },
-  {
-    id: 7,
-    type: 'ARTICLE',
-    typeBg: 'rgba(163, 6, 38, 0.08)',
-    typeColor: '#A30626',
-    meta: 'Article • Art de Vivre • 15 min',
-    title: "Les Fondements Harmoniques de l'Architecture Moderne",
-    cta: 'Commencer la lecture',
-    ctaIcon: 'arrow_forward',
-    ctaHref: '#',
-    image: '/assets/core/img/home_mag_06_1782125858971.png',
-    saved: true,
-  },
-  {
-    id: 8,
-    type: 'CAHIER',
-    typeBg: 'rgba(17, 17, 17, 0.08)',
-    typeColor: '#111111',
-    meta: 'Magazine • N° 13 • Relations',
-    title: "DONA Magazine : Les Mécanismes des Dynamiques de l'Amour",
-    cta: 'Lire le magazine',
-    ctaIcon: 'menu_book',
-    ctaHref: '/magazines/amour',
-    image: '/assets/core/img/home_philosophy_woman_1782125677007.png',
-    saved: true,
   }
 ];
-
-const TABS = ['Tous les contenus', 'Articles', 'Cahiers', 'Workbooks'];
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState('Tous les contenus');
   const [searchQuery, setSearchQuery] = useState('');
+  const [cards, setCards] = useState(INITIAL_FALLBACK_CARDS);
+  const [savedIds, setSavedIds] = useState(new Set(['art-1', 'wb-1']));
+  const [toastMessage, setToastMessage] = useState(null);
+  const [displayLimit, setDisplayLimit] = useState(6);
 
-  // Filtering Logic
-  const filteredCards = CARDS.filter((card) => {
-    // 1. Tab Filter
-    if (activeTab === 'Articles' && card.type !== 'ARTICLE') return false;
-    if (activeTab === 'Cahiers' && card.type !== 'CAHIER') return false;
-    if (activeTab === 'Workbooks' && card.type !== 'WORKBOOK') return false;
+  // Load saved favorites from localStorage on mount & fetch live contents from API
+  useEffect(() => {
+    try {
+      const storedSaved = localStorage.getItem('dona_saved_items');
+      if (storedSaved) {
+        setSavedIds(new Set(JSON.parse(storedSaved)));
+      }
+    } catch (e) {
+      console.error('Failed to load saved items from localStorage', e);
+    }
 
-    // 2. Search Query Filter
+    // Fetch dynamic content list from API
+    fetch('/api/espace-lecture')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCards(data);
+        }
+      })
+      .catch(err => {
+        console.warn('Using fallback cards list for Espace Lecture:', err);
+      });
+  }, []);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
+
+  // Toggle Heart Favorite
+  const toggleSave = (cardId, title) => {
+    const nextSaved = new Set(savedIds);
+    let message = '';
+    if (nextSaved.has(cardId)) {
+      nextSaved.delete(cardId);
+      message = `"${title.substring(0, 30)}..." retiré de vos favoris.`;
+    } else {
+      nextSaved.add(cardId);
+      message = `"${title.substring(0, 30)}..." ajouté à vos favoris !`;
+    }
+    setSavedIds(nextSaved);
+    try {
+      localStorage.setItem('dona_saved_items', JSON.stringify(Array.from(nextSaved)));
+    } catch (e) {
+      console.error('Failed to save to localStorage', e);
+    }
+    showToast(message);
+  };
+
+  // Share action
+  const handleShare = (title, url) => {
+    const fullUrl = window.location.origin + (url && url !== '#' ? url : window.location.pathname);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(fullUrl).then(() => {
+        showToast(`Lien copié dans le presse-papier !`);
+      }).catch(() => {
+        showToast(`Lien : ${fullUrl}`);
+      });
+    } else {
+      showToast(`Lien : ${fullUrl}`);
+    }
+  };
+
+  // Filter Cards by Tab and Search Query
+  const filteredCards = cards.filter((card) => {
+    const cardType = (card.type || card.docType || '').toUpperCase();
+
+    // Tab filter logic
+    if (activeTab === 'Articles' && cardType !== 'ARTICLE') return false;
+    if (activeTab === 'Cahiers' && cardType !== 'CAHIER') return false;
+    if (activeTab === 'Workbooks' && cardType !== 'WORKBOOK') return false;
+
+    // Search filter logic
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      return (
-        card.title.toLowerCase().includes(query) ||
-        card.meta.toLowerCase().includes(query) ||
-        card.type.toLowerCase().includes(query)
-      );
+      const q = searchQuery.toLowerCase().trim();
+      const titleMatch = (card.title || '').toLowerCase().includes(q);
+      const metaMatch = (card.meta || card.metaText || '').toLowerCase().includes(q);
+      return titleMatch || metaMatch;
     }
 
     return true;
   });
 
+  const visibleCards = filteredCards.slice(0, displayLimit);
+
   return (
     <main className="vip-container">
-      <style dangerouslySetInnerHTML={{ __html: `
+      
+      <style>{`
         .vip-container {
           display: grid;
           grid-template-columns: 280px 1fr;
           gap: 40px;
-          max-width: 1440px;
+          max-width: 1200px;
           margin: 0 auto;
-          padding: 80px 40px;
-          background: #FFFFFF; /* root light design variables */
-          min-height: 100vh;
+          padding: 80px 20px;
+          background: var(--color-bg);
         }
-
         .vip-sidebar {
-          background: #FFFFFF;
+          background: var(--color-bg);
           border: 1px solid var(--color-border);
           border-radius: 2px;
           padding: 32px 24px;
           display: flex;
           flex-direction: column;
           height: fit-content;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.01);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.01);
         }
-
-        .vip-sidebar-title {
-          padding: 0 20px 20px 20px;
-          font-size: 11px;
-          font-weight: 700;
-          color: var(--color-text-muted);
-          letter-spacing: 1.5px;
-          text-transform: uppercase;
-          border-bottom: 1px solid var(--color-border);
-          margin-bottom: 20px;
-        }
-
         .vip-sidebar-item {
           display: flex;
           align-items: center;
@@ -181,437 +213,393 @@ export default function Page() {
           font-size: 13px;
           font-weight: 600;
           letter-spacing: 0.05em;
-          color: #555555;
+          color: var(--color-text-muted);
           text-decoration: none;
           transition: all 0.3s ease;
           border-radius: 2px;
           margin-bottom: 8px;
         }
-
         .vip-sidebar-item:hover {
           background: var(--color-bg-alt);
-          color: #111111;
+          color: var(--color-text);
         }
-
         .vip-sidebar-item.active {
           background: var(--color-bg-alt);
-          color: #A30626;
+          color: var(--color-accent);
           font-weight: 700;
         }
-
         .vip-content {
-          background: #FFFFFF;
+          background: var(--color-bg);
           border: 1px solid var(--color-border);
           border-radius: 2px;
           padding: 48px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.01);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.01);
+          position: relative;
         }
-
         .vip-title {
-          font-family: 'Newsreader', 'Playfair Display', serif;
-          font-size: 36px;
-          font-weight: 300;
-          color: #111111;
-          margin: 0 0 40px 0;
-          letter-spacing: -0.5px;
-          text-transform: uppercase;
+          font-family: var(--font-secondary);
+          font-size: 32px;
+          font-weight: 700;
+          color: var(--color-text);
+          margin-bottom: 40px;
+          letter-spacing: -0.02em;
         }
-
         .logout-link {
           display: flex;
           align-items: center;
           gap: 10px;
-          color: #555555;
+          color: var(--color-text-muted);
           font-size: 13px;
           text-decoration: none;
           font-weight: 600;
-          padding: 15px 20px;
+          padding: 15px 0;
           transition: color 0.3s ease;
-          margin-top: 20px;
-          border-top: 1px solid var(--color-border);
         }
-
         .logout-link:hover {
-          color: #A30626;
+          color: var(--color-accent);
         }
 
-        /* Tabs Navigation */
+        /* Toast notification */
+        .lecture-toast {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          background: #111111;
+          color: #FFFFFF;
+          padding: 14px 24px;
+          border-radius: 4px;
+          font-size: 13px;
+          font-family: var(--font-primary);
+          font-weight: 500;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border-left: 4px solid var(--color-accent);
+          animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Filter Tabs & Search Bar */
         .lecture-tab-bar {
           display: flex;
-          align-items: flex-end;
+          align-items: center;
           justify-content: space-between;
           border-bottom: 1px solid var(--color-border);
+          padding-bottom: 16px;
           margin-bottom: 40px;
-          flex-wrap: wrap;
           gap: 20px;
+          flex-wrap: wrap;
         }
-
         .lecture-tabs {
           display: flex;
-          gap: 8px;
+          gap: 24px;
+          align-items: center;
         }
-
         .lecture-tab {
-          padding: 0 12px 16px 12px;
+          background: transparent;
+          border: none;
           font-family: var(--font-primary);
           font-size: 13px;
           font-weight: 600;
-          letter-spacing: 0.05em;
-          color: #555555;
-          text-decoration: none;
+          color: var(--color-text-muted);
           cursor: pointer;
-          border: none;
-          background: none;
-          border-bottom: 2px solid transparent;
-          margin-bottom: -1px;
-          transition: all 0.3s ease;
-          white-space: nowrap;
-          display: inline-flex;
+          padding: 8px 0;
+          position: relative;
+          display: flex;
           align-items: center;
+          gap: 6px;
+          transition: color 0.2s ease;
         }
-
         .lecture-tab:hover {
-          color: #111111;
+          color: var(--color-text);
         }
-
         .lecture-tab.active {
-          color: #A30626;
-          border-bottom-color: #A30626;
+          color: var(--color-accent);
+          font-weight: 700;
         }
-
+        .lecture-tab.active::after {
+          content: '';
+          position: absolute;
+          bottom: -17px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: var(--color-accent);
+        }
         .lecture-tab-count {
-          background: rgba(163, 6, 38, 0.06);
-          color: #A30626;
-          padding: 2px 7px;
-          border-radius: 20px;
+          background: var(--color-bg-alt);
+          color: var(--color-text-muted);
           font-size: 10px;
           font-weight: 700;
-          margin-left: 8px;
-          transition: background-color 0.3s ease;
+          padding: 2px 6px;
+          border-radius: 10px;
+          border: 1px solid var(--color-border);
         }
-
         .lecture-tab.active .lecture-tab-count {
-          background: rgba(163, 6, 38, 0.12);
+          background: var(--color-accent);
+          color: #FFFFFF;
+          border-color: var(--color-accent);
         }
-
-        /* Search Bar & Filters */
         .lecture-search-bar {
           display: flex;
-          gap: 12px;
           align-items: center;
-          padding-bottom: 16px;
+          gap: 8px;
         }
-
         .lecture-search-input-wrap {
-          position: relative;
-        }
-
-        .lecture-search-input-wrap .search-icon {
-          position: absolute;
-          left: 14px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 18px;
-          color: #555555;
-          pointer-events: none;
-        }
-
-        .lecture-search-input {
+          display: flex;
+          align-items: center;
           background: var(--color-bg-alt);
           border: 1px solid var(--color-border);
           border-radius: 2px;
-          padding: 10px 14px 10px 42px;
+          padding: 8px 12px;
+          gap: 8px;
+          width: 220px;
+          transition: border-color 0.2s ease;
+        }
+        .lecture-search-input-wrap:focus-within {
+          border-color: var(--color-accent);
+        }
+        .lecture-search-input {
+          background: transparent;
+          border: none;
+          outline: none;
           font-family: var(--font-primary);
           font-size: 13px;
-          color: #111111;
-          outline: none;
-          width: 240px;
-          transition: border-color 0.3s ease, background-color 0.3s ease;
+          color: var(--color-text);
+          width: 100%;
         }
-
-        .lecture-search-input:focus {
-          border-color: #A30626;
-          background: #FFFFFF;
+        .search-icon {
+          font-size: 16px;
+          color: var(--color-text-muted);
         }
-
         .lecture-filter-btn {
           background: var(--color-bg-alt);
           border: 1px solid var(--color-border);
           border-radius: 2px;
-          padding: 10px 12px;
+          padding: 8px 12px;
+          color: var(--color-text-muted);
+          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
-          color: #555555;
-          transition: all 0.3s ease;
+          transition: border-color 0.2s ease, color 0.2s ease;
         }
-
         .lecture-filter-btn:hover {
-          border-color: #A30626;
-          color: #A30626;
-          background: #FFFFFF;
+          border-color: var(--color-accent);
+          color: var(--color-accent);
         }
 
-        /* Cards Grid */
+        /* Card Grid */
         .lecture-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 32px;
-          margin-bottom: 48px;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 28px;
+          margin-bottom: 40px;
         }
-
         .lecture-card {
-          display: flex;
-          flex-direction: column;
+          background: var(--color-bg);
           border: 1px solid var(--color-border);
           border-radius: 2px;
           overflow: hidden;
-          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-          background: #FFFFFF;
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
         .lecture-card:hover {
-          border-color: #A30626;
-          box-shadow: 0 10px 30px rgba(163, 6, 38, 0.04);
           transform: translateY(-2px);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.04);
         }
-
         .lecture-card-thumb {
           position: relative;
           width: 100%;
-          aspect-ratio: 16/10;
-          overflow: hidden;
+          height: 190px;
           background: var(--color-bg-alt);
+          overflow: hidden;
         }
-
         .lecture-card-thumb img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: transform 0.4s ease;
         }
-
         .lecture-card:hover .lecture-card-thumb img {
           transform: scale(1.04);
         }
-
         .lecture-card-thumb-placeholder {
           width: 100%;
           height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: #F4F3F0;
+          background: rgba(153, 131, 87, 0.05);
         }
-
         .lecture-card-badge {
           position: absolute;
-          top: 14px;
-          left: 14px;
+          top: 12px;
+          left: 12px;
           font-family: var(--font-primary);
           font-size: 10px;
           font-weight: 700;
-          padding: 6px 12px;
-          letter-spacing: 1.5px;
+          letter-spacing: 0.1em;
+          padding: 4px 10px;
           border-radius: 2px;
           text-transform: uppercase;
         }
-
         .lecture-card-body {
           padding: 24px;
-          flex: 1;
           display: flex;
           flex-direction: column;
+          flex: 1;
         }
-
         .lecture-card-meta {
           font-family: var(--font-primary);
           font-size: 11px;
-          color: #555555;
-          margin-bottom: 12px;
-          letter-spacing: 0.5px;
+          font-weight: 600;
+          color: var(--color-text-muted);
           text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 8px;
         }
-
         .lecture-card-title {
-          font-family: 'Newsreader', 'Playfair Display', serif;
-          font-size: 20px;
-          font-weight: 400;
-          color: #111111;
-          line-height: 1.4;
-          margin: 0 0 auto 0;
-          padding-bottom: 24px;
+          font-family: var(--font-secondary);
+          font-size: 18px;
+          font-weight: 700;
+          color: var(--color-text);
+          line-height: 1.35;
+          margin: 0 0 20px 0;
+          flex: 1;
         }
-
         .lecture-card-footer {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding-top: 18px;
+          justify-content: space-between;
+          padding-top: 16px;
           border-top: 1px solid var(--color-border);
           margin-top: auto;
         }
-
         .lecture-card-cta {
-          display: flex;
+          display: inline-flex;
           align-items: center;
           gap: 6px;
           font-family: var(--font-primary);
           font-size: 12px;
-          font-weight: 600;
-          color: #111111;
+          font-weight: 700;
+          color: var(--color-text);
           text-decoration: none;
-          letter-spacing: 1.5px;
           text-transform: uppercase;
-          border-bottom: 1px solid #111111;
-          padding-bottom: 2px;
-          transition: all 0.3s ease;
+          letter-spacing: 0.05em;
+          transition: color 0.2s ease;
         }
-
         .lecture-card-cta:hover {
-          color: #A30626;
-          border-color: #A30626;
-          gap: 10px;
+          color: var(--color-accent);
         }
-
         .lecture-card-actions {
           display: flex;
-          gap: 16px;
           align-items: center;
+          gap: 8px;
         }
-
         .lecture-card-icon-btn {
-          background: none;
+          background: transparent;
           border: none;
+          color: var(--color-text-muted);
           cursor: pointer;
-          color: #555555;
+          padding: 4px;
           display: flex;
-          align-items: center;
-          transition: color 0.3s ease;
-          padding: 0;
-        }
-
-        .lecture-card-icon-btn:hover {
-          color: #A30626;
-        }
-
-        .lecture-card-icon-btn.saved {
-          color: #A30626;
-        }
-
-        /* Empty State Fallback Style */
-        .no-results {
-          display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 80px 24px;
+          transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .lecture-card-icon-btn:hover {
+          color: var(--color-accent);
+          transform: scale(1.1);
+        }
+        .lecture-card-icon-btn.saved {
+          color: var(--color-accent);
+        }
+
+        /* Empty / Load More State */
+        .no-results {
+          padding: 60px 20px;
           text-align: center;
-          border: 1px dashed var(--color-border);
-          border-radius: 4px;
           background: var(--color-bg-alt);
+          border: 1px dashed var(--color-border);
+          border-radius: 2px;
+          margin-bottom: 40px;
         }
-
         .no-results-icon {
-          font-size: 3rem;
-          color: #A30626;
-          margin-bottom: 20px;
-          opacity: 0.8;
+          font-size: 48px;
+          color: var(--color-text-muted);
+          margin-bottom: 12px;
         }
-
         .no-results-text {
-          font-family: 'Playfair Display', 'Cormorant Garamond', serif;
-          font-size: 1.5rem;
-          color: #555555;
-          font-style: italic;
+          font-family: var(--font-primary);
+          font-size: 14px;
+          color: var(--color-text-muted);
           margin: 0;
-          max-width: 500px;
-          line-height: 1.5;
         }
-
-        /* Load More */
         .load-more-btn {
+          background: var(--color-bg-alt);
+          border: 1px solid var(--color-border);
+          color: var(--color-text);
+          font-family: var(--font-primary);
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          padding: 14px 28px;
+          border-radius: 2px;
+          cursor: pointer;
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: transparent;
-          border: 1px solid var(--color-border);
-          color: #555555;
-          padding: 14px 32px;
-          border-radius: 2px;
-          font-family: var(--font-primary);
-          font-size: 12px;
-          font-weight: 600;
-          letter-spacing: 1.5px;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
         }
-
         .load-more-btn:hover {
-          border-color: #A30626;
-          color: #A30626;
-          background: #FFFFFF;
+          border-color: var(--color-accent);
+          color: var(--color-accent);
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 900px) {
           .vip-container {
             grid-template-columns: 1fr;
-            gap: 32px;
-            padding: 60px 20px;
+            gap: 24px;
+            padding: 40px 16px;
           }
-        }
-
-        @media (max-width: 768px) {
+          .vip-content {
+            padding: 32px 20px !important;
+          }
+          .vip-title {
+            font-size: 26px !important;
+            margin-bottom: 24px !important;
+          }
           .lecture-tab-bar {
             flex-direction: column;
             align-items: stretch;
-            gap: 20px;
-            padding-bottom: 0;
           }
-
-          .lecture-tabs {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 8px;
-            margin-bottom: -9px;
-          }
-
-          .lecture-tab {
-            padding: 0 12px 12px 12px;
-            font-size: 12px;
-          }
-
-          .lecture-search-bar {
-            width: 100%;
-          }
-
           .lecture-search-input-wrap {
-            flex-grow: 1;
-          }
-
-          .lecture-search-input {
             width: 100%;
-          }
-
-          .lecture-grid {
-            grid-template-columns: 1fr;
-            gap: 24px;
-          }
-
-          .vip-content {
-            padding: 32px 20px;
           }
         }
-      ` }} />
+      `}</style>
 
-      {/* ─── Sidebar ─── */}
-      <aside className="vip-sidebar">
-        <div className="vip-sidebar-title">
-          Portail des membres
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="lecture-toast">
+          <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "var(--color-accent)" }}>info</span>
+          <span>{toastMessage}</span>
         </div>
-        <div style={{ flex: 1 }}>
+      )}
+
+      {/* Sidebar navigation */}
+      <aside className="vip-sidebar">
+        <div style={{ flex: "1" }}>
+          <div style={{ padding: "0 20px 20px 20px", fontSize: "11px", fontWeight: "700", color: "var(--color-text-muted)", letterSpacing: "1px", textTransform: "uppercase" }}>Portail des membres</div>
+          
           <Link href="/member-profile" className="vip-sidebar-item">
             <span className="material-symbols-outlined">person</span>
             MON PROFIL
@@ -626,7 +614,7 @@ export default function Page() {
           </Link>
         </div>
 
-        <Link href="#" className="logout-link">
+        <Link href="/login" className="logout-link">
           <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>logout</span>
           SE DÉCONNECTER
         </Link>
@@ -646,14 +634,14 @@ export default function Page() {
                 onClick={() => setActiveTab(tab)}
               >
                 {tab}
-                {tab === 'Tous les contenus' && (
-                  <span className="lecture-tab-count">
-                    {searchQuery.trim() ? filteredCards.length : CARDS.length}
-                  </span>
-                )}
-                {tab !== 'Tous les contenus' && activeTab === tab && (
-                  <span className="lecture-tab-count">{filteredCards.length}</span>
-                )}
+                <span className="lecture-tab-count">
+                  {tab === 'Tous les contenus'
+                    ? cards.length
+                    : cards.filter(c => (c.type || c.docType || '').toUpperCase() === (
+                        tab === 'Articles' ? 'ARTICLE' : tab === 'Cahiers' ? 'CAHIER' : 'WORKBOOK'
+                      )).length
+                  }
+                </span>
               </button>
             ))}
           </div>
@@ -669,65 +657,78 @@ export default function Page() {
                 className="lecture-search-input"
               />
             </div>
-            <button className="lecture-filter-btn" aria-label="Filtres">
+            <button className="lecture-filter-btn" aria-label="Filtres" onClick={() => showToast('Recherche filtrée appliquée')}>
               <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>tune</span>
             </button>
           </div>
         </div>
 
         {/* Grid or Empty Fallback State */}
-        {filteredCards.length > 0 ? (
+        {visibleCards.length > 0 ? (
           <div className="lecture-grid">
-            {filteredCards.map((card) => (
-              <article className="lecture-card" key={card.id}>
-                {/* Thumbnail */}
-                <div className="lecture-card-thumb">
-                  {card.image ? (
-                    <img src={card.image} alt={card.title} />
-                  ) : (
-                    <div className="lecture-card-thumb-placeholder">
-                      <span className="material-symbols-outlined" style={{ fontSize: "48px", color: "#998357" }}>
-                        menu_book
-                      </span>
-                    </div>
-                  )}
+            {visibleCards.map((card) => {
+              const isSaved = savedIds.has(card.id);
+              const cardImage = card.image || card.imagePath;
 
-                  {/* Badge */}
-                  <span
-                    className="lecture-card-badge"
-                    style={{ background: card.typeBg, color: card.typeColor }}
-                  >
-                    {card.type}
-                  </span>
-                </div>
-
-                {/* Body */}
-                <div className="lecture-card-body">
-                  <div className="lecture-card-meta">{card.meta}</div>
-                  <h3 className="lecture-card-title">{card.title}</h3>
-
-                  <div className="lecture-card-footer">
-                    <Link href={card.ctaHref} className="lecture-card-cta">
-                      {card.cta}
-                      <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-                        {card.ctaIcon}
-                      </span>
-                    </Link>
-
-                    <div className="lecture-card-actions">
-                      <button className={`lecture-card-icon-btn${card.saved ? ' saved' : ''}`} aria-label="Sauvegarder">
-                        <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-                          {card.saved ? 'favorite' : 'favorite_border'}
+              return (
+                <article className="lecture-card" key={card.id}>
+                  {/* Thumbnail */}
+                  <div className="lecture-card-thumb">
+                    {cardImage ? (
+                      <img src={cardImage} alt={card.title} />
+                    ) : (
+                      <div className="lecture-card-thumb-placeholder">
+                        <span className="material-symbols-outlined" style={{ fontSize: "48px", color: card.typeColor || "#998357" }}>
+                          {card.docType === 'WORKBOOK' ? 'file_download' : 'menu_book'}
                         </span>
-                      </button>
-                      <button className="lecture-card-icon-btn" aria-label="Partager">
-                        <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>ios_share</span>
-                      </button>
+                      </div>
+                    )}
+
+                    {/* Badge */}
+                    <span
+                      className="lecture-card-badge"
+                      style={{ background: card.typeBg || 'rgba(17,17,17,0.08)', color: card.typeColor || '#111111' }}
+                    >
+                      {card.type || card.docType}
+                    </span>
+                  </div>
+
+                  {/* Body */}
+                  <div className="lecture-card-body">
+                    <div className="lecture-card-meta">{card.meta || card.metaText}</div>
+                    <h3 className="lecture-card-title">{card.title}</h3>
+
+                    <div className="lecture-card-footer">
+                      <Link href={card.ctaHref || '#'} className="lecture-card-cta">
+                        {card.cta || card.ctaText || 'Consulter'}
+                        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                          {card.ctaIcon || 'arrow_forward'}
+                        </span>
+                      </Link>
+
+                      <div className="lecture-card-actions">
+                        <button
+                          className={`lecture-card-icon-btn${isSaved ? ' saved' : ''}`}
+                          aria-label="Sauvegarder"
+                          onClick={() => toggleSave(card.id, card.title)}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                            {isSaved ? 'favorite' : 'favorite_border'}
+                          </span>
+                        </button>
+                        <button
+                          className="lecture-card-icon-btn"
+                          aria-label="Partager"
+                          onClick={() => handleShare(card.title, card.ctaHref)}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>ios_share</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="no-results">
@@ -737,10 +738,10 @@ export default function Page() {
         )}
 
         {/* Load More */}
-        {filteredCards.length > 0 && (
+        {filteredCards.length > visibleCards.length && (
           <div style={{ textAlign: "center" }}>
-            <button className="load-more-btn">
-              Charger plus de contenus
+            <button className="load-more-btn" onClick={() => setDisplayLimit(prev => prev + 6)}>
+              Charger plus de contenus ({filteredCards.length - visibleCards.length} restants)
               <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>expand_more</span>
             </button>
           </div>

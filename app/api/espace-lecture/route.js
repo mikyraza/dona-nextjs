@@ -1,97 +1,101 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET() {
-  /*
-  // FUTURE WORDPRESS HEADLESS API FETCH INTEGRATION:
   try {
-    // 1. Fetch CPT 'document' (from Headless WordPress REST API)
-    const responseDocs = await fetch('http://localhost/wp-json/wp/v2/document?per_page=20', {
-      headers: {
-        'Accept': 'application/json',
-      },
-      next: { revalidate: 600 }
-    });
-    const wpDocs = await responseDocs.json();
+    const items = [];
 
-    return NextResponse.json(wpDocs.map(doc => ({
-      id: doc.id,
-      docType: doc.acf.doc_type || 'ARTICLE', // ENUM: ARTICLE, CAHIER, WORKBOOK
-      title: doc.title.rendered,
-      metaText: doc.acf.meta_text || '',
-      ctaText: doc.acf.cta_text || 'Lire le document',
-      ctaIcon: doc.acf.cta_icon || 'arrow_forward',
-      ctaHref: doc.acf.cta_href || '#',
-      imagePath: doc.acf.image_path || null,
-      downloadPdfUrl: doc.acf.file_path || null, // Private file URL for downloads
-      orderIndex: doc.acf.order_index || 0
-    })));
-  } catch (error) {
-    console.error("WordPress API Fetch Error:", error);
-    // Fallback to static mock below
-  }
-  */
+    // 1. Load Magazines from lib/magazines_db.json
+    const magsPath = path.join(process.cwd(), 'lib', 'magazines_db.json');
+    if (fs.existsSync(magsPath)) {
+      const magsData = JSON.parse(fs.readFileSync(magsPath, 'utf-8'));
+      magsData.forEach((mag, index) => {
+        items.push({
+          id: `mag-${mag.id || index + 1}`,
+          docType: 'CAHIER',
+          type: 'CAHIER',
+          typeBg: 'rgba(17, 17, 17, 0.08)',
+          typeColor: '#111111',
+          title: `DONA Magazine : ${mag.title || 'Édition Spéciale'}`,
+          metaText: `Magazine • N° 0${index + 1} • ${mag.subtitle || 'Édition Strategique'}`,
+          meta: `Magazine • N° 0${index + 1} • ${mag.subtitle || 'Édition Strategique'}`,
+          ctaText: 'Lire le magazine',
+          cta: 'Lire le magazine',
+          ctaIcon: 'menu_book',
+          ctaHref: `/magazines/${mag.slug || 'intelligence'}`,
+          imagePath: mag.heroImage || mag.essenceImage || '/assets/core/img/home_mag_01_1782125759189.png',
+          image: mag.heroImage || mag.essenceImage || '/assets/core/img/home_mag_01_1782125759189.png',
+          downloadPdfUrl: null,
+        });
+      });
+    }
 
-  // Mock response mapping docs/dynamic-matrix.md
-  return NextResponse.json([
-    {
-      id: 1,
-      docType: 'ARTICLE',
-      title: "La Trajectoire de l'Effet Dunning-Kruger dans le Management Moderne",
-      metaText: 'Article • Intelligence • 12 min',
-      ctaText: 'Commencer la lecture',
-      ctaIcon: 'arrow_forward',
-      ctaHref: '/article-trends-intelligence',
-      imagePath: '/assets/core/img/home_alaune_side2_1782125722981.png',
-      downloadPdfUrl: null,
-      saved: true
-    },
-    {
-      id: 2,
-      docType: 'CAHIER',
-      title: 'DONA Magazine : Édition Spéciale Intelligence',
-      metaText: 'Magazine • N° 01 • Renseignements',
-      ctaText: 'Lire le magazine',
-      ctaIcon: 'menu_book',
-      ctaHref: '/magazines/intelligence',
-      imagePath: '/assets/core/img/home_mag_01_1782125759189.png',
-      downloadPdfUrl: null,
-      saved: false
-    },
-    {
-      id: 3,
+    // 2. Load Articles from lib/articles_db.json
+    const articlesPath = path.join(process.cwd(), 'lib', 'articles_db.json');
+    if (fs.existsSync(articlesPath)) {
+      const articlesData = JSON.parse(fs.readFileSync(articlesPath, 'utf-8'));
+      articlesData.slice(0, 10).forEach((art, index) => {
+        items.push({
+          id: `art-${art.id || index + 1}`,
+          docType: 'ARTICLE',
+          type: 'ARTICLE',
+          typeBg: 'rgba(163, 6, 38, 0.08)',
+          typeColor: '#A30626',
+          title: art.title,
+          metaText: `Article • ${art.badge || art.rubrique || 'Intelligence'} • 10 min`,
+          meta: `Article • ${art.badge || art.rubrique || 'Intelligence'} • 10 min`,
+          ctaText: 'Commencer la lecture',
+          cta: 'Commencer la lecture',
+          ctaIcon: 'arrow_forward',
+          ctaHref: art.category ? `/magazines/${art.category}/articles/${art.id}` : '/article-trends-intelligence',
+          imagePath: art.coverImage || art.image || '/assets/core/img/home_alaune_side2_1782125722981.png',
+          image: art.coverImage || art.image || '/assets/core/img/home_alaune_side2_1782125722981.png',
+          downloadPdfUrl: null,
+        });
+      });
+    }
+
+    // 3. Fallback Workbooks / Guides
+    items.push({
+      id: 'wb-1',
       docType: 'WORKBOOK',
+      type: 'WORKBOOK',
+      typeBg: 'rgba(176, 145, 89, 0.1)',
+      typeColor: '#998357',
       title: "Guide d'Optimisation des Systèmes Complexes",
       metaText: 'Workbook • Power Lab • Outil Stratégique',
+      meta: 'Workbook • Power Lab • Outil Stratégique',
       ctaText: 'Télécharger le PDF (4.2 MB)',
+      cta: 'Télécharger le PDF (4.2 MB)',
       ctaIcon: 'download',
-      ctaHref: 'https://example.com/downloads/workbook-complex-systems.pdf',
+      ctaHref: '/assets/core/docs/workbook-complex-systems.pdf',
       imagePath: null,
-      downloadPdfUrl: 'https://example.com/downloads/workbook-complex-systems.pdf',
-      saved: true
-    },
-    {
-      id: 4,
-      docType: 'ARTICLE',
-      title: "L'Esthétique de l'Effet de Contraste en Design Contemporain",
-      metaText: 'Article • Passions • 8 min',
-      ctaText: 'Commencer la lecture',
-      ctaIcon: 'arrow_forward',
-      ctaHref: '#',
-      imagePath: '/assets/core/img/home_alaune_side1_1782125709654.png',
-      downloadPdfUrl: null,
-      saved: false
-    },
-    {
-      id: 5,
-      docType: 'CAHIER',
-      title: "DONA Magazine : L'Art du Risque et du Power Lab",
-      metaText: "Magazine • N° 02 • Performance",
-      ctaText: 'Lire le magazine',
-      ctaIcon: 'menu_book',
-      ctaHref: '/magazines/power-lab',
-      imagePath: '/assets/core/img/home_mag_02_1782125769846.png',
-      downloadPdfUrl: null,
-      saved: false
-    }
-  ]);
+      image: null,
+      downloadPdfUrl: '/assets/core/docs/workbook-complex-systems.pdf',
+    });
+
+    items.push({
+      id: 'wb-2',
+      docType: 'WORKBOOK',
+      type: 'WORKBOOK',
+      typeBg: 'rgba(176, 145, 89, 0.1)',
+      typeColor: '#998357',
+      title: "Planificateur Hebdomadaire de l'Esprit Critique et Logique",
+      metaText: 'Workbook • Agenda • Productivité',
+      meta: 'Workbook • Agenda • Productivité',
+      ctaText: 'Télécharger le PDF (1.8 MB)',
+      cta: 'Télécharger le PDF (1.8 MB)',
+      ctaIcon: 'download',
+      ctaHref: '/assets/core/docs/planificateur-logique.pdf',
+      imagePath: null,
+      image: null,
+      downloadPdfUrl: '/assets/core/docs/planificateur-logique.pdf',
+    });
+
+    return NextResponse.json(items);
+  } catch (error) {
+    console.error("Error generating espace-lecture response:", error);
+    return NextResponse.json([]);
+  }
 }
