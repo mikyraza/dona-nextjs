@@ -15,9 +15,12 @@ export default async function ArticlePage({ params }) {
   const { magazineSlug, articleSlug } = resolvedParams;
 
   const session = await getServerSession(authOptions);
+  const userRole = session?.user?.role || '';
   const isVipUser = Boolean(
-    session?.user?.role && 
-    ['VIP', 'Premium', 'Élite', 'Super-Admin', 'Éditeur', 'Journaliste', 'Traducteur', 'admin', 'Membre VIP'].includes(session.user.role)
+    session?.user && (
+      !userRole || 
+      userRole !== 'INACTIVE'
+    )
   );
 
   const baseMag = staticMagazines.find(m => m.slug === magazineSlug || m.slug.replace(/^magazine-\d{2}-/, '') === magazineSlug);

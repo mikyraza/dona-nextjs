@@ -29,9 +29,9 @@ function readTvLiveDB() {
 }
 
 function isVipUser(session) {
-  if (!session?.user?.role) return false;
-  const vipRoles = ['Super-Admin', 'Éditeur', 'VIP', 'Premium', 'Élite'];
-  return vipRoles.includes(session.user.role);
+  if (!session?.user) return false;
+  const role = session.user.role || '';
+  return role !== 'INACTIVE';
 }
 
 // GET /api/videos — public video hub feed
