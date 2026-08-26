@@ -1437,7 +1437,8 @@ export default function AdminCatchAllPage({ params }) {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  );
+                })}
                   {filteredMembers.length === 0 && (
                     <tr>
                       <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#888888', fontStyle: 'italic' }}>
