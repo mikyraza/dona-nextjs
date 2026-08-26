@@ -182,75 +182,97 @@ export default function AdminCatchAllPage({ params }) {
     { id: "mem-3", name: "Claire Martin", email: "free@dona.com", plan: "Essentiel", status: "Inactive", joined: "10/06/2026" }
   ];
 
-  const [members, setMembers] = useState(DEFAULT_MEMBERS);
+  const [members, setMembers] = useState(null); // null = not yet loaded
   const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
 
-  // Load from localStorage on mount & merge saved member-profile avatar/phone
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        let currentMembers = DEFAULT_MEMBERS;
-        const storedAdmin = localStorage.getItem('dona_admin_members_db');
-        if (storedAdmin) {
-          const parsed = JSON.parse(storedAdmin);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            currentMembers = parsed;
-          }
-        }
-
-        // Merge profile from dona_member_profile if user updated their profile on /member-profile
-        const storedProfile = localStorage.getItem('dona_member_profile');
-        if (storedProfile) {
-          const profile = JSON.parse(storedProfile);
-          if (profile) {
-            const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
-            const profEmail = (profile.email || '').toLowerCase().trim();
-            const profName = fullName.toLowerCase();
-
-            let matchedAny = false;
-            currentMembers = currentMembers.map(m => {
-              const mEmail = (m.email || '').toLowerCase().trim();
-              const mName = (m.name || '').toLowerCase().trim();
-
-              if ((profEmail && mEmail === profEmail) || (profName && mName === profName)) {
-                matchedAny = true;
-                return {
-                  ...m,
-                  name: fullName || m.name,
-                  email: profile.email || m.email,
-                  phone: profile.phone !== undefined ? profile.phone : m.phone,
-                  avatar: profile.avatar !== undefined ? profile.avatar : m.avatar
-                };
-              }
-              return m;
-            });
-
-            if (!matchedAny && (fullName || profEmail)) {
-              currentMembers.unshift({
-                id: `mem-profile`,
-                name: fullName || 'Ernest Raza',
-                email: profile.email || 'mikyraza@gmail.com',
-                phone: profile.phone || '',
-                avatar: profile.avatar || null,
-                plan: 'Premium',
-                status: 'Active',
-                joined: new Date().toLocaleDateString('fr-FR')
-              });
-            }
-          }
-        }
-
-        setMembers(currentMembers);
-        localStorage.setItem('dona_admin_members_db', JSON.stringify(currentMembers));
-      } catch (e) {
-        console.error('Error loading admin members from localStorage:', e);
+  // Helper: enrich a member with the latest data from dona_member_profile
+  const enrichWithProfile = (mem) => {
+    try {
+      const storedProfile = localStorage.getItem('dona_member_profile');
+      if (!storedProfile) return mem;
+      const profile = JSON.parse(storedProfile);
+      if (!profile) return mem;
+      const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+      const profEmail = (profile.email || '').toLowerCase().trim();
+      const mEmail = (mem.email || '').toLowerCase().trim();
+      const mName = (mem.name || '').toLowerCase().trim();
+      const profName = fullName.toLowerCase();
+      if ((profEmail && mEmail === profEmail) || (profName && mName === profName)) {
+        return {
+          ...mem,
+          phone: profile.phone || mem.phone,
+          avatar: profile.avatar || mem.avatar
+        };
       }
+    } catch (e) {}
+    return mem;
+  };
+
+  // Load from localStorage on mount - runs ONCE, sets members
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      let currentMembers = DEFAULT_MEMBERS;
+      const storedAdmin = localStorage.getItem('dona_admin_members_db');
+      if (storedAdmin) {
+        const parsed = JSON.parse(storedAdmin);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          currentMembers = parsed;
+        }
+      }
+
+      // Merge dona_member_profile into the matching member
+      const storedProfile = localStorage.getItem('dona_member_profile');
+      if (storedProfile) {
+        const profile = JSON.parse(storedProfile);
+        if (profile) {
+          const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+          const profEmail = (profile.email || '').toLowerCase().trim();
+          const profName = fullName.toLowerCase();
+          let matchedAny = false;
+          currentMembers = currentMembers.map(m => {
+            const mEmail = (m.email || '').toLowerCase().trim();
+            const mName = (m.name || '').toLowerCase().trim();
+            if ((profEmail && mEmail === profEmail) || (profName && mName === profName)) {
+              matchedAny = true;
+              return {
+                ...m,
+                name: fullName || m.name,
+                email: profile.email || m.email,
+                phone: profile.phone || m.phone || '',
+                avatar: profile.avatar || m.avatar || null
+              };
+            }
+            return m;
+          });
+          if (!matchedAny && (fullName || profEmail)) {
+            currentMembers.unshift({
+              id: `mem-profile`,
+              name: fullName || 'Ernest Raza',
+              email: profile.email || '',
+              phone: profile.phone || '',
+              avatar: profile.avatar || null,
+              plan: 'Premium',
+              status: 'Active',
+              joined: new Date().toLocaleDateString('fr-FR')
+            });
+          }
+        }
+      }
+
+      setMembers(currentMembers);
+      // Persist merged result immediately
+      localStorage.setItem('dona_admin_members_db', JSON.stringify(currentMembers));
+    } catch (e) {
+      console.error('Error loading admin members from localStorage:', e);
+      setMembers(DEFAULT_MEMBERS);
     }
   }, []);
 
-  // Save to localStorage when members state changes
+  // Save to localStorage ONLY after initial load (members !== null)
   useEffect(() => {
+    if (members === null) return; // skip the initial null state
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('dona_admin_members_db', JSON.stringify(members));
@@ -1312,7 +1334,8 @@ export default function AdminCatchAllPage({ params }) {
 
       case 'membres': {
         // Filter the members list dynamically
-        const filteredMembers = members.filter(mem => {
+        const membersList = members || DEFAULT_MEMBERS;
+        const filteredMembers = membersList.filter(mem => {
           const matchesSearch = mem.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) || 
                                 mem.email.toLowerCase().includes(memberSearchQuery.toLowerCase());
           const matchesPlan = memberPlanFilter === 'all' || mem.plan === memberPlanFilter;
@@ -1478,7 +1501,7 @@ export default function AdminCatchAllPage({ params }) {
                       <td style={{ textAlign: 'right' }}>
                         <div className="table-actions" style={{ justifyContent: 'flex-end', gap: '8px' }}>
                           <button 
-                            onClick={() => { setSelectedMember(mem); setIsMemberDrawerOpen(true); }} 
+                            onClick={() => { setSelectedMember(enrichWithProfile(mem)); setIsMemberDrawerOpen(true); }} 
                             className="table-action-btn" 
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                           >
