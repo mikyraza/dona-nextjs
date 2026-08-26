@@ -1342,8 +1342,8 @@ export default function AdminCatchAllPage({ params }) {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Nom Complet</th>
-                    <th>Email</th>
+                    <th>Membre</th>
+                    <th>Email / Téléphone</th>
                     <th>Abonnement Plan</th>
                     <th>Status</th>
                     <th>Date d'adhésion</th>
@@ -1351,10 +1351,46 @@ export default function AdminCatchAllPage({ params }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredMembers.map((mem) => (
-                    <tr key={mem.id}>
-                      <td className="cell-bold">{mem.name}</td>
-                      <td>{mem.email}</td>
+                  {filteredMembers.map((mem) => {
+                    const initials = mem.name ? mem.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'M';
+                    return (
+                      <tr key={mem.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              background: 'var(--admin-bg-alt, #F4F3F0)',
+                              border: '1px solid var(--admin-border-color, #EAEAEA)',
+                              overflow: 'hidden',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              color: 'var(--admin-accent-color, #A30626)'
+                            }}>
+                              {mem.avatar ? (
+                                <img src={mem.avatar} alt={mem.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <span>{initials}</span>
+                              )}
+                            </div>
+                            <span className="cell-bold">{mem.name}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontWeight: '500' }}>{mem.email}</span>
+                            {mem.phone ? (
+                              <span style={{ fontSize: '11px', color: 'var(--admin-text-muted, #777777)' }}>{mem.phone}</span>
+                            ) : (
+                              <span style={{ fontSize: '11px', color: '#AAAAAA', fontStyle: 'italic' }}>Non renseigné</span>
+                            )}
+                          </div>
+                        </td>
                       <td>
                         <span className={`badge ${mem.plan === 'Élite' ? 'vip' : mem.plan === 'Premium' ? 'published' : 'draft'}`} style={{ 
                           backgroundColor: mem.plan === 'Élite' ? 'var(--admin-accent-color)' : mem.plan === 'Premium' ? '#EFF6FF' : '#F3F4F6',
