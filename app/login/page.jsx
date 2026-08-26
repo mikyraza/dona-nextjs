@@ -93,6 +93,10 @@ function LoginForm() {
   };
 
   if (isLoggedIn) {
+    const targetUrl = (callbackUrl && callbackUrl !== '/' && !callbackUrl.includes('/login') && !callbackUrl.includes('/vip'))
+      ? callbackUrl 
+      : '/espace-lecture';
+
     return (
       <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "500px", width: "100%", borderRadius: "4px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center"}}>
         <Link href="/" style={{marginBottom: "24px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
@@ -127,20 +131,29 @@ function LoginForm() {
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
-          <Link href={callbackUrl !== "/" ? callbackUrl : "/espace-lecture"} style={{
-            background: "var(--color-accent)",
-            color: "#FFF",
-            padding: "14px 24px",
-            borderRadius: "2px",
-            fontWeight: "700",
-            fontSize: "12px",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            textDecoration: "none",
-            display: "block"
-          }}>
+          <button
+            type="button"
+            onClick={() => {
+              router.push(targetUrl);
+              router.refresh();
+            }}
+            style={{
+              background: "var(--color-accent)",
+              color: "#FFF",
+              padding: "14px 24px",
+              borderRadius: "2px",
+              fontWeight: "700",
+              fontSize: "12px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              border: "none",
+              cursor: "pointer",
+              width: "100%",
+              display: "block"
+            }}
+          >
             Continuer vers mon espace →
-          </Link>
+          </button>
 
           <button
             type="button"
