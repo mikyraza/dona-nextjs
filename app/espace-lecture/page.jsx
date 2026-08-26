@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-const TABS = ['Tous les contenus', 'Articles', 'Cahiers', 'Workbooks'];
+const TABS = ['Tous les contenus', 'Articles', 'Magazines', 'Workbooks'];
 
 const INITIAL_FALLBACK_CARDS = [
   {
@@ -21,8 +21,8 @@ const INITIAL_FALLBACK_CARDS = [
   },
   {
     id: 'mag-1',
-    docType: 'CAHIER',
-    type: 'CAHIER',
+    docType: 'MAGAZINE',
+    type: 'MAGAZINE',
     typeBg: 'rgba(17, 17, 17, 0.08)',
     typeColor: '#111111',
     meta: 'Magazine • N° 01 • Renseignements',
@@ -60,8 +60,8 @@ const INITIAL_FALLBACK_CARDS = [
   },
   {
     id: 'mag-2',
-    docType: 'CAHIER',
-    type: 'CAHIER',
+    docType: 'MAGAZINE',
+    type: 'MAGAZINE',
     typeBg: 'rgba(17, 17, 17, 0.08)',
     typeColor: '#111111',
     meta: 'Magazine • N° 02 • Performance',
@@ -165,7 +165,7 @@ export default function Page() {
 
     // Tab filter logic
     if (activeTab === 'Articles' && cardType !== 'ARTICLE') return false;
-    if (activeTab === 'Cahiers' && cardType !== 'CAHIER') return false;
+    if (activeTab === 'Magazines' && cardType !== 'MAGAZINE') return false;
     if (activeTab === 'Workbooks' && cardType !== 'WORKBOOK') return false;
 
     // Search filter logic
@@ -638,7 +638,7 @@ export default function Page() {
                   {tab === 'Tous les contenus'
                     ? cards.length
                     : cards.filter(c => (c.type || c.docType || '').toUpperCase() === (
-                        tab === 'Articles' ? 'ARTICLE' : tab === 'Cahiers' ? 'CAHIER' : 'WORKBOOK'
+                        tab === 'Articles' ? 'ARTICLE' : tab === 'Magazines' ? 'MAGAZINE' : 'WORKBOOK'
                       )).length
                   }
                 </span>

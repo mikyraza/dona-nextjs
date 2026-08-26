@@ -13,8 +13,8 @@ export async function GET() {
       magsData.forEach((mag, index) => {
         items.push({
           id: `mag-${mag.id || index + 1}`,
-          docType: 'CAHIER',
-          type: 'CAHIER',
+          docType: 'MAGAZINE',
+          type: 'MAGAZINE',
           typeBg: 'rgba(17, 17, 17, 0.08)',
           typeColor: '#111111',
           title: `DONA Magazine : ${mag.title || 'Édition Spéciale'}`,
