@@ -131,11 +131,11 @@ function LoginForm() {
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
-          <button
-            type="button"
-            onClick={() => {
-              router.push(targetUrl);
-              router.refresh();
+          <a
+            href={targetUrl}
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.href = targetUrl;
             }}
             style={{
               background: "var(--color-accent)",
@@ -146,27 +146,47 @@ function LoginForm() {
               fontSize: "12px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              border: "none",
-              cursor: "pointer",
+              textDecoration: "none",
+              display: "block",
               width: "100%",
-              display: "block"
+              boxSizing: "border-box"
             }}
           >
-            Continuer vers mon espace →
-          </button>
+            Continuer vers mon espace lecture →
+          </a>
+
+          <a
+            href="/member-profile"
+            style={{
+              background: "var(--color-bg)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text)",
+              padding: "12px 24px",
+              borderRadius: "2px",
+              fontWeight: "600",
+              fontSize: "12px",
+              textDecoration: "none",
+              display: "block",
+              width: "100%",
+              boxSizing: "border-box"
+            }}
+          >
+            Mon Profil Membre
+          </a>
 
           <button
             type="button"
             onClick={handleSignOut}
             style={{
               background: "none",
-              border: "1px solid var(--color-border)",
+              border: "none",
               color: "#C81E1E",
-              padding: "12px 24px",
+              padding: "8px 24px",
               borderRadius: "2px",
               fontWeight: "600",
-              fontSize: "12px",
-              cursor: "pointer"
+              fontSize: "11px",
+              cursor: "pointer",
+              marginTop: "4px"
             }}
           >
             Se déconnecter de ce compte
