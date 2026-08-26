@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getActiveUserSubscription, canAccessMagazine } from '@/lib/subscriptionPermissions';
 
 const TABS = ['Tous les contenus', 'Articles', 'Magazines', 'Workbooks'];
 
@@ -23,6 +24,7 @@ const INITIAL_FALLBACK_CARDS = [
     id: 'mag-1',
     docType: 'MAGAZINE',
     type: 'MAGAZINE',
+    magId: 1,
     typeBg: 'rgba(17, 17, 17, 0.08)',
     typeColor: '#111111',
     meta: 'Magazine • N° 01 • Renseignements',
@@ -62,6 +64,7 @@ const INITIAL_FALLBACK_CARDS = [
     id: 'mag-2',
     docType: 'MAGAZINE',
     type: 'MAGAZINE',
+    magId: 2,
     typeBg: 'rgba(17, 17, 17, 0.08)',
     typeColor: '#111111',
     meta: 'Magazine • N° 02 • Performance',
@@ -93,9 +96,13 @@ export default function Page() {
   const [savedIds, setSavedIds] = useState(new Set(['art-1', 'wb-1']));
   const [toastMessage, setToastMessage] = useState(null);
   const [displayLimit, setDisplayLimit] = useState(6);
+  const [userSub, setUserSub] = useState({ plan: 'Essentiel', status: 'Active', isGuest: true });
+  const [paywallModal, setPaywallModal] = useState({ isOpen: false, title: '', message: '', targetPlan: 'Premium' });
 
   // Load saved favorites from localStorage on mount & fetch live contents from API
   useEffect(() => {
+    setUserSub(getActiveUserSubscription());
+
     try {
       const storedSaved = localStorage.getItem('dona_saved_items');
       if (storedSaved) {
@@ -117,6 +124,23 @@ export default function Page() {
         console.warn('Using fallback cards list for Espace Lecture:', err);
       });
   }, []);
+
+  const handleCardClick = (e, card) => {
+    const cardType = (card.type || card.docType || '').toUpperCase();
+    if (cardType === 'MAGAZINE') {
+      const magId = card.magId || (card.id ? parseInt(String(card.id).replace(/\D/g, ''), 10) : 1);
+      const access = canAccessMagazine(magId, userSub.plan, userSub.status);
+      if (!access.allowed) {
+        e.preventDefault();
+        setPaywallModal({
+          isOpen: true,
+          title: `Accès au Magazine N°${String(magId).padStart(2, '0')}`,
+          message: access.message || 'L\'accès aux magazines numériques complets est réservé aux abonnés.',
+          targetPlan: access.reason === 'requires_elite' ? 'Élite' : 'Premium'
+        });
+      }
+    }
+  };
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -699,7 +723,7 @@ export default function Page() {
                     <h3 className="lecture-card-title">{card.title}</h3>
 
                     <div className="lecture-card-footer">
-                      <Link href={card.ctaHref || '#'} className="lecture-card-cta">
+                      <Link href={card.ctaHref || '#'} onClick={(e) => handleCardClick(e, card)} className="lecture-card-cta">
                         {card.cta || card.ctaText || 'Consulter'}
                         <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
                           {card.ctaIcon || 'arrow_forward'}
@@ -747,6 +771,89 @@ export default function Page() {
           </div>
         )}
       </div>
+
+      {/* Paywall Modal */}
+      {paywallModal.isOpen && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(4px)",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "20px"
+        }} onClick={() => setPaywallModal({ ...paywallModal, isOpen: false })}>
+          <div style={{
+            background: "var(--color-bg)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "2px",
+            maxWidth: "480px",
+            width: "100%",
+            padding: "40px 32px",
+            textAlign: "center",
+            boxShadow: "0 25px 50px rgba(0,0,0,0.2)"
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "50%",
+              background: "rgba(163, 6, 38, 0.08)",
+              color: "var(--color-accent)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "20px"
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>lock</span>
+            </div>
+
+            <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "22px", fontWeight: "700", color: "var(--color-text)", marginBottom: "12px" }}>
+              {paywallModal.title}
+            </h3>
+
+            <p style={{ fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.6", marginBottom: "28px" }}>
+              {paywallModal.message}
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <Link
+                href={`/signup?plan=${paywallModal.targetPlan.toLowerCase()}`}
+                style={{
+                  background: "var(--color-accent)",
+                  color: "#FFFFFF",
+                  padding: "14px",
+                  borderRadius: "2px",
+                  fontFamily: "var(--font-primary)",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  textDecoration: "none"
+                }}
+              >
+                Passer à l'offre {paywallModal.targetPlan}
+              </Link>
+              <button
+                type="button"
+                onClick={() => setPaywallModal({ ...paywallModal, isOpen: false })}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--color-text-muted)",
+                  fontFamily: "var(--font-primary)",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                  padding: "8px"
+                }}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

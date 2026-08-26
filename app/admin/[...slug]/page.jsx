@@ -804,9 +804,9 @@ export default function AdminCatchAllPage({ params }) {
       priceAnnually: 0,
       currency: "€",
       features: [
-        "Accès aux articles publics",
-        "Newsletter hebdomadaire",
-        "Profil membre basique"
+        "Accès aux extraits, aperçus et magazines publics",
+        "Accès à la télé en direct",
+        "Accès à la radio en streaming"
       ]
     },
     {
@@ -817,10 +817,9 @@ export default function AdminCatchAllPage({ params }) {
       currency: "€",
       features: [
         "Tout de l'offre Essentiel",
-        "Articles et dossiers exclusifs",
-        "Accès au réseau privé (Slack)",
-        "Webinaires mensuels interactifs",
-        "Réductions sur les masterclasses"
+        "Accès illimité aux 10 premiers Magazines numériques DONA (HD)",
+        "Accès aux audios et au replay",
+        "Accès aux archives du Cercle DONA"
       ]
     },
     {
@@ -831,9 +830,9 @@ export default function AdminCatchAllPage({ params }) {
       currency: "€",
       features: [
         "Tout de l'offre Premium",
-        "Mentorat individuel (1h/mois)",
-        "Événements physiques exclusifs",
-        "Mise en avant sur le réseau"
+        "Accès à tout le contenu (Tous les 16 Magazines)",
+        "Invitations exclusives aux événements et galas privés",
+        "Service de conciergerie éditoriale et accès anticipé"
       ]
     }
   ]);

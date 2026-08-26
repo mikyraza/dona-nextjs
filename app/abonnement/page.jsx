@@ -185,12 +185,12 @@ export default function Page() {
         <div style={{background: "var(--color-bg)", padding: "40px 32px", border: "1px solid var(--color-border)", display: "flex", flexDirection: "column", borderRadius: "2px"}}>
             <h3 style={{fontFamily: "var(--font-secondary)", fontSize: "24px", fontWeight: "600", marginBottom: "12px", color: "var(--color-text)"}}>Essentiel</h3>
             <div style={{fontFamily: "var(--font-secondary)", fontSize: "48px", fontWeight: "700", marginBottom: "16px", color: "var(--color-text)"}}>0€</div>
-            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Pour découvrir la plateforme et accéder aux ressources de base.</p>
+            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Formule de découverte pour accéder aux médias en direct.</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Accès aux articles publics</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Newsletter hebdomadaire</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Profil membre basique</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Accès aux extraits, aperçus et magazines publics</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Accès à la télé en direct</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-text-muted)"}}>check_circle</span> Accès à la radio en streaming</li>
             </ul>
             
             <Link href="/signup?plan=essentiel" className="pricing-btn-outline">S'inscrire gratuitement</Link>
@@ -206,14 +206,13 @@ export default function Page() {
                 <span style={{fontFamily: "var(--font-primary)", fontSize: "14px", fontWeight: "400", color: "var(--color-text-muted)"}}>/mois</span>
             </div>
             {billingPeriod === 'annual' && <div style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-accent)", marginTop: "-12px", marginBottom: "16px", fontWeight: "600"}}>Facturé 278€/an</div>}
-            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>L'expérience complète pour accélérer votre développement.</p>
+            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Accès illimité aux 10 premiers magazines et aux audios/replays.</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
                 <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Tout de l'offre Essentiel</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Articles et dossiers exclusifs</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Accès au réseau privé (Slack)</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Webinaires mensuels interactifs</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Réductions sur les masterclasses</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Accès illimité aux 10 premiers Magazines numériques DONA (HD)</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Accès aux audios et au replay</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1"}}>check_circle</span> Accès aux archives du Cercle DONA</li>
             </ul>
             
             <Link href={`/signup?plan=premium&billing=${billingPeriod}`} className="pricing-btn-accent">Devenir Premium</Link>
@@ -227,13 +226,13 @@ export default function Page() {
                 <span style={{fontFamily: "var(--font-primary)", fontSize: "14px", fontWeight: "400", color: "var(--color-text-muted)"}}>/mois</span>
             </div>
             {billingPeriod === 'annual' && <div style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-accent)", marginTop: "-12px", marginBottom: "16px", fontWeight: "600"}}>Facturé 758€/an</div>}
-            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Pour un accompagnement personnalisé et un réseau VIP.</p>
+            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Accès intégral à l'ensemble du contenu et privilèges VIP.</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
                 <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Tout de l'offre Premium</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Mentorat individuel (1h/mois)</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Événements physiques exclusifs</li>
-                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Mise en avant sur le réseau</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Accès à tout le contenu (Tous les 16 Magazines)</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Invitations exclusives aux événements et galas privés</li>
+                <li style={{display: "flex", gap: "12px", alignItems: "center"}}><span className="material-symbols-outlined" style={{fontSize: "18px", fontVariationSettings: "'FILL' 1", color: "var(--color-accent)"}}>check_circle</span> Service de conciergerie éditoriale et accès anticipé</li>
             </ul>
             
             <Link href={`/signup?plan=elite&billing=${billingPeriod}`} className="pricing-btn-dark">Rejoindre l'Élite</Link>
@@ -257,42 +256,63 @@ export default function Page() {
             {/* Table Body */}
             <div style={{border: "1px solid var(--color-border)"}}>
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Articles publics</div>
+                    <div style={{fontWeight: "500"}}>Extraits, aperçus & magazines publics</div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Dossiers exclusifs</div>
-                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
+                    <div style={{fontWeight: "500"}}>Télé en direct</div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Réseau privé (Slack)</div>
-                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
+                    <div style={{fontWeight: "500"}}>Radio en streaming</div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Webinaires mensuels</div>
+                    <div style={{fontWeight: "500"}}>10 premiers Magazines numériques HD (N°01 à N°10)</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Mentorat individuel</div>
+                    <div style={{fontWeight: "500"}}>Contenus Audio & Replays</div>
+                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
+                </div>
+
+                <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
+                    <div style={{fontWeight: "500"}}>Archives du Cercle DONA</div>
+                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
+                </div>
+
+                <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
+                    <div style={{fontWeight: "500"}}>Accès à TOUT le contenu (16 Magazines complets)</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
-                <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Événements physiques</div>
+                <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
+                    <div style={{fontWeight: "500"}}>Invitations événements & galas privés</div>
+                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
+                </div>
+
+                <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", alignItems: "center"}}>
+                    <div style={{fontWeight: "500"}}>Conciergerie éditoriale & accès anticipé</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
