@@ -11,6 +11,7 @@ import ReplayDrawer from '../components/ReplayDrawer';
 import PlanDrawer from '../components/PlanDrawer';
 import MemberDrawer from '../components/MemberDrawer';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
+import { ALL_SUBSCRIBER_SERVICES, getServicesMatrixConfig, saveServicesMatrixConfig } from '@/lib/subscriptionPermissions';
 // The 16 official magazine universes for category matching
 const UNIVERSES = [
   { id: "intelligence", name: "01. Intelligence" },
@@ -839,17 +840,32 @@ export default function AdminCatchAllPage({ params }) {
   const [paywallText, setPaywallText] = useState("Rejoignez le Club DONA pour débloquer l'accès exclusif à nos magazines, articles premium et documentaires inédits.");
   const [paywallDepth, setPaywallDepth] = useState(30); // 30% cutoff depth
   const [paywallTargetTier, setPaywallTargetTier] = useState('Premium');
+  const [servicesMatrix, setServicesMatrix] = useState({});
+
+  useEffect(() => {
+    setServicesMatrix(getServicesMatrixConfig());
+  }, []);
+
+  const handleToggleMatrixService = (serviceId, planKey) => {
+    setServicesMatrix(prev => {
+      const next = {
+        ...prev,
+        [serviceId]: {
+          ...(prev[serviceId] || {}),
+          [planKey]: !prev[serviceId]?.[planKey]
+        }
+      };
+      saveServicesMatrixConfig(next);
+      return next;
+    });
+  };
 
   const [isPlanDrawerOpen, setIsPlanDrawerOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
   const handleSavePlan = (savedPlan) => {
-    // API BRIDGE INTEGRATION BLUEPRINT:
-    // To bridge these pricing rate updates to our public facing /abonnement page,
-    // we would dispatch a PUT or POST request to:
-    // fetch('/api/global-config', { method: 'PUT', body: JSON.stringify(savedPlan) })
-    // which synchronizes the WordPress ACF options pages or MongoDB document.
     setSubscriptionPlans(prev => prev.map(p => p.id === savedPlan.id ? savedPlan : p));
+    setServicesMatrix(getServicesMatrixConfig());
   };
 
   const handleSavePaywall = () => {
@@ -3191,6 +3207,147 @@ export default function AdminCatchAllPage({ params }) {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Interactive Services & Permissions Matrix Section */}
+            <div className="table-card" style={{ marginTop: '30px', padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: '22px', fontStyle: 'italic', margin: '0 0 4px' }}>
+                    Matrice des Services Abonnés & Droits d'Accès
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--admin-text-muted)' }}>
+                    Cliquez sur les boutons de sélection pour autoriser ou restreindre un service par abonnement (les modifications s'appliquent immédiatement sur tout le site).
+                  </p>
+                </div>
+                <span className="badge vip" style={{ backgroundColor: 'var(--admin-accent-color)', color: '#FFFFFF', padding: '4px 10px', fontSize: '10px', fontWeight: '700', letterSpacing: '0.05em' }}>
+                  PILOTAGE EN DIRECT
+                </span>
+              </div>
+
+              <div className="table-scroll-container">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '40%' }}>SERVICE / FONCTIONNALITÉ PLATFORME</th>
+                      <th style={{ textAlign: 'center', width: '20%' }}>ESSENTIEL (0€)</th>
+                      <th style={{ textAlign: 'center', width: '20%', color: 'var(--admin-accent-color)' }}>PREMIUM (23€/M)</th>
+                      <th style={{ textAlign: 'center', width: '20%' }}>ÉLITE (63€/M)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ALL_SUBSCRIBER_SERVICES.map((service) => {
+                      const isEssentiel = !!(servicesMatrix[service.id]?.Essentiel);
+                      const isPremium = !!(servicesMatrix[service.id]?.Premium);
+                      const isElite = !!(servicesMatrix[service.id]?.Élite);
+
+                      return (
+                        <tr key={service.id}>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--admin-accent-color)' }}>
+                                {service.icon}
+                              </span>
+                              <div>
+                                <span style={{ fontWeight: '600', color: 'var(--admin-text-color)', display: 'block', fontSize: '13px' }}>
+                                  {service.name}
+                                </span>
+                                <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>
+                                  {service.category}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Essentiel Toggle */}
+                          <td style={{ textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleMatrixService(service.id, 'Essentiel')}
+                              style={{
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '6px 14px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                letterSpacing: '0.05em',
+                                background: isEssentiel ? 'var(--admin-accent-color)' : '#E0E0E0',
+                                color: isEssentiel ? '#FFFFFF' : '#666666',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                {isEssentiel ? 'check' : 'lock'}
+                              </span>
+                              {isEssentiel ? 'INCLUS' : 'PAYWALL'}
+                            </button>
+                          </td>
+
+                          {/* Premium Toggle */}
+                          <td style={{ textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleMatrixService(service.id, 'Premium')}
+                              style={{
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '6px 14px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                letterSpacing: '0.05em',
+                                background: isPremium ? 'var(--admin-accent-color)' : '#E0E0E0',
+                                color: isPremium ? '#FFFFFF' : '#666666',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                {isPremium ? 'check' : 'lock'}
+                              </span>
+                              {isPremium ? 'INCLUS' : 'PAYWALL'}
+                            </button>
+                          </td>
+
+                          {/* Élite Toggle */}
+                          <td style={{ textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleMatrixService(service.id, 'Élite')}
+                              style={{
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '6px 14px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                letterSpacing: '0.05em',
+                                background: isElite ? 'var(--admin-accent-color)' : '#E0E0E0',
+                                color: isElite ? '#FFFFFF' : '#666666',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                {isElite ? 'check' : 'lock'}
+                              </span>
+                              {isElite ? 'INCLUS' : 'PAYWALL'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
 
