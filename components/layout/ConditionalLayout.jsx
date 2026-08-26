@@ -6,6 +6,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PersistentPlayer from './PersistentPlayer';
 import BackgroundSync from '../common/BackgroundSync';
+import SubscriptionSimulatorBar from '../SubscriptionSimulatorBar';
 
 export default function ConditionalLayout({ children }) {
   const pathname = usePathname();
@@ -22,6 +23,7 @@ export default function ConditionalLayout({ children }) {
       <main>{children}</main>
       <Footer />
       <PersistentPlayer />
+      <SubscriptionSimulatorBar />
     </>
   );
 }

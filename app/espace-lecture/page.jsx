@@ -99,9 +99,16 @@ export default function Page() {
   const [userSub, setUserSub] = useState({ plan: 'Essentiel', status: 'Active', isGuest: true });
   const [paywallModal, setPaywallModal] = useState({ isOpen: false, title: '', message: '', targetPlan: 'Premium' });
 
-  // Load saved favorites from localStorage on mount & fetch live contents from API
-  useEffect(() => {
+  const syncUserSub = () => {
     setUserSub(getActiveUserSubscription());
+  };
+
+  // Load saved favorites from localStorage on mount & listen to subscription changes
+  useEffect(() => {
+    syncUserSub();
+
+    window.addEventListener('dona_subscription_changed', syncUserSub);
+    window.addEventListener('storage', syncUserSub);
 
     try {
       const storedSaved = localStorage.getItem('dona_saved_items');
@@ -123,6 +130,11 @@ export default function Page() {
       .catch(err => {
         console.warn('Using fallback cards list for Espace Lecture:', err);
       });
+
+    return () => {
+      window.removeEventListener('dona_subscription_changed', syncUserSub);
+      window.removeEventListener('storage', syncUserSub);
+    };
   }, []);
 
   const handleCardClick = (e, card) => {
@@ -135,8 +147,29 @@ export default function Page() {
         setPaywallModal({
           isOpen: true,
           title: `Accès au Magazine N°${String(magId).padStart(2, '0')}`,
-          message: access.message || 'L\'accès aux magazines numériques complets est réservé aux abonnés.',
+          message: access.message || 'L\'accès à ce magazine est réservé aux abonnés autorisés.',
           targetPlan: access.reason === 'requires_elite' ? 'Élite' : 'Premium'
+        });
+      }
+    } else if (cardType === 'PODCAST' || cardType === 'REPLAY' || cardType === 'AUDIO') {
+      const access = canAccessAudioAndReplay(userSub.plan, userSub.status);
+      if (!access.allowed) {
+        e.preventDefault();
+        setPaywallModal({
+          isOpen: true,
+          title: `Accès aux Audios & Replays`,
+          message: access.message || 'L\'accès aux contenus audios et replays vidéo est réservé aux abonnés Premium et Élite.',
+          targetPlan: 'Premium'
+        });
+      }
+    } else if (cardType === 'WORKBOOK') {
+      if (!isServiceAllowedForPlan('workbooks', userSub.plan)) {
+        e.preventDefault();
+        setPaywallModal({
+          isOpen: true,
+          title: `Accès aux Workbooks & PDFs`,
+          message: 'Le téléchargement des workbooks et guides stratégiques est réservé aux abonnés Premium et Élite.',
+          targetPlan: 'Premium'
         });
       }
     }
