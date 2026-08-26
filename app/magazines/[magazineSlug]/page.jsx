@@ -54,7 +54,7 @@ export default async function Page({ params }) {
             position: "absolute",
             inset: 0,
             zIndex: 1,
-            background: magazine.gradient || "linear-gradient(135deg, #111111, #333333)"
+            backgroundColor: "#111"
           }}>
             {magazine.heroImage && (
               <img 
@@ -65,15 +65,14 @@ export default async function Page({ params }) {
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
-                  opacity: 0.15,
-                  mixBlendMode: "luminosity"
+                  opacity: 0.5
                 }}
               />
             )}
             <div className="mag-hero-overlay" style={{
               position: "absolute",
               inset: 0,
-              background: "linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.8))"
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.8))"
             }}></div>
           </div>
           <div className="mag-hero-content container" style={{ position: "relative", zIndex: 2 }}>
