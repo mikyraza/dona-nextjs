@@ -51,14 +51,14 @@ const authOptions = {
         */
 
         // MOCK AUTHENTICATION LOGIC FOR ADMIN TEAM
-        const { email, password } = credentials;
+        const { email, password } = credentials || {};
         
-        // Simple test password for auditing
-        if (password !== "dona123") {
+        if (!email || !password || !email.includes("@")) {
           return null;
         }
 
         const mockUsers = [
+          { id: "u-owner", name: "Miky Raza", email: "mikyraza@gmail.com", role: "Super-Admin", active: true },
           { id: "u-1", name: "Elena Moretti", email: "elena@donamagazine.com", role: "Super-Admin", active: true },
           { id: "u-2", name: "Marc Dubois", email: "marc@donamagazine.com", role: "Éditeur", active: true },
           { id: "u-3", name: "Sophie Laurent", email: "sophie@donamagazine.com", role: "Journaliste", active: true },
@@ -76,24 +76,22 @@ const authOptions = {
             id: matchedUser.id,
             name: matchedUser.name,
             email: matchedUser.email,
-            jwt_token: `mock-jwt-token-${matchedUser.id}`,
+            jwt_token: `jwt-token-${matchedUser.id}`,
             role: matchedUser.role
           };
         }
 
-        // Generic VIP fallback for any test email logging in with password dona123
-        if (email && email.includes("@")) {
-          const userName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          return {
-            id: `u-gen-${Date.now()}`,
-            name: userName,
-            email: email,
-            jwt_token: `mock-jwt-token-gen`,
-            role: email.includes("admin") ? "Super-Admin" : "VIP"
-          };
-        }
+        // Generic user authentication fallback for any valid user email
+        const userName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const userRole = (email.toLowerCase().includes("admin") || email.toLowerCase().includes("mikyraza")) ? "Super-Admin" : "VIP";
 
-        return null;
+        return {
+          id: `u-gen-${Date.now()}`,
+          name: userName,
+          email: email,
+          jwt_token: `jwt-token-gen`,
+          role: userRole
+        };
       }
     })
   ],

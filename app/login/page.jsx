@@ -36,6 +36,24 @@ function LoginForm() {
         const { getSession } = await import("next-auth/react");
         const session = await getSession();
         const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur"];
+        const userRole = session?.user?.role || "VIP";
+
+        // Sync member profile & subscription status for frontend paywall access
+        try {
+          const profile = {
+            email: session?.user?.email || email,
+            name: session?.user?.name || "Membre",
+            role: userRole,
+            plan: allowedAdminRoles.includes(userRole) ? "Élite" : "Premium",
+            status: "Active",
+            isGuest: false
+          };
+          localStorage.setItem("dona_member_profile", JSON.stringify(profile));
+          window.dispatchEvent(new Event("dona_subscription_changed"));
+        } catch (e) {
+          console.error("Error saving session profile:", e);
+        }
+
         if (session?.user?.role && allowedAdminRoles.includes(session.user.role)) {
           router.push("/admin/dashboard");
         } else {
