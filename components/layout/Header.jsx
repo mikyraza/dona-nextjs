@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
+import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
 
 export default function Header() {
   const [activeMenu, setActiveMenu] = useState(null);
@@ -12,8 +14,44 @@ export default function Header() {
   const [hubData, setHubData] = useState({ liveTv: null, featuredVideo: null });
   const timeoutRef = useRef(null);
   const headerRef = useRef(null);
-  const pathname = usePathname();
-  const router = useRouter();
+  const { data: session, status: authStatus } = useSession();
+  const [userProfile, setUserProfile] = useState(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const syncHeaderUser = () => {
+    const activeSub = getActiveUserSubscription();
+    if (session?.user || (!activeSub.isGuest && activeSub.email)) {
+      const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur"];
+      const role = session?.user?.role || activeSub.role || "USER";
+      setUserProfile({
+        name: session?.user?.name || activeSub.name || activeSub.email?.split('@')[0] || "Membre",
+        email: session?.user?.email || activeSub.email || "membre@dona.com",
+        plan: activeSub.plan || "Essentiel",
+        role: role,
+        isAdmin: allowedAdminRoles.includes(role) || role.toLowerCase().includes("admin")
+      });
+    } else {
+      setUserProfile(null);
+    }
+  };
+
+  useEffect(() => {
+    syncHeaderUser();
+    window.addEventListener('dona_subscription_changed', syncHeaderUser);
+    window.addEventListener('storage', syncHeaderUser);
+    return () => {
+      window.removeEventListener('dona_subscription_changed', syncHeaderUser);
+      window.removeEventListener('storage', syncHeaderUser);
+    };
+  }, [session, authStatus]);
+
+  const handleSignOut = async () => {
+    try {
+      localStorage.removeItem('dona_member_profile');
+      window.dispatchEvent(new Event('dona_subscription_changed'));
+    } catch (e) {}
+    signOut({ callbackUrl: '/' });
+  };
 
   // Load video hub data for the Studio Mega Menu
   useEffect(() => {
@@ -211,32 +249,169 @@ export default function Header() {
             </svg>
           </button>
           
-          <Link href="/member-profile" className="account-link" onClick={closeAllMenus}>COMPTE</Link>
-          
-          {/* Modal sélecteur bilingue juste à gauche du bouton d'action S'ABONNER */}
-          {isLangOpen && (
-            <div className="language-modal-inline" style={{
-              position: 'absolute',
-              top: '100%',
-              right: '220px',
-              backgroundColor: 'var(--color-bg)',
-              border: '1px solid var(--color-border)',
-              padding: '15px 20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-              zIndex: 1100
-            }}>
-              <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', fontWeight: 'bold', letterSpacing: '0.1em' }}>LANGUE</span>
-              <div style={{ display: 'flex', gap: '15px' }}>
-                <button style={{ background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>FR</button>
-                <span style={{ color: 'var(--color-border)' }}>|</span>
-                <button style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '12px' }}>EN</button>
-              </div>
-            </div>
-          )}
+          {userProfile ? (
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                style={{
+                  background: 'rgba(163, 6, 38, 0.08)',
+                  border: '1px solid rgba(163, 6, 38, 0.25)',
+                  color: 'var(--color-text)',
+                  padding: '6px 14px',
+                  borderRadius: '30px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  letterSpacing: '0.05em',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--color-accent)' }}>account_circle</span>
+                <span style={{ textTransform: 'uppercase' }}>{userProfile.name}</span>
+                <span style={{
+                  fontSize: '9px',
+                  fontWeight: '800',
+                  background: 'var(--color-accent)',
+                  color: '#FFF',
+                  padding: '2px 6px',
+                  borderRadius: '2px'
+                }}>
+                  {userProfile.plan.toUpperCase()}
+                </span>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                  {isUserMenuOpen ? 'expand_less' : 'expand_more'}
+                </span>
+              </button>
 
-          <Link href="/abonnement" className="btn-subscribe" onClick={closeAllMenus}>S'INSCRIRE / S'ABONNER</Link>
+              {isUserMenuOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '110%',
+                  right: 0,
+                  backgroundColor: 'var(--color-bg)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '4px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                  padding: '8px 0',
+                  minWidth: '220px',
+                  zIndex: 2000,
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-border)' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-text)' }}>{userProfile.name}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px' }}>{userProfile.email}</div>
+                  </div>
+
+                  <Link
+                    href="/member-profile"
+                    onClick={() => { setIsUserMenuOpen(false); closeAllMenus(); }}
+                    style={{
+                      padding: '10px 16px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: 'var(--color-text)',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person</span>
+                    Mon Espace Membre
+                  </Link>
+
+                  <Link
+                    href="/espace-lecture"
+                    onClick={() => { setIsUserMenuOpen(false); closeAllMenus(); }}
+                    style={{
+                      padding: '10px 16px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: 'var(--color-text)',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>auto_stories</span>
+                    Mon Espace Lecture
+                  </Link>
+
+                  <Link
+                    href="/abonnement"
+                    onClick={() => { setIsUserMenuOpen(false); closeAllMenus(); }}
+                    style={{
+                      padding: '10px 16px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: 'var(--color-text)',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>stars</span>
+                    Offre : {userProfile.plan}
+                  </Link>
+
+                  {userProfile.isAdmin && (
+                    <Link
+                      href="/admin/dashboard"
+                      onClick={() => { setIsUserMenuOpen(false); closeAllMenus(); }}
+                      style={{
+                        padding: '10px 16px',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: 'var(--color-accent)',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        borderTop: '1px solid var(--color-border)'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>admin_panel_settings</span>
+                      Portail Administration
+                    </Link>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    style={{
+                      padding: '10px 16px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#C81E1E',
+                      background: 'none',
+                      border: 'none',
+                      borderTop: '1px solid var(--color-border)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginTop: '4px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
+                    Se Déconnecter
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link href="/login" className="account-link" onClick={closeAllMenus}>SE CONNECTER</Link>
+              <Link href="/abonnement" className="btn-subscribe" onClick={closeAllMenus}>S'INSCRIRE / S'ABONNER</Link>
+            </>
+          )}
 
           {/* ── Hamburger (mobile only) ── */}
           <button
