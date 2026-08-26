@@ -15,7 +15,7 @@ export const magazines = [
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20m0-20a9 9 0 019 9m-9-9a9 9 0 00-9 9m9 11a9 9 0 01-9-9m9 9a9 9 0 009-9M2 12h20"></path></svg>`,
     features: [
       { title: "The Brief", subtitle: "SYNTHÈSE QUOTIDIENNE STRATÉGIQUE", meta: "EST. 2024 • 08:00 CET", icon: "assignment" },
-      { title: "The Pulse", subtitle: "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE", meta: "LIVE UPDATE • GLOBAL FEED", icon: "pulse" },
+      { title: "The Pulse", subtitle: "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE", meta: "LIVE UPDATE • GLOBAL FEED", icon: "sensors" },
       { title: "Deep-Dive", subtitle: "ANALYSES DE FOND PAR NOS EXPERTS", meta: "MONTHLY REV. • 40 PAGE PDF", icon: "search" },
       { title: "Radar", subtitle: "CARTOGRAPHIE DES RISQUES ÉMERGENTS", meta: "DYNAMIC MAP • Q4 FOCUS", icon: "shield" }
     ],

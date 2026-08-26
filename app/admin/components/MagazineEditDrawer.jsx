@@ -75,7 +75,7 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20m0-20a9 9 0 019 9m-9-9a9 9 0 00-9 9m9 11a9 9 0 01-9-9m9 9a9 9 0 009-9M2 12h20"></path></svg>`,
     features: [
       { title: "The Brief", subtitle: "SYNTHÈSE QUOTIDIENNE STRATÉGIQUE", meta: "EST. 2024 • 08:00 CET", icon: "assignment" },
-      { title: "The Pulse", subtitle: "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE", meta: "LIVE UPDATE • GLOBAL FEED", icon: "pulse" }
+      { title: "The Pulse", subtitle: "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE", meta: "LIVE UPDATE • GLOBAL FEED", icon: "sensors" }
     ],
     tabs: [
       { id: "tab-1", slug: "the-pulse", name: "The Pulse", order: 1, defaultActive: true, hidden: false },
@@ -116,7 +116,7 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
         icon: magazine.icon || `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20m0-20a9 9 0 019 9m-9-9a9 9 0 00-9 9m9 11a9 9 0 01-9-9m9 9a9 9 0 009-9M2 12h20"></path></svg>`,
         features: magazine.features?.length > 0 ? magazine.features : [
           { title: "The Brief", subtitle: "SYNTHÈSE QUOTIDIENNE STRATÉGIQUE", meta: "EST. 2024 • 08:00 CET", icon: "assignment" },
-          { title: "The Pulse", subtitle: "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE", meta: "LIVE UPDATE • GLOBAL FEED", icon: "pulse" }
+          { title: "The Pulse", subtitle: "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE", meta: "LIVE UPDATE • GLOBAL FEED", icon: "sensors" }
         ],
         tabs: magazine.tabs?.length > 0 ? magazine.tabs : [
           { id: "tab-1", slug: "the-pulse", name: "The Pulse", order: 1, defaultActive: true, hidden: false },
@@ -157,7 +157,7 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20m0-20a9 9 0 019 9m-9-9a9 9 0 00-9 9m9 11a9 9 0 01-9-9m9 9a9 9 0 009-9M2 12h20"></path></svg>`,
         features: [
           { title: "The Brief", subtitle: "SYNTHÈSE QUOTIDIENNE STRATÉGIQUE", meta: "EST. 2024 • 08:00 CET", icon: "assignment" },
-          { title: "The Pulse", subtitle: "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE", meta: "LIVE UPDATE • GLOBAL FEED", icon: "pulse" }
+          { title: "The Pulse", subtitle: "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE", meta: "LIVE UPDATE • GLOBAL FEED", icon: "sensors" }
         ],
         tabs: [
           { id: "tab-1", slug: "the-pulse", name: "The Pulse", order: 1, defaultActive: true, hidden: false },
@@ -913,7 +913,7 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
                             />
                             <input 
                               type="text" 
-                              placeholder="Icône Material (ex: assignment, pulse, search)"
+                              placeholder="Icône Material (ex: assignment, sensors, search)"
                               value={feat.icon} 
                               onChange={e => handleFeatureChange(idx, 'icon', e.target.value)}
                               style={{ padding: '6px 10px', border: '1px solid #D1D5DB', borderRadius: '3px', fontSize: '12px' }}

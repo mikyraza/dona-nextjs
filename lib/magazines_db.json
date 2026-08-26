@@ -8,7 +8,7 @@
     "themePrimary": "#a31835",
     "themeSecondary": "#3d0c1b",
     "gradient": "linear-gradient(135deg, #2b1126, #411d3d)",
-    "heroImage": "/assets/core/img/mag_hero_01.png",
+    "heroImage": "/assets/core/uploads/1787130125600_voici_le_logo_Ultra_realistic_202606161521.jpeg",
     "heroButtons": [
       {
         "id": "btn-1",
@@ -31,7 +31,7 @@
       {
         "id": "tab-1",
         "slug": "the-pulse",
-        "name": "The Pulse",
+        "name": "General",
         "order": 1,
         "defaultActive": true,
         "hidden": false
@@ -39,7 +39,7 @@
       {
         "id": "tab-2",
         "slug": "ia-generative",
-        "name": "IA Générative",
+        "name": "live",
         "order": 2,
         "defaultActive": false,
         "hidden": false
@@ -47,7 +47,7 @@
       {
         "id": "tab-3",
         "slug": "cybersecurite",
-        "name": "Cybersécurité",
+        "name": "street",
         "order": 3,
         "defaultActive": false,
         "hidden": false
@@ -90,7 +90,35 @@
         "order": 5
       }
     ],
-    "updatedAt": "2026-07-23T11:58:16.779Z"
+    "updatedAt": "2026-08-26T09:39:56.487Z",
+    "icon": "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" strokeWidth=\"1.5\"><path d=\"M12 2v20m0-20a9 9 0 019 9m-9-9a9 9 0 00-9 9m9 11a9 9 0 01-9-9m9 9a9 9 0 009-9M2 12h20\"></path></svg>",
+    "features": [
+      {
+        "title": "Le resultat",
+        "subtitle": "SYNTHÈSE QUOTIDIENNE STRATÉGIQUE",
+        "meta": "EST. 2024 • 08:00 CET",
+        "icon": "assignment"
+      },
+      {
+        "title": "Le journal",
+        "subtitle": "SIGNAUX FAIBLES & DÉTECTION PRÉCOCE",
+        "meta": "LIVE UPDATE • GLOBAL FEED",
+        "icon": "sensors"
+      },
+      {
+        "title": "Icon",
+        "subtitle": "ANALYSES DE FOND PAR NOS EXPERTS",
+        "meta": "MONTHLY REV. • 40 PAGE PDF",
+        "icon": "search"
+      },
+      {
+        "title": "Nuit",
+        "subtitle": "CARTOGRAPHIE DES RISQUES ÉMERGENTS",
+        "meta": "DYNAMIC MAP • Q4 FOCUS",
+        "icon": "shield"
+      }
+    ],
+    "status": "Published"
   },
   {
     "id": 2,
