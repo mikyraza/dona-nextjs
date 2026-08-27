@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getActiveUserSubscription, canAccessAudioAndReplay } from '@/lib/subscriptionPermissions';
+import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
 
 export default function Page() {
   const [userSub, setUserSub] = useState({ plan: 'Essentiel', status: 'Active', isGuest: true });
   const [paywallModal, setPaywallModal] = useState({ isOpen: false, title: '', message: '' });
+  const { loadTrack } = useAudioPlayer();
 
   const syncUserSub = () => {
     setUserSub(getActiveUserSubscription());
@@ -32,7 +34,11 @@ export default function Page() {
         message: access.message || 'L\'accès aux podcasts, audios et replays est réservé aux abonnés Premium et Élite.'
       });
     } else {
-      alert(`Lecture démarrée : ${title}`);
+      loadTrack({
+        title: title,
+        source: 'DONA STUDIO AUDIO',
+        duration: 2520
+      });
     }
   };
 

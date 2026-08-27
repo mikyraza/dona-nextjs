@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import { AudioPlayerProvider } from '../contexts/AudioPlayerContext';
+import { LanguageProvider } from '../contexts/LanguageContext';
 import ConditionalLayout from '../components/layout/ConditionalLayout';
 import AuthProvider from '../components/providers/AuthProvider';
 import Script from 'next/script';
@@ -51,11 +52,13 @@ export default function RootLayout({ children }) {
       </head>
       <body suppressHydrationWarning>
         <AuthProvider>
-          <AudioPlayerProvider>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </AudioPlayerProvider>
+          <LanguageProvider>
+            <AudioPlayerProvider>
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+            </AudioPlayerProvider>
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

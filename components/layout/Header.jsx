@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Header() {
   const [activeMenu, setActiveMenu] = useState(null);
@@ -19,6 +20,8 @@ export default function Header() {
   const { data: session, status: authStatus } = useSession();
   const [userProfile, setUserProfile] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const { lang, changeLanguage, t, currentLangObj, LANGUAGES } = useLanguage();
 
   const syncHeaderUser = () => {
     const activeSub = getActiveUserSubscription();
@@ -227,18 +230,67 @@ export default function Header() {
             </svg>
           </Link>
 
-          <button 
-            className="btn-icon" 
-            aria-label="Langue" 
-            id="lang-trigger"
-            onClick={() => setIsLangOpen(!isLangOpen)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="btn-icon" 
+              aria-label="Langue" 
+              id="lang-trigger"
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '0 8px' }}
+            >
+              <span style={{ fontSize: '11px', fontWeight: '700', fontFamily: 'var(--font-primary)' }}>{currentLangObj.code}</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+            </button>
+
+            {isLangOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '115%',
+                right: 0,
+                backgroundColor: 'var(--color-bg)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '4px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                padding: '6px 0',
+                minWidth: '170px',
+                zIndex: 2500,
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                {LANGUAGES.map(l => (
+                  <button
+                    key={l.code}
+                    type="button"
+                    onClick={() => {
+                      changeLanguage(l.code);
+                      setIsLangOpen(false);
+                    }}
+                    style={{
+                      padding: '8px 14px',
+                      fontSize: '12px',
+                      fontWeight: lang === l.code ? '700' : '500',
+                      color: lang === l.code ? 'var(--color-accent)' : 'var(--color-text)',
+                      background: lang === l.code ? 'rgba(163, 6, 38, 0.06)' : 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px'
+                    }}
+                  >
+                    <span style={{ fontSize: '15px' }}>{l.flag}</span>
+                    <span>{l.name}</span>
+                    {lang === l.code && <span className="material-symbols-outlined" style={{ fontSize: '14px', marginLeft: 'auto', color: 'var(--color-accent)' }}>check</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button 
             id="theme-toggle" 

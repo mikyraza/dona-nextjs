@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
 
 // ─── Category filter tabs ────────────────────────────────────────────────────
 const CATEGORIES = ['Tout', 'Économie', 'Culture', 'Masterclass', 'Événement', 'Documentaire'];
@@ -13,7 +14,7 @@ function formatDate(iso) {
 }
 
 // ─── VideoCard component ─────────────────────────────────────────────────────
-function VideoCard({ video, featured = false, onPlay }) {
+function VideoCard({ video, featured = false, onPlay, onLockedClick }) {
   const videoRef = useRef(null);
 
   const handleMouseEnter = () => {
@@ -29,20 +30,27 @@ function VideoCard({ video, featured = false, onPlay }) {
     }
   };
 
+  const handleClick = () => {
+    if (video.isLocked) {
+      if (onLockedClick) onLockedClick(video);
+    } else if (onPlay) {
+      onPlay(video);
+    }
+  };
+
   return (
     <div
       className={`vh-card ${featured ? 'vh-card--featured' : ''} ${video.isLocked ? 'vh-card--locked' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={() => !video.isLocked && onPlay && onPlay(video)}
+      onClick={handleClick}
       role="button"
       tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && !video.isLocked && onPlay && onPlay(video)}
+      onKeyDown={e => e.key === 'Enter' && handleClick()}
       aria-label={video.isLocked ? `Contenu VIP : ${video.title}` : `Regarder : ${video.title}`}
     >
       {/* Thumbnail */}
       <div className="vh-card__thumb">
-        {/* Thumbnail Image or SVG placeholder */}
         {video.thumbnailUrl ? (
           <img 
             src={video.thumbnailUrl} 
@@ -63,7 +71,6 @@ function VideoCard({ video, featured = false, onPlay }) {
           </div>
         )}
 
-        {/* Video element for hover preview */}
         {video.videoUrl && !video.isLocked && (
           <video
             ref={videoRef}
@@ -76,19 +83,16 @@ function VideoCard({ video, featured = false, onPlay }) {
           />
         )}
 
-        {/* Badges */}
         <div className="vh-card__badges">
           {video.isHD && <span className="vh-badge vh-badge--hd">HD</span>}
           {video.isVipOnly && <span className="vh-badge vh-badge--vip">👑 VIP</span>}
           {video.isFeatured && <span className="vh-badge vh-badge--featured">À LA UNE</span>}
         </div>
 
-        {/* Duration */}
         {video.duration && (
           <div className="vh-card__duration">{video.duration}</div>
         )}
 
-        {/* Lock overlay for VIP */}
         {video.isLocked && (
           <div className="vh-card__lock">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -98,7 +102,6 @@ function VideoCard({ video, featured = false, onPlay }) {
           </div>
         )}
 
-        {/* Play button */}
         {!video.isLocked && (
           <div className="vh-card__play" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -108,7 +111,6 @@ function VideoCard({ video, featured = false, onPlay }) {
         )}
       </div>
 
-      {/* Info */}
       <div className="vh-card__info">
         <span className="vh-card__label">{video.label || video.category}</span>
         <h3 className="vh-card__title">{video.title}</h3>
@@ -180,10 +182,17 @@ export default function StudioPage() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('Tout');
   const [playerVideo, setPlayerVideo] = useState(null);
+  const [clientVip, setClientVip] = useState(false);
   const playerRef = useRef(null);
 
-  // userIsVip is determined server-side in /api/videos and returned in the payload
-  const userIsVip = hubData?.userIsVip || false;
+  useEffect(() => {
+    const sub = getActiveUserSubscription();
+    if (!sub.isGuest && (sub.plan === 'Premium' || sub.plan === 'Élite')) {
+      setClientVip(true);
+    }
+  }, []);
+
+  const userIsVip = clientVip || hubData?.userIsVip || false;
 
   const fetchHub = useCallback(async () => {
     setLoading(true);
@@ -203,12 +212,19 @@ export default function StudioPage() {
   }, [fetchHub]);
 
   const handlePlay = (video) => {
-    if (video.isLocked) return;
+    if (video.isLocked) {
+      router.push('/abonnement');
+      return;
+    }
     setPlayerVideo(video);
     setTimeout(() => {
       playerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       playerRef.current?.querySelector('video')?.play().catch(() => {});
     }, 100);
+  };
+
+  const handleLockedClick = () => {
+    router.push('/abonnement');
   };
 
   const handleClosePlayer = () => setPlayerVideo(null);

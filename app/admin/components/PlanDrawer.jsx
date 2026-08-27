@@ -11,6 +11,7 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
   const [features, setFeatures] = useState([]);
   const [newFeatureText, setNewFeatureText] = useState('');
   const [servicesState, setServicesState] = useState({});
+  const [excerptDepth, setExcerptDepth] = useState(30);
 
   useEffect(() => {
     const currentMatrix = getServicesMatrixConfig();
@@ -22,9 +23,9 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
       setPriceAnnually(plan.priceAnnually !== undefined ? plan.priceAnnually : (plan.price ? plan.price * 10 : 0));
       setCurrency(plan.currency || '€');
       setFeatures(plan.features ? [...plan.features] : []);
+      setExcerptDepth(plan.excerptDepth !== undefined ? plan.excerptDepth : 30);
       setNewFeatureText('');
 
-      // Map current plan toggles from matrix
       const planKey = planName.toLowerCase().includes('élite') || planName.toLowerCase().includes('elite')
         ? 'Élite'
         : planName.toLowerCase().includes('premium')
@@ -47,6 +48,7 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
       setPriceAnnually(0);
       setCurrency('€');
       setFeatures([]);
+      setExcerptDepth(30);
       setNewFeatureText('');
       setServicesState({});
     }
@@ -183,6 +185,26 @@ export default function PlanDrawer({ isOpen, onClose, onSave, plan = null }) {
                 <option value="FCFA">XAF (FCFA)</option>
               </select>
             </div>
+          </div>
+
+          <div className="drawer-input-group" style={{ marginTop: '16px' }}>
+            <label htmlFor="paywall-depth" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Profondeur du Paywall (Extrait public)</span>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--admin-accent-color)' }}>{excerptDepth}% du texte</span>
+            </label>
+            <input
+              id="paywall-depth"
+              type="range"
+              min="10"
+              max="90"
+              step="5"
+              value={excerptDepth}
+              onChange={(e) => setExcerptDepth(parseInt(e.target.value, 10))}
+              style={{ width: '100%', accentColor: 'var(--admin-accent-color, #A30626)', margin: '8px 0' }}
+            />
+            <p style={{ fontSize: '11px', color: '#777', margin: 0 }}>
+              Définit la quantité de texte de l'article visible par les non-abonnés avant le masquage.
+            </p>
           </div>
 
           {/* Interactive Services & Permissions Selector */}

@@ -50,10 +50,10 @@ export async function middleware(req) {
 
   // 1. Restriction sur le Dashboard Admin Next.js (/admin/*)
   if (path.startsWith("/admin")) {
-    if (process.env.NODE_ENV === 'development') {
-      return NextResponse.next();
-    }
     if (!token) {
+      if (process.env.NODE_ENV === 'development') {
+        return NextResponse.next();
+      }
       return NextResponse.redirect(new URL("/login", req.url));
     }
     if (!allowedAdminRoles.includes(token.role)) {

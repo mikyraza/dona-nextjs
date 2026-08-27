@@ -773,11 +773,17 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                     <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('formatBlock', '<h2>')} className="toolbar-btn" title="Titre H2">
                       <span className="material-symbols-outlined">title</span>
                     </button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('formatBlock', '<h3>')} className="toolbar-btn" title="Titre H3">
+                      <span style={{ fontWeight: '700', fontSize: '13px' }}>H3</span>
+                    </button>
                     <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('formatBlock', '<blockquote>')} className="toolbar-btn" title="Citation">
                       <span className="material-symbols-outlined">format_quote</span>
                     </button>
                     <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('insertUnorderedList')} className="toolbar-btn" title="Liste à puces">
                       <span className="material-symbols-outlined">format_list_bulleted</span>
+                    </button>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execEditorCommand('insertOrderedList')} className="toolbar-btn" title="Liste numérotée">
+                      <span className="material-symbols-outlined">format_list_numbered</span>
                     </button>
 
                     <span className="toolbar-divider"></span>
