@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getStorageItem, setStorageItem } from '@/lib/storage';
 import dynamic from 'next/dynamic';
 
 const RichEditor = dynamic(() => import('./RichEditor'), { ssr: false });
@@ -259,68 +258,40 @@ export default function AdminTodayPage() {
   const [editorialDraft, setEditorialDraft] = useState({});
   const [valueDraft, setValueDraft] = useState({});
 
-  // Load from storage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('dona_today_config_v3');
-    if (saved) {
-      try { setData(JSON.parse(saved)); } catch (e) {}
-    } else {
-      // Migrate from v2 if exists
-      const savedV2 = localStorage.getItem('dona_today_config_v2');
-      if (savedV2) {
-        try { 
-          const parsedV2 = JSON.parse(savedV2);
-          if (parsedV2.urgentArticle && parsedV2.newsTimeline) {
-             const mergedNews = [
-                {...parsedV2.urgentArticle, id: 'news-0', isFeatured: true, isNew: true, time: "Maintenant"},
-                ...parsedV2.newsTimeline.map(n => ({...n, isFeatured: false}))
-             ];
-             parsedV2.newsItems = mergedNews;
-             delete parsedV2.urgentArticle;
-             delete parsedV2.newsTimeline;
-             setData(parsedV2);
-          }
-        } catch (e) {}
+  // Load from SQLite database on mount
+  const fetchTodayData = async () => {
+    try {
+      const res = await fetch('/api/admin/today-page');
+      const json = await res.json();
+      if (json.success && json.config && json.config.hero) {
+        setData(json.config);
       }
+    } catch (e) {
+      console.error('Error fetching today page config from database:', e);
     }
+  };
+
+  useEffect(() => {
+    fetchTodayData();
   }, []);
 
-  const persistAll = (newData) => {
-    localStorage.setItem('dona_today_config_v3', JSON.stringify(newData));
-    // Sync legacy key so the public page can also read it
-    
-    // Calculate featured vs timeline
-    let urgent = newData.newsItems.find(n => n.isFeatured);
-    let timeline = newData.newsItems.filter(n => !n.isFeatured);
-    if (!urgent && newData.newsItems.length > 0) {
-      urgent = newData.newsItems[0];
-      timeline = newData.newsItems.slice(1);
+  const persistAll = async (newData) => {
+    try {
+      const res = await fetch('/api/admin/today-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newData)
+      });
+      const json = await res.json();
+      if (json.success && json.config) {
+        setData(json.config);
+        setSaveNotif('✓ Modifications enregistrées directement dans la base de données !');
+        setTimeout(() => setSaveNotif(''), 3500);
+      }
+    } catch (e) {
+      console.error('Error saving today page config to database:', e);
+      setSaveNotif('Erreur lors de la sauvegarde');
     }
-    
-    const legacyData = {
-      hero: {
-        title: newData.hero.title,
-        subtitle: newData.hero.subtitle,
-        button1: { label: newData.hero.button1Label, url: newData.hero.button1Url },
-        button2: { label: newData.hero.button2Label, url: newData.hero.button2Url },
-        image: newData.hero.image
-      },
-      filters: newData.filters.map(f => ({ id: f.id, label: f.label, url: f.url })),
-      urgentArticle: urgent ? { id: urgent.id, title: urgent.title, desc: urgent.desc, image: urgent.image || '/assets/core/img/featured_urgent.png', filters: urgent.filters || [], isFeatured: urgent.isFeatured } : null,
-      newsTimeline: timeline.map(n => ({ id: n.id, time: n.time, isNew: n.isNew, title: n.title, desc: n.desc, image: n.image, filters: n.filters || [], isFeatured: n.isFeatured })),
-      editorial: {
-        title: newData.editorial.title,
-        desc: newData.editorial.content?.replace(/<[^>]+>/g, ''),
-        points: newData.editorial.points,
-        quote: newData.editorial.quote,
-        image: newData.editorial.image
-      },
-      values: newData.values.map(v => ({ id: v.id, title: v.title, desc: v.desc })),
-      france: newData.france.map(f => ({ id: f.id, category: f.category, time: f.time, title: f.title, desc: f.desc, image: f.image, filters: f.filters || [] }))
-    };
-    localStorage.setItem('dona_today_config', JSON.stringify(legacyData));
-    setSaveNotif('✓ Modifications enregistrées');
-    setTimeout(() => setSaveNotif(''), 3000);
   };
 
   // ─── HERO ─────────────────────────────────────────────────────────────────

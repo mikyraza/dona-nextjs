@@ -1,32 +1,23 @@
 import fs from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
+import { dbGetArticles } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const articlesPath = path.join(process.cwd(), 'lib', 'articles_db.json');
-    const magsPath = path.join(process.cwd(), 'lib', 'magazines_db.json');
+    const dbPath = path.join(process.cwd(), 'lib', 'dona.db');
+    let lastModified = Date.now();
 
-    let lastModified = 0;
-    let articlesCount = 0;
-
-    if (fs.existsSync(articlesPath)) {
-      const stats = fs.statSync(articlesPath);
-      lastModified = Math.max(lastModified, stats.mtimeMs);
-      try {
-        const content = fs.readFileSync(articlesPath, 'utf8');
-        const arr = JSON.parse(content);
-        articlesCount = Array.isArray(arr) ? arr.length : 0;
-      } catch (e) {}
+    if (fs.existsSync(dbPath)) {
+      const stats = fs.statSync(dbPath);
+      lastModified = stats.mtimeMs;
     }
 
-    if (fs.existsSync(magsPath)) {
-      const stats = fs.statSync(magsPath);
-      lastModified = Math.max(lastModified, stats.mtimeMs);
-    }
+    const articles = dbGetArticles();
+    const articlesCount = articles.length;
 
     return NextResponse.json({
       lastModified: Math.round(lastModified),
@@ -45,3 +36,4 @@ export async function GET() {
     });
   }
 }
+

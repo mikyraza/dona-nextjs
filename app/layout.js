@@ -27,13 +27,14 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
           rel="stylesheet"
         />
-        {/* Anti-flicker: runs before paint to apply saved theme */}
+        {/* Anti-flicker & Anti-extension mutation scrubber: runs before hydration */}
         <Script
-          id="theme-initializer"
-          strategy="afterInteractive"
+          id="theme-and-extension-initializer"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               try {
+                // 1. Apply saved theme immediately
                 var savedTheme = localStorage.getItem('dona-theme');
                 if (savedTheme === 'dark') {
                   document.documentElement.setAttribute('data-theme', 'dark');
@@ -42,10 +43,40 @@ export default function RootLayout({ children }) {
                   document.documentElement.setAttribute('data-theme', 'light');
                   document.documentElement.classList.remove('dark');
                 }
-              } catch(e) {
-                document.documentElement.setAttribute('data-theme', 'light');
-                document.documentElement.classList.remove('dark');
-              }
+
+                // 2. Prevent browser extension attributes (like bis_skin_checked) from causing hydration mismatch
+                var scrubExtensions = function() {
+                  var els = document.querySelectorAll('[bis_skin_checked]');
+                  for (var i = 0; i < els.length; i++) {
+                    els[i].removeAttribute('bis_skin_checked');
+                  }
+                };
+                scrubExtensions();
+
+                if (typeof MutationObserver !== 'undefined') {
+                  var observer = new MutationObserver(function(mutations) {
+                    for (var i = 0; i < mutations.length; i++) {
+                      var m = mutations[i];
+                      if (m.type === 'attributes' && m.attributeName === 'bis_skin_checked' && m.target && m.target.removeAttribute) {
+                        m.target.removeAttribute('bis_skin_checked');
+                      }
+                    }
+                  });
+                  observer.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['bis_skin_checked'] });
+                }
+
+                // 3. Filter extension noise from console in development
+                if (typeof window !== 'undefined') {
+                  var origError = console.error;
+                  console.error = function() {
+                    var msg = arguments[0];
+                    if (typeof msg === 'string' && (msg.indexOf('bis_skin_checked') !== -1 || (msg.indexOf('hydration-mismatch') !== -1 && JSON.stringify(Array.from(arguments)).indexOf('bis_skin_checked') !== -1))) {
+                      return;
+                    }
+                    origError.apply(console, arguments);
+                  };
+                }
+              } catch(e) {}
             `,
           }}
         />

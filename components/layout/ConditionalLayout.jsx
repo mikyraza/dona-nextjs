@@ -13,14 +13,14 @@ export default function ConditionalLayout({ children }) {
   const isAdminRoute = pathname?.startsWith('/admin');
 
   if (isAdminRoute) {
-    return <main>{children}</main>;
+    return <>{children}</>;
   }
 
   return (
     <>
       <BackgroundSync />
       <Header />
-      <main>{children}</main>
+      <main suppressHydrationWarning>{children}</main>
       <Footer />
       <PersistentPlayer />
       <SubscriptionSimulatorBar />

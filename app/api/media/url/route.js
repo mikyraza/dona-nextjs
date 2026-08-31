@@ -1,3 +1,4 @@
+import { writeAtomicSync } from '@/lib/atomicFile';
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
@@ -47,7 +48,7 @@ export async function POST(req) {
     }
 
     const filePath = path.join(uploadsDir, finalFilename);
-    fs.writeFileSync(filePath, buffer);
+    writeAtomicSync(filePath, buffer);
 
     const fileUrl = `/assets/core/uploads/${finalFilename}`;
 

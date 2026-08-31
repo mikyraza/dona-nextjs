@@ -3,6 +3,7 @@
 import React, { useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 function SignupForm() {
   const router = useRouter();
@@ -93,51 +94,60 @@ function SignupForm() {
     setFieldErrors({});
     setLoading(true);
 
+    const fullName = `${firstName} ${lastName}`.trim() || 'Nouveau Membre';
+
     try {
-      // ─── APPEL API SERVER-SIDE : Persistance réelle (cross-devices) ──────────
-      const res = await fetch('/api/auth/register', {
+      // 1. Direct Persistence to SQLite Database (users & members tables)
+      const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           firstName,
           lastName,
-          email,
+          name: fullName,
+          email: email.trim().toLowerCase(),
           password,
           phone,
-          plan: selectedPlan.name,
-          avatar: avatar || null,
-        }),
+          avatar,
+          plan: selectedPlan.name
+        })
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        // Erreurs retournées par l'API (email dupliqué, validation, etc.)
-        setError(data.error || 'Erreur lors de la création du compte.');
+      if (!res.ok || !data.success) {
+        setError(data.error || "Une erreur est survenue lors de l'enregistrement.");
         setLoading(false);
         return;
       }
 
-      // ─── Succès : cache local pour l'UI (profil visible immédiatement) ───
-      const serverUser = data.user;
+      // 2. Set active member profile for UI state
       localStorage.setItem('dona_member_profile', JSON.stringify({
-        id: serverUser.id,
-        firstName: serverUser.firstName,
-        lastName: serverUser.lastName,
-        email: serverUser.email,
-        phone: serverUser.phone || '',
-        avatar: serverUser.avatar || null,
-        plan: serverUser.plan,
-        status: serverUser.status,
+        firstName: firstName || fullName.split(' ')[0],
+        lastName: lastName || fullName.split(' ')[1] || '',
+        name: fullName,
+        email: email.trim().toLowerCase(),
+        phone: phone || '',
+        avatar: avatar || null,
+        plan: selectedPlan.name,
+        role: 'USER',
+        status: 'Active',
+        isGuest: false
       }));
-      localStorage.setItem('dona_user_plan', serverUser.plan);
+      localStorage.setItem('dona_user_plan', selectedPlan.name);
+      window.dispatchEvent(new Event('dona_subscription_changed'));
 
-      // Navigation vers le profil membre
+      // 3. Immediately Sign In to NextAuth
+      await signIn('credentials', {
+        email: email.trim().toLowerCase(),
+        password,
+        redirect: false
+      });
+
       router.push('/member-profile');
-
-    } catch (networkErr) {
-      console.error('[signup] Erreur réseau:', networkErr);
-      setError('Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.');
+    } catch (e) {
+      console.error('Error saving registration data:', e);
+      setError("Erreur réseau lors de l'enregistrement.");
+    } finally {
       setLoading(false);
     }
   };

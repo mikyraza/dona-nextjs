@@ -33,7 +33,7 @@ const UNIVERSES = [
 ];
 
 export default function AdminCatchAllPage({ params }) {
-  const resolvedParams = use(params);
+  const resolvedParams = params && typeof params.then === 'function' ? use(params) : (params || {});
   const slug = resolvedParams.slug || [];
   const section = slug[0] || 'articles';
   const subsection = slug[1] || '';
@@ -241,115 +241,82 @@ export default function AdminCatchAllPage({ params }) {
     return mem;
   };
 
-  // Load from localStorage on mount - runs ONCE, sets members
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  // Fetch members from /api/admin/members (SQLite Database)
+  const fetchMembers = async () => {
     try {
-      let currentMembers = DEFAULT_MEMBERS;
-      const storedAdmin = localStorage.getItem('dona_admin_members_db');
-      if (storedAdmin) {
-        const parsed = JSON.parse(storedAdmin);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          currentMembers = parsed;
-        }
+      const res = await fetch('/api/admin/members');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.members)) {
+        setMembers(data.members);
       }
-
-      // Merge dona_member_profile into the matching member
-      const storedProfile = localStorage.getItem('dona_member_profile');
-      if (storedProfile) {
-        const profile = JSON.parse(storedProfile);
-        if (profile) {
-          const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
-          const profEmail = (profile.email || '').toLowerCase().trim();
-          const profName = fullName.toLowerCase();
-          let matchedAny = false;
-          currentMembers = currentMembers.map(m => {
-            const mEmail = (m.email || '').toLowerCase().trim();
-            const mName = (m.name || '').toLowerCase().trim();
-            if ((profEmail && mEmail === profEmail) || (profName && mName === profName)) {
-              matchedAny = true;
-              return {
-                ...m,
-                name: fullName || m.name,
-                email: profile.email || m.email,
-                phone: profile.phone || m.phone || '',
-                avatar: profile.avatar || m.avatar || null
-              };
-            }
-            return m;
-          });
-          if (!matchedAny && (fullName || profEmail)) {
-            currentMembers.unshift({
-              id: `mem-profile`,
-              name: fullName || 'Ernest Raza',
-              email: profile.email || '',
-              phone: profile.phone || '',
-              avatar: profile.avatar || null,
-              plan: 'Premium',
-              status: 'Active',
-              joined: new Date().toLocaleDateString('fr-FR')
-            });
-          }
-        }
-      }
-
-      setMembers(currentMembers);
-      // Persist merged result immediately
-      localStorage.setItem('dona_admin_members_db', JSON.stringify(currentMembers));
     } catch (e) {
-      console.error('Error loading admin members from localStorage:', e);
+      console.error('Error loading admin members from database:', e);
       setMembers(DEFAULT_MEMBERS);
     }
-  }, []);
+  };
 
-  // Save to localStorage ONLY after initial load (members !== null)
   useEffect(() => {
-    if (members === null) return; // skip the initial null state
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('dona_admin_members_db', JSON.stringify(members));
-        localStorage.setItem('dona_members_count', (1281 + members.length).toString());
-      } catch (e) {
-        console.error('Error saving admin members to localStorage:', e);
-      }
+    if (section === 'membres') {
+      fetchMembers();
     }
-  }, [members]);
+  }, [section]);
 
   // Search & Filter State for Members Directory
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [memberPlanFilter, setMemberPlanFilter] = useState('all');
   const [memberStatusFilter, setMemberStatusFilter] = useState('all');
 
-  const handleSaveMember = (savedMember) => {
-    const isEdit = (members || []).some(m => m.id === savedMember.id);
-    if (isEdit) {
-      setMembers(prev => (prev || []).map(m => m.id === savedMember.id ? savedMember : m));
-    } else {
-      setMembers(prev => [savedMember, ...(prev || [])]);
-    }
-
+  const handleSaveMember = async (savedMember) => {
     try {
-      const storedProfile = localStorage.getItem('dona_member_profile');
-      if (storedProfile) {
-        const profile = JSON.parse(storedProfile);
-        const pEmail = (profile.email || '').toLowerCase().trim();
-        const sEmail = (savedMember.email || '').toLowerCase().trim();
-        if (profile && (pEmail === sEmail || savedMember.id === 'mem-profile')) {
-          const parts = (savedMember.name || '').split(' ');
-          const fName = parts[0] || profile.firstName;
-          const lName = parts.slice(1).join(' ') || profile.lastName;
-          localStorage.setItem('dona_member_profile', JSON.stringify({
-            ...profile,
-            firstName: fName,
-            lastName: lName,
-            email: savedMember.email || profile.email,
-            phone: savedMember.phone !== undefined ? savedMember.phone : profile.phone,
-            avatar: savedMember.avatar !== undefined ? savedMember.avatar : profile.avatar
-          }));
+      const res = await fetch('/api/admin/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savedMember)
+      });
+      const data = await res.json();
+      if (data.success && data.member) {
+        const isEdit = (members || []).some(m => m.id === data.member.id || m.email === data.member.email);
+        if (isEdit) {
+          setMembers(prev => (prev || []).map(m => (m.id === data.member.id || m.email === data.member.email) ? data.member : m));
+        } else {
+          setMembers(prev => [data.member, ...(prev || [])]);
         }
       }
     } catch (e) {
-      console.error('Error syncing saved member to profile:', e);
+      console.error('Error saving member to database:', e);
+    }
+  };
+
+  const handleToggleMemberStatus = async (mem) => {
+    const nextStatus = mem.status === 'Active' ? 'Inactive' : 'Active';
+    try {
+      const res = await fetch('/api/admin/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...mem, status: nextStatus })
+      });
+      const data = await res.json();
+      if (data.success && data.member) {
+        setMembers(prev => (prev || []).map(m => m.id === mem.id ? data.member : m));
+      }
+    } catch (e) {
+      console.error('Error toggling member status:', e);
+    }
+  };
+
+  const handleDeleteMember = async (memberId, memberName) => {
+    if (confirm(`Supprimer le membre ${memberName || ''} de la base de données ?`)) {
+      try {
+        const res = await fetch(`/api/admin/members?id=${encodeURIComponent(memberId)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          setMembers(prev => (prev || []).filter(m => m.id !== memberId));
+        }
+      } catch (e) {
+        console.error('Error deleting member from database:', e);
+      }
     }
   };
 
@@ -1690,7 +1657,7 @@ export default function AdminCatchAllPage({ params }) {
                           </button>
                           <span className="table-action-divider">|</span>
                           <button 
-                            onClick={() => setMembers(prev => (prev || []).map(m => m.id === mem.id ? { ...m, status: m.status === 'Active' ? 'Inactive' : 'Active' } : m))} 
+                            onClick={() => handleToggleMemberStatus(mem)} 
                             className="table-action-btn" 
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                           >
@@ -1698,11 +1665,7 @@ export default function AdminCatchAllPage({ params }) {
                           </button>
                           <span className="table-action-divider">|</span>
                           <button 
-                            onClick={() => {
-                              if (confirm(`Supprimer le membre ${mem.name} ?`)) {
-                                setMembers(prev => (prev || []).filter(m => m.id !== mem.id));
-                              }
-                            }} 
+                            onClick={() => handleDeleteMember(mem.id, mem.name)} 
                             className="table-action-btn secondary" 
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--admin-accent-color)' }}
                           >

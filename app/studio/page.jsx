@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import ReactPlayer from 'react-player';
 import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
+import { getMediaFormatInfo } from '@/lib/mediaFormatHelper';
 
 // ─── Category filter tabs ────────────────────────────────────────────────────
 const CATEGORIES = ['Tout', 'Économie', 'Culture', 'Masterclass', 'Événement', 'Documentaire'];
@@ -72,7 +73,7 @@ function VideoCard({ video, featured = false, onPlay, onLockedClick }) {
           </div>
         )}
 
-        {video.videoUrl && !video.isLocked && (
+        {video.videoUrl && !video.isLocked && getMediaFormatInfo(video.videoUrl).isHtml5Supported && (
           <video
             ref={videoRef}
             src={video.videoUrl}

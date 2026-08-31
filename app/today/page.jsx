@@ -58,19 +58,45 @@ export default function Page() {
   const [activeFilter, setActiveFilter] = useState(initialConfig.filters[0].id);
 
   useEffect(() => {
-    // Load dynamic config from localStorage
-    const savedConfig = localStorage.getItem('dona_today_config');
-    if (savedConfig) {
-      try {
-        const parsed = JSON.parse(savedConfig);
-        setConfig(parsed);
-        if (parsed.filters && parsed.filters.length > 0) {
+    fetch('/api/today')
+      .then(res => res.json())
+      .then(dbConfig => {
+        if (dbConfig && dbConfig.hero) {
+          let urgent = (dbConfig.newsItems || []).find(n => n.isFeatured);
+          let timeline = (dbConfig.newsItems || []).filter(n => !n.isFeatured);
+          if (!urgent && dbConfig.newsItems && dbConfig.newsItems.length > 0) {
+            urgent = dbConfig.newsItems[0];
+            timeline = dbConfig.newsItems.slice(1);
+          }
+
+          const parsed = {
+            hero: {
+              title: dbConfig.hero.title || initialConfig.hero.title,
+              subtitle: dbConfig.hero.subtitle || initialConfig.hero.subtitle,
+              button1: { label: dbConfig.hero.button1Label || "DÉCOUVRIR DONA", url: dbConfig.hero.button1Url || "#" },
+              button2: { label: dbConfig.hero.button2Label || "LIRE LE MANIFESTE", url: dbConfig.hero.button2Url || "#" },
+              image: dbConfig.hero.image || initialConfig.hero.image
+            },
+            filters: dbConfig.filters && dbConfig.filters.length > 0 ? dbConfig.filters : initialConfig.filters,
+            urgentArticle: urgent || initialConfig.urgentArticle,
+            newsTimeline: timeline && timeline.length > 0 ? timeline : initialConfig.newsTimeline,
+            editorial: {
+              title: dbConfig.editorial?.title || initialConfig.editorial.title,
+              desc: dbConfig.editorial?.content?.replace(/<[^>]+>/g, '') || initialConfig.editorial.desc,
+              points: dbConfig.editorial?.points || initialConfig.editorial.points,
+              quote: dbConfig.editorial?.quote || initialConfig.editorial.quote,
+              image: dbConfig.editorial?.image || initialConfig.editorial.image
+            },
+            values: dbConfig.values && dbConfig.values.length > 0 ? dbConfig.values : initialConfig.values,
+            france: dbConfig.france && dbConfig.france.length > 0 ? dbConfig.france : initialConfig.france
+          };
+          setConfig(parsed);
+          if (parsed.filters && parsed.filters.length > 0) {
             setActiveFilter(parsed.filters[0].id);
+          }
         }
-      } catch (e) {
-        console.error("Erreur de parsing dona_today_config", e);
-      }
-    }
+      })
+      .catch(err => console.error("Error fetching Today config from database:", err));
   }, []);
 
   // Compute filtered items

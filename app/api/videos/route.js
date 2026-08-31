@@ -1,34 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { dbGetVideos, dbGetTvLive } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
-import fs from 'fs';
-import path from 'path';
-
-const VIDEOS_DB_PATH = path.join(process.cwd(), 'lib', 'videos_db.json');
-const TVLIVE_DB_PATH = path.join(process.cwd(), 'lib', 'tvlive_db.json');
-
-function readVideosDB() {
-  try {
-    if (fs.existsSync(VIDEOS_DB_PATH)) {
-      return JSON.parse(fs.readFileSync(VIDEOS_DB_PATH, 'utf-8'));
-    }
-  } catch (e) {
-    console.error('readVideosDB error:', e);
-  }
-  return [];
-}
-
-function readTvLiveDB() {
-  try {
-    if (fs.existsSync(TVLIVE_DB_PATH)) {
-      return JSON.parse(fs.readFileSync(TVLIVE_DB_PATH, 'utf-8'));
-    }
-  } catch (e) {
-    console.error('readTvLiveDB error:', e);
-  }
-  return { isLive: false, epg: [] };
-}
 
 function isVipUser(session) {
   if (!session?.user) return false;
@@ -36,7 +10,7 @@ function isVipUser(session) {
   return role !== 'INACTIVE';
 }
 
-// GET /api/videos — public video hub feed
+// GET /api/videos — public video hub feed from relational SQL DB
 // Supports: ?category=, ?magazine=, ?featured=true, ?replay=true, ?limit=N
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -50,7 +24,14 @@ export async function GET(request) {
   const session = await getServerSession();
   const userIsVip = isVipUser(session);
 
-  let videos = readVideosDB().filter(v => v.status === 'Published');
+  let videos = dbGetVideos({
+    status: 'Published',
+    category: category && category !== 'all' ? category : undefined,
+    magazine: magazine && magazine !== 'all' ? magazine : undefined,
+    featured: featured === 'true',
+    replay: replay === 'true',
+    limit,
+  });
 
   // Filter VIP-only for non-VIP users — replace content with placeholder
   videos = videos.map(v => {
@@ -64,26 +45,8 @@ export async function GET(request) {
     return { ...v, isLocked: false };
   });
 
-  // Apply filters
-  if (category && category !== 'all') {
-    videos = videos.filter(v => v.category === category);
-  }
-  if (magazine && magazine !== 'all') {
-    videos = videos.filter(v => v.magazine === magazine);
-  }
-  if (featured === 'true') {
-    videos = videos.filter(v => v.isFeatured);
-  }
-  if (replay === 'true') {
-    videos = videos.filter(v => v.isReplay);
-  }
-
-  // Sort by publishedAt desc
-  videos.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-  videos = videos.slice(0, limit);
-
-  // Get live TV state
-  const tvLive = readTvLiveDB();
+  // Get live TV state from relational DB
+  const tvLive = dbGetTvLive();
   const liveTvPayload = {
     isLive: tvLive.isLive,
     currentTitle: tvLive.currentTitle,
@@ -105,3 +68,4 @@ export async function GET(request) {
     userIsVip,
   });
 }
+

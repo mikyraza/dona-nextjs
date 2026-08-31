@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import AdminMediaPlayer from './AdminMediaPlayer';
+import { getMediaFormatInfo } from '@/lib/mediaFormatHelper';
+import { uploadFileWithProgress } from '@/lib/uploadWithRetry';
 
 const MediaPickerModal = dynamic(() => import('./MediaPickerModal'), { ssr: false });
 
@@ -146,6 +149,8 @@ export default function VideoDrawer({ isOpen, onClose, onSave, video }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
 
   const [magazinesList, setMagazinesList] = useState(DEFAULT_UNIVERSES);
 
@@ -283,45 +288,61 @@ export default function VideoDrawer({ isOpen, onClose, onSave, video }) {
     setFileName('');
     setUploadProgress(0);
     setIsUploading(false);
+    setPendingFile(null);
+    setUploadError(null);
   }
 
   if (!isOpen) return null;
 
-  // Handle upload
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setFileName(file.name);
+  // Perform upload with real progress and retry support
+  const performUpload = async (fileToUpload) => {
+    if (!fileToUpload) return;
+    setPendingFile(fileToUpload);
+    setFileName(fileToUpload.name);
     setIsUploading(true);
-    setUploadProgress(15);
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const interval = setInterval(() => {
-      setUploadProgress(prev => (prev < 85 ? prev + 10 : 85));
-    }, 150);
+    setUploadError(null);
+    setUploadProgress(0);
 
     try {
-      const res = await fetch('/api/media', { method: 'POST', body: formData });
-      const data = await res.json();
-      clearInterval(interval);
-      if (data.success && data.url) {
+      const data = await uploadFileWithProgress(fileToUpload, {
+        onProgress: (percent) => setUploadProgress(percent)
+      });
+
+      if (data && data.url) {
         setUploadProgress(100);
         setVideoUrl(data.url);
+        setUploadError(null);
       } else {
-        alert(`Erreur upload: ${data.error || 'Téléversement échoué'}`);
-        setUploadProgress(0);
+        throw new Error(data?.error || "Échec du téléversement");
       }
     } catch (err) {
-      clearInterval(interval);
-      console.error('Upload error:', err);
-      alert('Erreur de connexion lors du téléversement');
+      console.error('Video upload error:', err);
+      setUploadError(err.message || "Erreur réseau lors de l'envoi du fichier volumineux.");
       setUploadProgress(0);
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      performUpload(file);
+    }
+  };
+
+  const handleRetryUpload = () => {
+    if (pendingFile) {
+      performUpload(pendingFile);
+    }
+  };
+
+  const handleCancelUpload = () => {
+    setPendingFile(null);
+    setUploadError(null);
+    setFileName('');
+    setUploadProgress(0);
+    setIsUploading(false);
   };
 
   const handleMediaSelect = (url) => {
@@ -678,7 +699,7 @@ export default function VideoDrawer({ isOpen, onClose, onSave, video }) {
                         <input
                           type="file"
                           id="vid-upload-input"
-                          accept="video/mp4,video/webm,video/ogg"
+                          accept="video/*,.mkv,.avi,.mp4,.webm,.mov,.wmv,.flv"
                           style={{ display: 'none' }}
                           onChange={handleFileChange}
                         />
@@ -689,17 +710,66 @@ export default function VideoDrawer({ isOpen, onClose, onSave, video }) {
                       </div>
 
                       {fileName && (
-                        <div className="file-upload-status-card" style={{ marginTop: '10px', padding: '10px 14px', background: '#FAF9F6', border: '1px solid #E5E7EB', borderRadius: '4px' }}>
+                        <div className="file-upload-status-card" style={{ marginTop: '10px', padding: '12px 14px', background: uploadError ? '#FEF2F2' : '#FAF9F6', border: `1px solid ${uploadError ? '#FCA5A5' : '#E5E7EB'}`, borderRadius: '6px' }}>
                           <div className="file-info" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span className="material-symbols-outlined" style={{ color: 'var(--admin-accent-color)', fontSize: '20px' }}>movie</span>
-                              <span style={{ fontSize: '12px', fontWeight: 600 }}>{fileName}</span>
+                              <span className="material-symbols-outlined" style={{ color: uploadError ? '#DC2626' : (uploadProgress === 100 ? '#16A34A' : 'var(--admin-accent-color)'), fontSize: '20px' }}>
+                                {uploadError ? 'error' : (uploadProgress === 100 ? 'check_circle' : 'movie')}
+                              </span>
+                              <span style={{ fontSize: '12px', fontWeight: 600, color: uploadError ? '#991B1B' : '#111' }}>{fileName}</span>
                             </div>
-                            <span style={{ fontSize: '11px', color: '#6B7280', fontWeight: 600 }}>{uploadProgress}%</span>
+                            <span style={{ fontSize: '11px', color: uploadError ? '#DC2626' : (uploadProgress === 100 ? '#16A34A' : '#6B7280'), fontWeight: 600 }}>
+                              {uploadError ? "Échec de l'envoi" : (uploadProgress === 100 ? "Téléversé ✓" : `${uploadProgress}%`)}
+                            </span>
                           </div>
-                          {uploadProgress > 0 && uploadProgress < 100 && (
-                            <div className="upload-mini-progress" style={{ marginTop: '6px' }}>
-                              <div className="upload-mini-progress-fill" style={{ width: `${uploadProgress}%` }} />
+
+                          {isUploading && (
+                            <div className="upload-mini-progress" style={{ marginTop: '8px' }}>
+                              <div className="upload-mini-progress-fill" style={{ width: `${uploadProgress}%`, transition: 'width 0.2s ease' }} />
+                            </div>
+                          )}
+
+                          {uploadError && (
+                            <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                              <span style={{ fontSize: '11px', color: '#B91C1C' }}>{uploadError}</span>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button
+                                  type="button"
+                                  onClick={handleRetryUpload}
+                                  style={{
+                                    padding: '5px 10px',
+                                    borderRadius: '4px',
+                                    background: '#DC2626',
+                                    color: '#fff',
+                                    border: 'none',
+                                    fontSize: '11px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>refresh</span>
+                                  Réessayer l'envoi
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleCancelUpload}
+                                  style={{
+                                    padding: '5px 10px',
+                                    borderRadius: '4px',
+                                    background: '#fff',
+                                    color: '#374151',
+                                    border: '1px solid #D1D5DB',
+                                    fontSize: '11px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Annuler
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { uploadFileWithProgress } from '@/lib/uploadWithRetry';
 
 const MediaPickerModal = dynamic(() => import('./MediaPickerModal'), { ssr: false });
 
@@ -149,6 +150,133 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
   const [mediaModalTarget, setMediaModalTarget] = useState(null); // 'cover' | 'gallery' | 'video' | 'audio' | 'editor'
 
   const editorRef = useRef(null);
+
+  // Cover Upload Handler
+  const performCoverUpload = async (file) => {
+    if (!file) return;
+    setCoverPendingFile(file);
+    setCoverImageFileName(file.name);
+    setCoverImageIsUploading(true);
+    setCoverUploadError(null);
+    setCoverImageUploadProgress(0);
+
+    try {
+      const data = await uploadFileWithProgress(file, {
+        onProgress: (percent) => setCoverImageUploadProgress(percent)
+      });
+      if (data && data.url) {
+        setCoverImage(data.url);
+        setCoverImageUploadProgress(100);
+        setCoverUploadError(null);
+      } else {
+        throw new Error(data?.error || "Échec de l'upload de la couverture");
+      }
+    } catch (err) {
+      console.error('Cover upload error:', err);
+      setCoverUploadError(err.message || "Erreur réseau lors de l'envoi.");
+      setCoverImageUploadProgress(0);
+    } finally {
+      setCoverImageIsUploading(false);
+    }
+  };
+
+  // Gallery Upload Handler
+  const performGalleryUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    setGalleryPendingFiles(Array.from(files));
+    setGalleryIsUploading(true);
+    setGalleryUploadError(null);
+    setGalleryUploadProgress(0);
+
+    try {
+      const total = files.length;
+      let completed = 0;
+      const uploadedItems = [];
+
+      for (let i = 0; i < total; i++) {
+        const f = files[i];
+        const data = await uploadFileWithProgress(f, {
+          onProgress: (p) => {
+            const overall = Math.round(((completed * 100) + p) / total);
+            setGalleryUploadProgress(overall);
+          }
+        });
+        if (data && data.url) {
+          uploadedItems.push({ url: data.url, caption: f.name });
+          completed++;
+        }
+      }
+
+      setArticleGallery(prev => [...prev, ...uploadedItems]);
+      setGalleryUploadProgress(100);
+      setGalleryPendingFiles([]);
+      setGalleryUploadError(null);
+    } catch (err) {
+      console.error('Gallery upload error:', err);
+      setGalleryUploadError(err.message || "Erreur réseau lors de l'envoi de la galerie.");
+    } finally {
+      setGalleryIsUploading(false);
+    }
+  };
+
+  // Video Upload Handler
+  const performVideoUpload = async (file) => {
+    if (!file) return;
+    setVideoPendingFile(file);
+    setVideoFileName(file.name);
+    setVideoIsUploading(true);
+    setVideoUploadError(null);
+    setVideoUploadProgress(0);
+
+    try {
+      const data = await uploadFileWithProgress(file, {
+        onProgress: (percent) => setVideoUploadProgress(percent)
+      });
+      if (data && data.url) {
+        setVideoUrl(data.url);
+        setVideoUploadProgress(100);
+        setVideoUploadError(null);
+      } else {
+        throw new Error(data?.error || "Échec de l'upload de la vidéo");
+      }
+    } catch (err) {
+      console.error('Video upload error:', err);
+      setVideoUploadError(err.message || "Erreur réseau lors de l'envoi de la vidéo.");
+      setVideoUploadProgress(0);
+    } finally {
+      setVideoIsUploading(false);
+    }
+  };
+
+  // Audio Upload Handler
+  const performAudioUpload = async (file) => {
+    if (!file) return;
+    setAudioPendingFile(file);
+    setAudioFileName(file.name);
+    setAudioIsUploading(true);
+    setAudioUploadError(null);
+    setAudioUploadProgress(0);
+
+    try {
+      const data = await uploadFileWithProgress(file, {
+        onProgress: (percent) => setAudioUploadProgress(percent)
+      });
+      if (data && data.url) {
+        setAudioFileName(data.url);
+        setAudioUploadProgress(100);
+        setAudioUploadError(null);
+      } else {
+        throw new Error(data?.error || "Échec de l'upload audio");
+      }
+    } catch (err) {
+      console.error('Audio upload error:', err);
+      setAudioUploadError(err.message || "Erreur réseau lors de l'envoi audio.");
+      setAudioUploadProgress(0);
+    } finally {
+      setAudioIsUploading(false);
+    }
+  };
+
 
   // Fetch dynamic magazines on open
   useEffect(() => {

@@ -1,56 +1,19 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { dbGetTvLive, dbUpdateTvLive } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-const TVLIVE_DB_PATH = path.join(process.cwd(), 'lib', 'tvlive_db.json');
-
-function readTvLiveDB() {
-  try {
-    if (fs.existsSync(TVLIVE_DB_PATH)) {
-      return JSON.parse(fs.readFileSync(TVLIVE_DB_PATH, 'utf-8'));
-    }
-  } catch (e) {
-    console.error('readTvLiveDB error:', e);
-  }
-  return { isLive: false, epg: [] };
-}
-
-function writeTvLiveDB(data) {
-  fs.writeFileSync(TVLIVE_DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-// GET /api/admin/tv-live — get live state + EPG
+// GET /api/admin/tv-live — get live state + EPG from relational SQL DB
 export async function GET() {
-  const state = readTvLiveDB();
+  const state = dbGetTvLive();
   return NextResponse.json({ success: true, ...state });
 }
 
-// POST /api/admin/tv-live — update live state (toggle, stream URL, metadata)
+// POST /api/admin/tv-live — update live state in relational SQL DB
 export async function POST(request) {
   try {
     const body = await request.json();
-    const current = readTvLiveDB();
-
-    const isStartingLive = (body.isLive === true && !current.isLive) || 
-                           (body.isLive === true && body.streamUrl && body.streamUrl !== current.streamUrl);
-
-    const updated = {
-      ...current,
-      isLive: body.isLive !== undefined ? body.isLive : current.isLive,
-      streamUrl: body.streamUrl !== undefined ? body.streamUrl : current.streamUrl,
-      hlsUrl: body.hlsUrl !== undefined ? body.hlsUrl : current.hlsUrl,
-      currentTitle: body.currentTitle !== undefined ? body.currentTitle : current.currentTitle,
-      currentSubtitle: body.currentSubtitle !== undefined ? body.currentSubtitle : current.currentSubtitle,
-      currentGuest: body.currentGuest !== undefined ? body.currentGuest : current.currentGuest,
-      format: body.format !== undefined ? body.format : current.format,
-      location: body.location !== undefined ? body.location : current.location,
-      updatedAt: new Date().toISOString(),
-      liveStartTime: isStartingLive ? Date.now() : (current.liveStartTime || Date.now())
-    };
-
-    writeTvLiveDB(updated);
+    const updated = dbUpdateTvLive(body);
     return NextResponse.json({ success: true, ...updated });
   } catch (error) {
     console.error('POST /api/admin/tv-live error:', error);
@@ -58,13 +21,12 @@ export async function POST(request) {
   }
 }
 
-// PUT /api/admin/tv-live — manage EPG (add/remove/reorder items)
+// PUT /api/admin/tv-live — manage EPG in relational SQL DB
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const current = readTvLiveDB();
+    const current = dbGetTvLive();
 
-    // action: 'add' | 'remove' | 'move-up' | 'move-down' | 'replace'
     let epg = [...(current.epg || [])];
 
     if (body.action === 'add' && body.item) {
@@ -93,12 +55,11 @@ export async function PUT(request) {
       epg = body.epg;
     }
 
-    const updated = { ...current, epg, updatedAt: new Date().toISOString() };
-    writeTvLiveDB(updated);
-
-    return NextResponse.json({ success: true, epg });
+    const updated = dbUpdateTvLive({ epg });
+    return NextResponse.json({ success: true, epg: updated.epg });
   } catch (error) {
     console.error('PUT /api/admin/tv-live error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

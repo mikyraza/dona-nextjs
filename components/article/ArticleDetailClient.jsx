@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { getActiveUserSubscription, canAccessMagazine } from '@/lib/subscriptionPermissions';
 import SaveArticleButton from '@/components/article/SaveArticleButton';
 import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
+import { getMediaFormatInfo } from '@/lib/mediaFormatHelper';
 
 export default function ArticleDetailClient({ magazine, article, magazineSlug, articleSlug }) {
   const { data: session } = useSession();

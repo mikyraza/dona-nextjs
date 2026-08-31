@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, SessionProvider, useSession } from 'next-auth/react';
@@ -18,6 +18,11 @@ function AdminInnerLayout({ children }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Bypasser le layout pour la page de connexion administrative
   if (pathname === '/admin/login') {
@@ -39,7 +44,7 @@ function AdminInnerLayout({ children }) {
   const isTranslator = userRole === "Traducteur";
 
   return (
-    <div className="admin-layout-wrapper">
+    <div className="admin-layout-wrapper" suppressHydrationWarning>
       {/* Sidebar Navigation */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -286,9 +291,9 @@ function AdminInnerLayout({ children }) {
       </aside>
 
       {/* Main Panel Area */}
-      <div className="admin-main-container">
+      <div className="admin-main-container" suppressHydrationWarning>
         {/* Top Navbar */}
-        <header className="admin-topbar">
+        <header className="admin-topbar" suppressHydrationWarning>
           <div className="topbar-left">
             <span className="topbar-title">Dashboard</span>
           </div>
@@ -348,12 +353,12 @@ function AdminInnerLayout({ children }) {
         </header>
 
         {/* Page Content View */}
-        <main className="admin-content-pane">
+        <main className="admin-content-pane" suppressHydrationWarning>
           {children}
         </main>
 
         {/* Admin Footer */}
-        <footer className="admin-footer">
+        <footer className="admin-footer" suppressHydrationWarning>
           <div>
             © 2024 DONA Media Group — V2.0.4
           </div>

@@ -1,51 +1,31 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { dbGetVideos, dbUpsertVideo, dbDeleteVideo } from '@/lib/db';
 
-const VIDEOS_DB_PATH = path.join(process.cwd(), 'lib', 'videos_db.json');
-
-function readVideosDB() {
-  try {
-    if (fs.existsSync(VIDEOS_DB_PATH)) {
-      return JSON.parse(fs.readFileSync(VIDEOS_DB_PATH, 'utf-8'));
-    }
-  } catch (e) {
-    console.error('readVideosDB error:', e);
-  }
-  return [];
-}
-
-function writeVideosDB(data) {
-  fs.writeFileSync(VIDEOS_DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-// GET /api/admin/videos — list all videos
+// GET /api/admin/videos — list all videos from relational SQL DB
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const category = searchParams.get('category');
-  const magazine = searchParams.get('magazine');
-  const status = searchParams.get('status');
+  try {
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
+    const magazine = searchParams.get('magazine');
+    const status = searchParams.get('status');
 
-  let videos = readVideosDB();
+    const videos = dbGetVideos({
+      category: category && category !== 'all' ? category : undefined,
+      magazine: magazine && magazine !== 'all' ? magazine : undefined,
+      status: status && status !== 'all' ? status : undefined,
+    });
 
-  if (category && category !== 'all') {
-    videos = videos.filter(v => v.category === category);
+    return NextResponse.json({ success: true, videos });
+  } catch (error) {
+    console.error('GET /api/admin/videos error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
-  if (magazine && magazine !== 'all') {
-    videos = videos.filter(v => v.magazine === magazine);
-  }
-  if (status && status !== 'all') {
-    videos = videos.filter(v => v.status === status);
-  }
-
-  return NextResponse.json({ success: true, videos });
 }
 
-// POST /api/admin/videos — create a new video
+// POST /api/admin/videos — create a new video in relational SQL DB
 export async function POST(request) {
   try {
     const body = await request.json();
-    const videos = readVideosDB();
 
     const newVideo = {
       id: `vid-${Date.now()}`,
@@ -66,38 +46,33 @@ export async function POST(request) {
       status: body.status || 'Draft',
     };
 
-    videos.unshift(newVideo);
-    writeVideosDB(videos);
+    const saved = dbUpsertVideo(newVideo);
 
-    return NextResponse.json({ success: true, video: newVideo });
+    return NextResponse.json({ success: true, video: saved || newVideo });
   } catch (error) {
     console.error('POST /api/admin/videos error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-// PUT /api/admin/videos — update an existing video
+// PUT /api/admin/videos — update an existing video in relational SQL DB
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const videos = readVideosDB();
-    const idx = videos.findIndex(v => v.id === body.id);
-
-    if (idx === -1) {
-      return NextResponse.json({ success: false, error: 'Video not found' }, { status: 404 });
+    if (!body.id) {
+      return NextResponse.json({ success: false, error: 'Missing video id' }, { status: 400 });
     }
 
-    videos[idx] = { ...videos[idx], ...body, updatedAt: new Date().toISOString() };
-    writeVideosDB(videos);
+    const saved = dbUpsertVideo(body);
 
-    return NextResponse.json({ success: true, video: videos[idx] });
+    return NextResponse.json({ success: true, video: saved || body });
   } catch (error) {
     console.error('PUT /api/admin/videos error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-// DELETE /api/admin/videos — delete a video by id
+// DELETE /api/admin/videos — delete a video by id from relational SQL DB
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -107,9 +82,7 @@ export async function DELETE(request) {
       return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });
     }
 
-    let videos = readVideosDB();
-    videos = videos.filter(v => v.id !== id);
-    writeVideosDB(videos);
+    dbDeleteVideo(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -117,3 +90,4 @@ export async function DELETE(request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

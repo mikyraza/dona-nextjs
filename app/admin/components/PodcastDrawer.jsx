@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import AdminMediaPlayer from './AdminMediaPlayer';
+import { getMediaFormatInfo } from '@/lib/mediaFormatHelper';
+import { uploadFileWithProgress } from '@/lib/uploadWithRetry';
 
 const MediaPickerModal = dynamic(() => import('./MediaPickerModal'), { ssr: false });
 
@@ -688,7 +691,7 @@ export default function PodcastDrawer({ isOpen, onClose, onSave, podcast }) {
                         <input
                           type="file"
                           id="pod-audio-file"
-                          accept="audio/mpeg,audio/wav,audio/aac,audio/mp4"
+                          accept="audio/*,video/*,.mp3,.wav,.aac,.m4a,.flac,.ogg,.avi,.mkv"
                           style={{ display: 'none' }}
                           onChange={handleAudioChange}
                         />

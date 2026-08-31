@@ -2,18 +2,30 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { uploadFileWithProgress } from "@/lib/uploadWithRetry";
 
 export default function MediaPickerModal({ isOpen, onClose, onSelect }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [pendingFile, setPendingFile] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
   const [activeTab, setActiveTab] = useState("library"); // 'library', 'upload', 'url'
   const [urlInput, setUrlInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchMedia();
+      setCurrentPage(1);
+      setSearch("");
+      setUploadError(null);
+      setPendingFile(null);
+      setUploadProgress(0);
     }
   }, [isOpen]);
 
@@ -32,33 +44,45 @@ export default function MediaPickerModal({ isOpen, onClose, onSelect }) {
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const filteredFiles = files.filter(f => {
+    if (!search) return true;
+    return f.name.toLowerCase().includes(search.toLowerCase());
+  });
 
+  const totalPages = Math.max(1, Math.ceil(filteredFiles.length / itemsPerPage));
+  const paginatedFiles = filteredFiles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const performUpload = async (file) => {
+    if (!file) return;
+    setPendingFile(file);
     setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
+    setUploadError(null);
+    setUploadProgress(0);
 
     try {
-      const res = await fetch("/api/media", { method: "POST", body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.url) {
-          onSelect(data.url);
-          onClose();
-        } else {
-          await fetchMedia();
-          setActiveTab("library");
-        }
+      const data = await uploadFileWithProgress(file, {
+        onProgress: (percent) => setUploadProgress(percent)
+      });
+      if (data && data.url) {
+        setUploadProgress(100);
+        onSelect(data.url);
+        onClose();
       } else {
-        alert("Erreur lors de l'upload");
+        throw new Error(data?.error || "Échec de l'upload");
       }
     } catch (error) {
-      alert("Erreur réseau");
+      console.error("MediaPicker upload error:", error);
+      setUploadError(error.message || "Erreur réseau lors du téléversement");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      performUpload(file);
     }
   };
 
@@ -67,6 +91,7 @@ export default function MediaPickerModal({ isOpen, onClose, onSelect }) {
     if (!urlInput) return;
 
     setUploading(true);
+    setUploadError(null);
     try {
       const res = await fetch("/api/media/url", {
         method: "POST",
@@ -78,10 +103,10 @@ export default function MediaPickerModal({ isOpen, onClose, onSelect }) {
         onSelect(data.url);
         onClose();
       } else {
-        alert(`Erreur: ${data.error || "Échec"}`);
+        setUploadError(data?.error || "Échec de l'import");
       }
     } catch (error) {
-      alert("Erreur lors de l'import");
+      setUploadError("Erreur lors de l'import");
     } finally {
       setUploading(false);
       setUrlInput("");
@@ -100,53 +125,132 @@ export default function MediaPickerModal({ isOpen, onClose, onSelect }) {
           </button>
         </div>
 
-        <div className="media-picker-tabs">
-          <button className={activeTab === "library" ? "active" : ""} onClick={() => setActiveTab("library")}>
-            Bibliothèque locale
-          </button>
-          <button className={activeTab === "upload" ? "active" : ""} onClick={() => setActiveTab("upload")}>
-            Envoyer un fichier
-          </button>
-          <button className={activeTab === "url" ? "active" : ""} onClick={() => setActiveTab("url")}>
-            Insérer depuis une URL
-          </button>
+        <div className="media-picker-tabs" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex' }}>
+            <button className={activeTab === "library" ? "active" : ""} onClick={() => setActiveTab("library")}>
+              Bibliothèque ({filteredFiles.length})
+            </button>
+            <button className={activeTab === "upload" ? "active" : ""} onClick={() => setActiveTab("upload")}>
+              Envoyer un fichier
+            </button>
+            <button className={activeTab === "url" ? "active" : ""} onClick={() => setActiveTab("url")}>
+              Insérer depuis une URL
+            </button>
+          </div>
+
+          {activeTab === "library" && (
+            <div style={{ paddingRight: '16px' }}>
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                style={{ padding: '6px 12px', borderRadius: '16px', border: '1px solid #ddd', fontSize: '12px', outline: 'none' }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="media-picker-content">
           {activeTab === "library" && (
-            <div className="media-library-grid">
-              {loading ? (
-                <div className="loading-state">Chargement des médias...</div>
-              ) : files.length === 0 ? (
-                <div className="empty-state">Aucun média trouvé.</div>
-              ) : (
-                files.map((file) => (
-                  <div key={file.name} className="media-picker-item" onClick={() => { onSelect(file.url); onClose(); }}>
-                    <div className="media-thumbnail">
-                      {file.type === "image" ? (
-                        <Image src={file.url} alt={file.name} fill style={{ objectFit: "cover" }} unoptimized />
-                      ) : (
-                        <div className="media-icon">
-                          <span className="material-symbols-outlined">
-                            {file.type === "video" ? "movie" : "description"}
-                          </span>
-                        </div>
-                      )}
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div className="media-library-grid" style={{ flexGrow: 1 }}>
+                {loading ? (
+                  <div className="loading-state">Chargement des médias...</div>
+                ) : paginatedFiles.length === 0 ? (
+                  <div className="empty-state">Aucun média trouvé.</div>
+                ) : (
+                  paginatedFiles.map((file) => (
+                    <div key={file.id || file.name} className="media-picker-item" onClick={() => { onSelect(file.url); onClose(); }} title={file.name}>
+                      <div className="media-thumbnail">
+                        {file.type === "image" ? (
+                          <img src={file.url} alt={file.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <div className="media-icon">
+                            <span className="material-symbols-outlined">
+                              {file.type === "video" ? "movie" : "description"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))
+                )}
+              </div>
+
+              {/* Modal Pagination */}
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px', borderTop: '1px solid #eee', background: '#fafafa' }}>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid #ddd', background: '#fff', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '12px' }}
+                  >
+                    Précédent
+                  </button>
+                  <span style={{ fontSize: '12px', color: '#666' }}>Page {currentPage} sur {totalPages}</span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid #ddd', background: '#fff', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontSize: '12px' }}
+                  >
+                    Suivant
+                  </button>
+                </div>
               )}
             </div>
           )}
 
           {activeTab === "upload" && (
-            <div className="media-upload-area">
-              <span className="material-symbols-outlined" style={{ fontSize: "48px", color: "#ccc" }}>cloud_upload</span>
-              <h3>Glissez ou choisissez un fichier</h3>
+            <div className="media-upload-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "48px", color: uploadError ? '#DC2626' : "#ccc" }}>
+                {uploadError ? 'cloud_off' : 'cloud_upload'}
+              </span>
+              <h3 style={{ margin: '12px 0 6px', color: uploadError ? '#B91C1C' : '#333' }}>
+                {uploadError ? "Échec du téléversement" : "Glissez ou choisissez un fichier"}
+              </h3>
+              
+              {uploadError && (
+                <p style={{ color: '#DC2626', fontSize: '13px', marginBottom: '16px', maxWidth: '400px', textAlign: 'center' }}>
+                  {uploadError}
+                </p>
+              )}
+
+              {uploading && (
+                <div style={{ width: '280px', margin: '12px 0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                    <span>Envoi en cours...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div style={{ height: '6px', background: '#E5E7EB', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${uploadProgress}%`, background: 'var(--admin-accent-color, #000)', transition: 'width 0.2s ease' }} />
+                  </div>
+                </div>
+              )}
+
               <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: "none" }} />
-              <button className="btn-primary" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                {uploading ? "Envoi en cours..." : "Parcourir l'ordinateur"}
-              </button>
+              
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                {uploadError && pendingFile && (
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ background: '#DC2626', borderColor: '#DC2626' }}
+                    onClick={() => performUpload(pendingFile)}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', verticalAlign: 'middle', marginRight: '4px' }}>refresh</span>
+                    Réessayer ({pendingFile.name})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? `Envoi (${uploadProgress}%)...` : "Parcourir l'ordinateur"}
+                </button>
+              </div>
             </div>
           )}
 

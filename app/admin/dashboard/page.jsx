@@ -5,57 +5,55 @@ import Link from 'next/link';
 import ArticleDrawer from '../components/ArticleDrawer';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
 export default function DashboardPage() {
-  const [activities, setActivities] = useState([
-    {
-      id: "act-1",
-      type: "Article",
-      title: "L'avenir de la presse indépendante",
-      author: "E. Moretti",
-      status: "Published",
-      updated: "2h ago",
-    },
-    {
-      id: "act-2",
-      type: "Vidéo",
-      title: "Reportage: Les coulisses de DONA",
-      author: "M. Dupont",
-      status: "Scheduled",
-      updated: "5h ago",
-    },
-    {
-      id: "act-3",
-      type: "Podcast",
-      title: "Épisode 12: Tech & Éthique",
-      author: "S. Lefebvre",
-      status: "Draft",
-      updated: "1d ago",
-    }
-  ]);
+  const [activities, setActivities] = useState([]);
   const [globalConfig, setGlobalConfig] = useState(null);
-  const [timeRange, setTimeRange] = useState("7D"); // 7 days selected by default
+  const [timeRange, setTimeRange] = useState("7D");
   const [loading, setLoading] = useState(true);
 
   // Phase 3.2: Drawer & CRUD State Management
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
-  const [publishedCount, setPublishedCount] = useState(24);
+  const [publishedCount, setPublishedCount] = useState(0);
 
   // Active sync states
   const [activeMembersCount, setActiveMembersCount] = useState(1284);
   const [activeRadioTrack, setActiveRadioTrack] = useState("Intro Édito DONA Radio");
 
-  // Sync state values on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedCount = localStorage.getItem('dona_members_count');
-      if (storedCount) {
-        setActiveMembersCount(parseInt(storedCount, 10));
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsRes, configRes] = await Promise.all([
+        fetch('/api/admin/stats'),
+        fetch('/api/global-config')
+      ]);
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        if (statsData.success && statsData.stats) {
+          setPublishedCount(statsData.stats.articlesPublished || 0);
+          setActiveMembersCount(statsData.stats.activeMembers || 1284);
+          if (Array.isArray(statsData.stats.activities)) {
+            setActivities(statsData.stats.activities);
+          }
+          if (statsData.stats.tvLive?.currentTitle) {
+            setActiveRadioTrack(statsData.stats.tvLive.currentTitle);
+          }
+        }
       }
-      const storedTrack = localStorage.getItem('dona_radio_active_title');
-      if (storedTrack) {
-        setActiveRadioTrack(storedTrack);
+
+      if (configRes.ok) {
+        const configData = await configRes.json();
+        setGlobalConfig(configData);
       }
+    } catch (err) {
+      console.error("Dashboard data fetch error:", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, []);
 
   // Triggered when clicking + NOUVEL ARTICLE
@@ -70,7 +68,7 @@ export default function DashboardPage() {
     setIsDrawerOpen(true);
   };
 
-  // Handles adding or updating article in local state
+  // Handles adding or updating article in SQLite DB
   const handleSaveArticle = async (savedArticle) => {
     try {
       const response = await fetch('/api/admin/articles', {
@@ -78,119 +76,15 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(savedArticle)
       });
-      if (!response.ok) throw new Error("Erreur de synchronisation avec le serveur");
-      const dbArticle = await response.json();
+      if (!response.ok) throw new Error("Erreur de synchronisation avec la base de données");
       
-      const isEdit = activities.some(act => act.id === savedArticle.id);
-      const typeMap = {
-        text: "Article",
-        video: "Vidéo",
-        audio: "Podcast"
-      };
-      
-      const mappedActivity = {
-        ...dbArticle,
-        type: typeMap[dbArticle.format] || "Article",
-        author: "Rédaction",
-        updated: "À l'instant"
-      };
-
-      if (isEdit) {
-        setActivities(prev => prev.map(act => act.id === savedArticle.id ? mappedActivity : act));
-        // Persist edits
-        const localCustom = await getStorageItem('dona_custom_articles', []);
-        const updatedCustom = localCustom.map(art => art.id === savedArticle.id ? mappedActivity : art);
-        await setStorageItem('dona_custom_articles', updatedCustom);
-        alert("Modifications enregistrées avec succès.");
-      } else {
-        setActivities(prev => [mappedActivity, ...prev]);
-        // Persist new article
-        const localCustom = await getStorageItem('dona_custom_articles', []);
-        await setStorageItem('dona_custom_articles', [mappedActivity, ...localCustom]);
-        if (dbArticle.status === "Published") {
-          setPublishedCount(prev => prev + 1);
-        }
-        alert("La publication a été mise en ligne sur le serveur principal.");
-      }
+      await fetchDashboardData();
+      alert("Publication enregistrée directement dans la base de données !");
     } catch (err) {
       console.error("API sync error:", err);
       alert("Erreur lors de la synchronisation avec le serveur principal : " + err.message);
     }
   };
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [configRes, magazinesRes, articlesRes] = await Promise.all([
-          fetch('/api/global-config'),
-          fetch('/api/magazines'),
-          fetch('/api/admin/articles')
-        ]);
-
-        if (configRes.ok) {
-          const configData = await configRes.json();
-          setGlobalConfig(configData);
-        }
-
-        if (magazinesRes.ok) {
-          const magazinesData = await magazinesRes.json();
-          let apiArticles = [];
-          magazinesData.forEach(mag => {
-            if (mag.articles) {
-              mag.articles.forEach(art => {
-                const author = art.meta ? art.meta.split(' • ')[0] : "Rédaction";
-                apiArticles.push({
-                  id: art.id,
-                  type: "Article",
-                  title: art.title,
-                  author: author.replace("DR. ", ""),
-                  status: art.isVipOnly ? "Published" : "Draft",
-                  updated: "Récemment"
-                });
-              });
-            }
-          });
-
-          if (articlesRes.ok) {
-            const wpArticles = await articlesRes.json();
-            const typeMap = { text: "Article", video: "Vidéo", audio: "Podcast" };
-            wpArticles.forEach(art => {
-              apiArticles.push({
-                id: art.id,
-                type: typeMap[art.format] || "Article",
-                title: art.title,
-                author: "Rédaction",
-                status: art.status,
-                updated: "Synchronisé"
-              });
-            });
-          }
-
-          // Merge custom articles from storage
-          const localCustom = await getStorageItem('dona_custom_articles', []);
-          apiArticles = [...localCustom, ...apiArticles];
-
-          if (apiArticles.length > 0) {
-            setActivities(prev => {
-              const combined = [...prev];
-              apiArticles.forEach(apiArt => {
-                if (!combined.some(c => c.title === apiArt.title || c.id === apiArt.id)) {
-                  combined.push(apiArt);
-                }
-              });
-              return combined.slice(0, 5);
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Dashboard data fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
 
   return (
     <>

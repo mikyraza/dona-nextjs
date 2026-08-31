@@ -23,14 +23,26 @@ export default function AllArticlesPage() {
   const [config, setConfig] = useState(initialConfig);
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('dona_today_config');
-    if (savedConfig) {
-      try {
-        setConfig(JSON.parse(savedConfig));
-      } catch (e) {
-        console.error("Erreur de parsing dona_today_config", e);
-      }
-    }
+    fetch('/api/today')
+      .then(res => res.json())
+      .then(dbConfig => {
+        if (dbConfig && dbConfig.hero) {
+          let urgent = (dbConfig.newsItems || []).find(n => n.isFeatured);
+          let timeline = (dbConfig.newsItems || []).filter(n => !n.isFeatured);
+          if (!urgent && dbConfig.newsItems && dbConfig.newsItems.length > 0) {
+            urgent = dbConfig.newsItems[0];
+            timeline = dbConfig.newsItems.slice(1);
+          }
+
+          setConfig({
+            filters: dbConfig.filters && dbConfig.filters.length > 0 ? dbConfig.filters : initialConfig.filters,
+            urgentArticle: urgent || null,
+            newsTimeline: timeline || [],
+            france: dbConfig.france || []
+          });
+        }
+      })
+      .catch(err => console.error("Error fetching Today config from database:", err));
   }, []);
 
   // Rassembler tous les articles valides
