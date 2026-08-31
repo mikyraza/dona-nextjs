@@ -136,17 +136,41 @@ export default function Page() {
         {/* CATEGORIES FILTER */}
         <div className="today-filters">
             <ul className="filter-list">
-                {config.filters.map((filter) => (
-                  <li key={filter.id}>
-                    <a 
-                      href="#"
-                      onClick={(e) => { e.preventDefault(); setActiveFilter(filter.id); }} 
-                      className={`filter-pill ${activeFilter === filter.id ? 'active' : ''}`}
-                    >
-                      {filter.label}
-                    </a>
-                  </li>
-                ))}
+                {config.filters.map((filter) => {
+                  const isActive = activeFilter === filter.id;
+                  const labelText = (filter.label && filter.label.trim()) 
+                    ? filter.label 
+                    : (filter.id === 1 || filter.id === 'all' || filter.id === '1' ? 'TOUTES' : 'CATÉGORIE');
+
+                  return (
+                    <li key={filter.id}>
+                      <button 
+                        type="button"
+                        onClick={() => setActiveFilter(filter.id)} 
+                        className={`filter-pill ${isActive ? 'active' : ''}`}
+                        style={{ 
+                          background: isActive ? '#8B002A' : 'var(--color-bg, #FFFFFF)', 
+                          color: isActive ? '#FFFFFF' : 'var(--color-text, #1C1B1B)', 
+                          border: isActive ? '1px solid #8B002A' : '1px solid var(--color-border, #CCCCCC)',
+                          padding: '8px 20px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: '70px'
+                        }}
+                      >
+                        {labelText}
+                      </button>
+                    </li>
+                  );
+                })}
             </ul>
         </div>
 
@@ -331,7 +355,7 @@ export default function Page() {
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Newsletter hebdomadaire</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 3 articles par mois</li>
                     </ul>
-                    <a href="#" className="btn-sub-outline">S'INSCRIRE</a>
+                    <Link href="/signup" className="btn-sub-outline">S'INSCRIRE</Link>
                 </div>
                 
                 {/* Premium */}
@@ -346,7 +370,7 @@ export default function Page() {
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Réseau privé d'entraide</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Événements exclusifs</li>
                     </ul>
-                    <Link href="#" className="btn-sub-solid">COMMENCER L'ESSAI GRATUIT - 14 JOURS</Link>
+                    <Link href="/abonnement" className="btn-sub-solid">COMMENCER L'ESSAI GRATUIT - 14 JOURS</Link>
                 </div>
             </div>
         </section>

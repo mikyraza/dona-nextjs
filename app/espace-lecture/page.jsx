@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { getActiveUserSubscription, canAccessMagazine } from '@/lib/subscriptionPermissions';
+import { getActiveUserSubscription, canAccessMagazine, canAccessAudioAndReplay, isServiceAllowedForPlan } from '@/lib/subscriptionPermissions';
 
 const TABS = ['Tous les contenus', 'Articles', 'Magazines', 'Workbooks'];
 
@@ -44,7 +44,8 @@ const INITIAL_FALLBACK_CARDS = [
     title: "Guide d'Optimisation des Systèmes Complexes",
     cta: 'Télécharger le PDF (4.2 MB)',
     ctaIcon: 'download',
-    ctaHref: '#',
+    ctaHref: '/assets/core/docs/workbook-complex-systems.pdf',
+    downloadPdfUrl: '/assets/core/docs/workbook-complex-systems.pdf',
     image: null,
   },
   {
@@ -57,7 +58,7 @@ const INITIAL_FALLBACK_CARDS = [
     title: "L'Esthétique de l'Effet de Contraste en Design Contemporain",
     cta: 'Commencer la lecture',
     ctaIcon: 'arrow_forward',
-    ctaHref: '#',
+    ctaHref: '/article-trends-intelligence',
     image: '/assets/core/img/home_alaune_side1_1782125709654.png',
   },
   {
@@ -84,7 +85,36 @@ const INITIAL_FALLBACK_CARDS = [
     title: "Planificateur Hebdomadaire de l'Esprit Critique et Logique",
     cta: 'Télécharger le PDF (1.8 MB)',
     ctaIcon: 'download',
-    ctaHref: '#',
+    ctaHref: '/assets/core/docs/planificateur-logique.pdf',
+    downloadPdfUrl: '/assets/core/docs/planificateur-logique.pdf',
+    image: null,
+  },
+  {
+    id: 'wb-3',
+    docType: 'WORKBOOK',
+    type: 'WORKBOOK',
+    typeBg: 'rgba(176, 145, 89, 0.1)',
+    typeColor: '#998357',
+    meta: 'Workbook • Manifeste • Leadership',
+    title: "Guide Stratégique DONA 2026 : Vision & Quiet Luxury",
+    cta: 'Télécharger le PDF (3.5 MB)',
+    ctaIcon: 'download',
+    ctaHref: '/assets/core/docs/guide-strategique-dona-2026.pdf',
+    downloadPdfUrl: '/assets/core/docs/guide-strategique-dona-2026.pdf',
+    image: null,
+  },
+  {
+    id: 'wb-4',
+    docType: 'WORKBOOK',
+    type: 'WORKBOOK',
+    typeBg: 'rgba(176, 145, 89, 0.1)',
+    typeColor: '#998357',
+    meta: 'Workbook • Executive • Dossier Exclusif',
+    title: "Masterclass Leadership & Influence Rédactionnelle",
+    cta: 'Télécharger le PDF (5.1 MB)',
+    ctaIcon: 'download',
+    ctaHref: '/assets/core/docs/masterclass-leadership.pdf',
+    downloadPdfUrl: '/assets/core/docs/masterclass-leadership.pdf',
     image: null,
   }
 ];
@@ -95,7 +125,12 @@ export default function Page() {
   const [cards, setCards] = useState(INITIAL_FALLBACK_CARDS);
   const [savedIds, setSavedIds] = useState(new Set(['art-1', 'wb-1']));
   const [toastMessage, setToastMessage] = useState(null);
-  const [displayLimit, setDisplayLimit] = useState(6);
+  
+  // Pagination State (N°20)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  const gridTopRef = useRef(null);
+
   const [userSub, setUserSub] = useState({ plan: 'Essentiel', status: 'Active', isGuest: true });
   const [paywallModal, setPaywallModal] = useState({ isOpen: false, title: '', message: '', targetPlan: 'Premium' });
 
@@ -103,7 +138,6 @@ export default function Page() {
     setUserSub(getActiveUserSubscription());
   };
 
-  // Load saved favorites from localStorage on mount & listen to subscription changes
   useEffect(() => {
     syncUserSub();
 
@@ -137,6 +171,17 @@ export default function Page() {
     };
   }, []);
 
+  // Reset pagination on tab or search change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
   const handleCardClick = (e, card) => {
     const cardType = (card.type || card.docType || '').toUpperCase();
     if (cardType === 'MAGAZINE' || cardType === 'ARTICLE') {
@@ -168,7 +213,7 @@ export default function Page() {
         setPaywallModal({
           isOpen: true,
           title: `Accès aux Workbooks & PDFs`,
-          message: 'Le téléchargement des workbooks et guides stratégiques est réservé aux abonnés Premium et Élite.',
+          message: 'Le téléchargement des workbooks et guides stratégiques est réservé aux abonnés des formules Premium et Élite.',
           targetPlan: 'Premium'
         });
       }
@@ -236,7 +281,19 @@ export default function Page() {
     return true;
   });
 
-  const visibleCards = filteredCards.slice(0, displayLimit);
+  // Calculate Pagination Page Items (N°20)
+  const totalPages = Math.ceil(filteredCards.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredCards.length);
+  const visibleCards = filteredCards.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    if (gridTopRef.current) {
+      gridTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <main className="vip-container">
@@ -434,22 +491,6 @@ export default function Page() {
           font-size: 16px;
           color: var(--color-text-muted);
         }
-        .lecture-filter-btn {
-          background: var(--color-bg-alt);
-          border: 1px solid var(--color-border);
-          border-radius: 2px;
-          padding: 8px 12px;
-          color: var(--color-text-muted);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: border-color 0.2s ease, color 0.2s ease;
-        }
-        .lecture-filter-btn:hover {
-          border-color: var(--color-accent);
-          color: var(--color-accent);
-        }
 
         /* Card Grid */
         .lecture-grid {
@@ -579,46 +620,57 @@ export default function Page() {
           color: var(--color-accent);
         }
 
-        /* Empty / Load More State */
-        .no-results {
-          padding: 60px 20px;
-          text-align: center;
-          background: var(--color-bg-alt);
-          border: 1px dashed var(--color-border);
-          border-radius: 2px;
-          margin-bottom: 40px;
+        /* Pagination Controls (N°20) */
+        .pagination-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          margin-top: 40px;
+          padding-top: 24px;
+          border-top: 1px solid var(--color-border);
         }
-        .no-results-icon {
-          font-size: 48px;
-          color: var(--color-text-muted);
-          margin-bottom: 12px;
-        }
-        .no-results-text {
+        .pagination-info {
           font-family: var(--font-primary);
-          font-size: 14px;
+          font-size: 12px;
           color: var(--color-text-muted);
-          margin: 0;
+          font-weight: 500;
         }
-        .load-more-btn {
+        .pagination-buttons {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .pagination-btn {
           background: var(--color-bg-alt);
           border: 1px solid var(--color-border);
           color: var(--color-text);
           font-family: var(--font-primary);
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          padding: 14px 28px;
+          font-size: 13px;
+          font-weight: 600;
+          min-width: 36px;
+          height: 36px;
           border-radius: 2px;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          justify-content: center;
           transition: all 0.2s ease;
+          padding: 0 10px;
         }
-        .load-more-btn:hover {
+        .pagination-btn:hover:not(:disabled) {
           border-color: var(--color-accent);
           color: var(--color-accent);
+        }
+        .pagination-btn.active {
+          background: var(--color-accent);
+          color: #FFFFFF;
+          border-color: var(--color-accent);
+          font-weight: 700;
+        }
+        .pagination-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
         }
 
         @media (max-width: 900px) {
@@ -678,7 +730,7 @@ export default function Page() {
       </aside>
 
       {/* ─── Main Content ─── */}
-      <div className="vip-content">
+      <div className="vip-content" ref={gridTopRef}>
         <h1 className="vip-title">Mon Espace Lecture</h1>
 
         {/* Tab Bar + Search */}
@@ -688,7 +740,7 @@ export default function Page() {
               <button
                 key={tab}
                 className={`lecture-tab${activeTab === tab ? ' active' : ''}`}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
               >
                 {tab}
                 <span className="lecture-tab-count">
@@ -710,13 +762,10 @@ export default function Page() {
                 type="text"
                 placeholder="Rechercher..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
                 className="lecture-search-input"
               />
             </div>
-            <button className="lecture-filter-btn" aria-label="Filtres" onClick={() => showToast('Recherche filtrée appliquée')}>
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>tune</span>
-            </button>
           </div>
         </div>
 
@@ -726,6 +775,8 @@ export default function Page() {
             {visibleCards.map((card) => {
               const isSaved = savedIds.has(card.id);
               const cardImage = card.image || card.imagePath;
+              const isWorkbook = (card.type || card.docType || '').toUpperCase() === 'WORKBOOK';
+              const downloadUrl = card.downloadPdfUrl || card.ctaHref;
 
               return (
                 <article className="lecture-card" key={card.id}>
@@ -736,7 +787,7 @@ export default function Page() {
                     ) : (
                       <div className="lecture-card-thumb-placeholder">
                         <span className="material-symbols-outlined" style={{ fontSize: "48px", color: card.typeColor || "#998357" }}>
-                          {card.docType === 'WORKBOOK' ? 'file_download' : 'menu_book'}
+                          {isWorkbook ? 'picture_as_pdf' : 'menu_book'}
                         </span>
                       </div>
                     )}
@@ -756,12 +807,29 @@ export default function Page() {
                     <h3 className="lecture-card-title">{card.title}</h3>
 
                     <div className="lecture-card-footer">
-                      <Link href={card.ctaHref || '#'} onClick={(e) => handleCardClick(e, card)} className="lecture-card-cta">
-                        {card.cta || card.ctaText || 'Consulter'}
-                        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-                          {card.ctaIcon || 'arrow_forward'}
-                        </span>
-                      </Link>
+                      {isWorkbook ? (
+                        <a 
+                          href={downloadUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          download
+                          onClick={(e) => handleCardClick(e, card)} 
+                          className="lecture-card-cta"
+                          style={{ color: '#998357' }}
+                        >
+                          {card.cta || card.ctaText || 'Télécharger PDF'}
+                          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                            download
+                          </span>
+                        </a>
+                      ) : (
+                        <Link href={card.ctaHref || '#'} onClick={(e) => handleCardClick(e, card)} className="lecture-card-cta">
+                          {card.cta || card.ctaText || 'Consulter'}
+                          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                            {card.ctaIcon || 'arrow_forward'}
+                          </span>
+                        </Link>
+                      )}
 
                       <div className="lecture-card-actions">
                         <button
@@ -794,13 +862,50 @@ export default function Page() {
           </div>
         )}
 
-        {/* Load More */}
-        {filteredCards.length > visibleCards.length && (
-          <div style={{ textAlign: "center" }}>
-            <button className="load-more-btn" onClick={() => setDisplayLimit(prev => prev + 6)}>
-              Charger plus de contenus ({filteredCards.length - visibleCards.length} restants)
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>expand_more</span>
-            </button>
+        {/* ─── Dynamic Numbered Pagination Controls (N°20) ─── */}
+        {filteredCards.length > 0 && (
+          <div className="pagination-container">
+            <div className="pagination-info">
+              Affichage de {startIndex + 1} à {endIndex} sur {filteredCards.length} contenus — Page {currentPage} sur {totalPages}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="pagination-buttons">
+                {/* Previous Page */}
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  aria-label="Page précédente"
+                >
+                  ‹ Précédent
+                </button>
+
+                {/* Numbered Page Buttons */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    className={`pagination-btn${currentPage === page ? ' active' : ''}`}
+                    onClick={() => goToPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {/* Next Page */}
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Page suivante"
+                >
+                  Suivant ›
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

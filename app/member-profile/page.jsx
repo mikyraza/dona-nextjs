@@ -12,8 +12,10 @@ export default function Page() {
     avatar: null,
   });
 
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [saveStatus, setSaveStatus] = useState(null); // { type: 'success' | 'error', message: string }
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   // Load from localStorage on mount
@@ -59,10 +61,53 @@ export default function Page() {
     }
   };
 
-  // Handle Form Submit
-  const handleSubmit = (e) => {
+  // Handle Form Submit (Server-Side Persistence + Password Hashing)
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaveStatus(null);
+
+    if (password) {
+      if (password.length < 8) {
+        setSaveStatus({ type: 'error', message: 'Le nouveau mot de passe doit faire au moins 8 caractères.' });
+        return;
+      }
+      if (!/[A-Z]/.test(password)) {
+        setSaveStatus({ type: 'error', message: 'Le nouveau mot de passe doit contenir au moins une lettre majuscule.' });
+        return;
+      }
+      if (!/[0-9]/.test(password)) {
+        setSaveStatus({ type: 'error', message: 'Le nouveau mot de passe doit contenir au moins un chiffre.' });
+        return;
+      }
+    }
+
+    setLoading(true);
+
     try {
+      // 1. Envoi au serveur pour mise à jour réelle dans users_db.json + hachage NextAuth
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: profile.email,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          phone: profile.phone,
+          avatar: profile.avatar,
+          currentPassword,
+          newPassword: password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSaveStatus({ type: 'error', message: data.error || 'Erreur lors de la mise à jour du profil.' });
+        setLoading(false);
+        return;
+      }
+
+      // 2. Mise à jour du cache local
       const updatedProfile = {
         firstName: profile.firstName,
         lastName: profile.lastName,
@@ -73,24 +118,18 @@ export default function Page() {
 
       localStorage.setItem('dona_member_profile', JSON.stringify(updatedProfile));
 
-      // Also sync profile changes to Admin Members DB
+      // Re-sync local admin table
       try {
         const storedAdmin = localStorage.getItem('dona_admin_members_db');
         const adminMembers = storedAdmin ? JSON.parse(storedAdmin) : [];
         const fullName = `${profile.firstName} ${profile.lastName}`.trim();
         const profEmail = (profile.email || '').toLowerCase().trim();
-        const profName = fullName.toLowerCase();
 
-        let updated = false;
         const nextAdminMembers = adminMembers.map(m => {
-          const mEmail = (m.email || '').toLowerCase().trim();
-          const mName = (m.name || '').toLowerCase().trim();
-          if ((profEmail && mEmail === profEmail) || (profName && mName === profName)) {
-            updated = true;
+          if ((m.email || '').toLowerCase().trim() === profEmail) {
             return {
               ...m,
               name: fullName || m.name,
-              email: profile.email || m.email,
               phone: profile.phone || m.phone,
               avatar: profile.avatar || m.avatar
             };
@@ -98,34 +137,25 @@ export default function Page() {
           return m;
         });
 
-        if (!updated) {
-          nextAdminMembers.unshift({
-            id: `mem-${Date.now()}`,
-            name: fullName || 'Ernest Raza',
-            email: profile.email || 'mikyraza@gmail.com',
-            phone: profile.phone || '',
-            avatar: profile.avatar || null,
-            plan: 'Premium',
-            status: 'Active',
-            joined: new Date().toLocaleDateString('fr-FR')
-          });
-        }
-
         localStorage.setItem('dona_admin_members_db', JSON.stringify(nextAdminMembers));
-      } catch (err) {
-        console.error('Error syncing member profile to admin DB:', err);
-      }
+      } catch (err) {}
 
+      setCurrentPassword("");
       setPassword("");
-      setSaveStatus({ type: 'success', message: 'Vos modifications ont été enregistrées avec succès !' });
+      setSaveStatus({
+        type: 'success',
+        message: data.message || 'Vos modifications et mot de passe ont été enregistrés et hachés en base serveur !'
+      });
 
-      // Automatically hide success notification after 4 seconds
       setTimeout(() => {
         setSaveStatus(null);
-      }, 4000);
-    } catch (e) {
-      console.error("Error saving profile to localStorage:", e);
-      setSaveStatus({ type: 'error', message: 'Une erreur est survenue lors de l\'enregistrement.' });
+      }, 5000);
+
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      setSaveStatus({ type: 'error', message: 'Erreur réseau lors de l\'enregistrement.' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -491,23 +521,39 @@ export default function Page() {
             </div>
             
             <div style={{ padding: "0", marginBottom: "40px" }}>
-              <h3 style={{ fontSize: "16px", fontWeight: "600", margin: "0 0 30px 0", color: "var(--color-text)" }}>Mot de Passe</h3>
+              <h3 style={{ fontSize: "16px", fontWeight: "600", margin: "0 0 20px 0", color: "var(--color-text)" }}>Sécurité & Mot de Passe</h3>
               
-              <div style={{ marginTop: "20px" }}>
-                <label className="vip-label">NOUVEAU MOT DE PASSE</label>
+              <div style={{ marginTop: "16px" }}>
+                <label className="vip-label">MOT DE PASSE ACTUEL</label>
                 <input
                   type="password"
                   className="vip-input"
                   placeholder="••••••••"
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword(e.target.value)}
+                />
+              </div>
+
+              <div style={{ marginTop: "16px" }}>
+                <label className="vip-label">NOUVEAU MOT DE PASSE</label>
+                <input
+                  type="password"
+                  className="vip-input"
+                  placeholder="8+ caractères, 1 majuscule, 1 chiffre"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                 />
+                {password && (
+                  <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>
+                    Exigences : 8+ caractères, 1 majuscule, 1 chiffre
+                  </div>
+                )}
               </div>
             </div>
             
             <div>
-              <button type="submit" className="btn-crimson">
-                ENREGISTRER LES MODIFICATIONS
+              <button type="submit" className="btn-crimson" disabled={loading}>
+                {loading ? "ENREGISTREMENT..." : "ENREGISTRER LES MODIFICATIONS"}
               </button>
             </div>
           </div>

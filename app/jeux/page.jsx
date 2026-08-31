@@ -86,13 +86,139 @@ const RULES = [
   { n: '03', title: 'Classement en Direct', desc: 'Le tableau évolue après chaque partie. Les 10 premiers accèdent à la Finale Annuelle.' },
 ];
 
+const ARCHIVE_ITEMS = [
+  { id: 'arc-401', num: 'N° 401', title: 'Le Dilemme du Prisonnier Corporatif', date: '20 Août 2026', success: '14%' },
+  { id: 'arc-400', num: 'N° 400', title: 'L\'Équilibre de Pareto Inversé', date: '13 Août 2026', success: '9%' },
+  { id: 'arc-399', num: 'N° 399', title: 'Le Labyrinthe des Ambitions I', date: '06 Août 2026', success: '18%' },
+  { id: 'arc-398', num: 'N° 398', title: 'Cryptogramme de Palmyre', date: '30 Juillet 2026', success: '21%' },
+];
+
+const CAS_PRATIQUES = [
+  { id: 'cas-1', code: 'CAS #01', title: 'OPO Hostile & Défense de Contrôle', difficulty: 'Trés Difficile', time: '20 min' },
+  { id: 'cas-2', code: 'CAS #02', title: 'Négociation Transfrontalière sous Embargo', difficulty: 'Expert', time: '25 min' },
+  { id: 'cas-3', code: 'CAS #03', title: 'Gestion de Crise Cyber & Image de Marque', difficulty: 'Modéré', time: '15 min' },
+  { id: 'cas-4', code: 'CAS #04', title: 'Arbitrage d\'Alliance & Partage de PI', difficulty: 'Avancé', time: '18 min' },
+];
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function JeuxPage() {
   const [activeGame, setActiveGame] = useState(null);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showCasModal, setShowCasModal] = useState(false);
+  const [showHeroRiddleModal, setShowHeroRiddleModal] = useState(false);
+  const [showPlayModal, setShowPlayModal] = useState(null); // game object if open
+  const [showTournoiModal, setShowTournoiModal] = useState(false);
+  const [newsletterSuccess, setNewsletterSuccess] = useState(false);
+
+  const [userRiddleAnswer, setUserRiddleAnswer] = useState('');
+  const [riddleResult, setRiddleResult] = useState(null);
+  const [dynamicConfig, setDynamicConfig] = useState(null);
+
+  React.useEffect(() => {
+    fetch('/api/admin/jeux')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.heroRiddle) setDynamicConfig(data);
+      })
+      .catch(err => {
+        console.error("Error loading server games config:", err);
+        if (typeof window !== 'undefined') {
+          const local = localStorage.getItem('dona_jeux_config');
+          if (local) {
+            try { setDynamicConfig(JSON.parse(local)); } catch(e){}
+          }
+        }
+      });
+  }, []);
+
+  const currentHeroRiddle = dynamicConfig?.heroRiddle || {
+    title: "Le Labyrinthe des Ambitions",
+    difficulty: "Expert",
+    timeAvg: "14 min",
+    question: "Quatre dirigeants siègent à des distances égales. Le premier contrôle la ressource, le deuxième détient l'information, le troisième possède l'influence. Où devez-vous vous placer pour diriger la décision sans jamais révéler votre rôle ?",
+    answerKeyword: "centre",
+    successRate: "12%"
+  };
+
+  const currentGamesList = dynamicConfig?.gamesList?.map(g => ({
+    ...g,
+    icon: (
+      <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" strokeWidth="0.8">
+        <circle cx="40" cy="40" r="30" />
+        <circle cx="40" cy="40" r="18" />
+        <circle cx="40" cy="40" r="6" />
+        <line x1="10" y1="40" x2="70" y2="40" />
+        <line x1="40" y1="10" x2="40" y2="70" />
+      </svg>
+    )
+  })) || GAMES;
+
+  const handleValidateRiddle = (e) => {
+    e.preventDefault();
+    const keyword = (currentHeroRiddle.answerKeyword || 'centre').toLowerCase().trim();
+    if (userRiddleAnswer.trim().toLowerCase().includes(keyword) || userRiddleAnswer.trim().toLowerCase().includes('pouvoir')) {
+      setRiddleResult('success');
+    } else {
+      setRiddleResult('error');
+    }
+  };
 
   return (
     <div className="jeux3-root">
+      
+      <style>{`
+        .jeux-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 20px;
+        }
+        .jeux-modal-card {
+          background: #FFFFFF;
+          color: #111111;
+          border-radius: 4px;
+          padding: 36px;
+          max-width: 550px;
+          width: 100%;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+          position: relative;
+        }
+        .jeux-modal-close {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: none;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+          color: #888;
+        }
+        .jeux-modal-close:hover {
+          color: #8B002A;
+        }
+        .jeux-btn-action {
+          background: #8B002A;
+          color: #FFFFFF;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 2px;
+          font-family: var(--font-primary, sans-serif);
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: background 0.3s ease;
+        }
+        .jeux-btn-action:hover {
+          background: #A30031;
+        }
+      `}</style>
 
       {/* ══════════════════════════════════════════════════════
           HERO — ÉNIGME DU JOUR
@@ -125,7 +251,7 @@ export default function JeuxPage() {
                 <span className="jeux3-stat-value">3 842</span>
               </div>
             </div>
-            <button className="jeux3-hero__cta" id="jeux-hero-cta">
+            <button className="jeux3-hero__cta" id="jeux-hero-cta" onClick={() => setShowHeroRiddleModal(true)}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21" />
               </svg>
@@ -137,13 +263,11 @@ export default function JeuxPage() {
           <div className="jeux3-hero__visual">
             <div className="jeux3-hero__frame">
               <svg className="jeux3-hero__emblem" viewBox="0 0 400 400" fill="none" stroke="#1C1B1B" strokeWidth="0.6">
-                {/* Labyrinth-like concentric paths */}
                 <rect x="20" y="20" width="360" height="360" />
                 <rect x="60" y="60" width="280" height="280" />
                 <rect x="100" y="100" width="200" height="200" />
                 <rect x="140" y="140" width="120" height="120" />
                 <rect x="175" y="175" width="50" height="50" />
-                {/* Maze breaks */}
                 <line x1="60" y1="200" x2="20" y2="200" />
                 <line x1="200" y1="60" x2="200" y2="20" />
                 <line x1="340" y1="200" x2="380" y2="200" />
@@ -153,13 +277,11 @@ export default function JeuxPage() {
                 <line x1="300" y1="200" x2="340" y2="200" />
                 <line x1="200" y1="300" x2="200" y2="340" />
                 <line x1="140" y1="200" x2="100" y2="200" />
-                {/* Node markers */}
                 <circle cx="200" cy="200" r="8" fill="#A30626" stroke="none" />
                 <circle cx="200" cy="60" r="4" fill="#A30626" stroke="none" opacity="0.5" />
                 <circle cx="60" cy="200" r="3" fill="#A30626" stroke="none" opacity="0.3" />
               </svg>
 
-              {/* Floating time card */}
               <div className="jeux3-hero__float-card">
                 <span className="jeux3-float-label">DIFFICULTÉ</span>
                 <span className="jeux3-float-value">Expert</span>
@@ -179,17 +301,22 @@ export default function JeuxPage() {
               <p className="jeux3-kicker">JEUX DE L'ESPRIT</p>
               <h2 className="jeux3-section-title">Les Classiques du Cercle</h2>
             </div>
-            <Link href="#" className="jeux3-section-link">
+            <button 
+              type="button" 
+              onClick={() => setShowArchiveModal(true)} 
+              className="jeux3-section-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
               Voir l'Archive
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
               </svg>
-            </Link>
+            </button>
           </header>
 
           <div className="jeux3-games-grid">
-            {GAMES.map((game) => (
+            {currentGamesList.map((game) => (
               <article
                 key={game.id}
                 className={`jeux3-game-card ${activeGame === game.id ? 'jeux3-game-card--active' : ''}`}
@@ -199,7 +326,6 @@ export default function JeuxPage() {
                 id={`game-card-${game.id}`}
                 onKeyDown={(e) => e.key === 'Enter' && setActiveGame(game.id === activeGame ? null : game.id)}
               >
-                {/* Artwork area */}
                 <div className="jeux3-card__art">
                   <div className="jeux3-card__art-inner">
                     {game.icon}
@@ -207,17 +333,20 @@ export default function JeuxPage() {
                   <span className="jeux3-card__badge">{game.badge}</span>
                 </div>
 
-                {/* Content */}
                 <div className="jeux3-card__body">
                   <span className="jeux3-card__category">{game.category}</span>
                   <h3 className="jeux3-card__title">{game.title}</h3>
                   <p className="jeux3-card__desc">{game.subtitle}</p>
                 </div>
 
-                {/* Footer */}
                 <div className="jeux3-card__footer">
                   <span className="jeux3-card__meta">{game.meta}</span>
-                  <button className="jeux3-card__play" aria-label={`Jouer à ${game.title}`}>
+                  <button 
+                    type="button" 
+                    onClick={(e) => { e.stopPropagation(); setShowPlayModal(game); }} 
+                    className="jeux3-card__play" 
+                    aria-label={`Jouer à ${game.title}`}
+                  >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                       <polygon points="5 3 19 12 5 21" />
                     </svg>
@@ -257,13 +386,18 @@ export default function JeuxPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="#" className="jeux3-text-link">
+              <button 
+                type="button" 
+                onClick={() => setShowCasModal(true)} 
+                className="jeux3-text-link"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
                 Explorer la Bibliothèque des Cas
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <line x1="5" y1="12" x2="19" y2="12" />
                   <polyline points="12 5 19 12 12 19" />
                 </svg>
-              </Link>
+              </button>
             </div>
 
             {/* Quote visual */}
@@ -299,7 +433,6 @@ export default function JeuxPage() {
           SECTION 3 — TOURNOI DES DÉCIDEURS (Crimson block)
           ══════════════════════════════════════════════════════ */}
       <section className="jeux3-tournoi" id="tournoi-decideurs">
-        {/* Decorative geometry */}
         <div className="jeux3-tournoi__deco" aria-hidden="true">
           <svg viewBox="0 0 600 600" fill="none" stroke="#FFFFFF" strokeWidth="0.4" opacity="0.06">
             <circle cx="300" cy="300" r="280" />
@@ -336,7 +469,7 @@ export default function JeuxPage() {
             </div>
 
             {/* CTA */}
-            <button className="jeux3-tournoi__cta" id="tournoi-inscri-btn">
+            <button className="jeux3-tournoi__cta" id="tournoi-inscri-btn" onClick={() => setShowTournoiModal(true)}>
               S'inscrire au Tournoi
             </button>
 
@@ -406,21 +539,229 @@ export default function JeuxPage() {
             <p className="jeux3-newsletter__desc">
               Recevez notre défi hebdomadaire ultime chaque vendredi matin. Conçu pour durer tout le weekend.
             </p>
-            <form className="jeux3-newsletter__form" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="email"
-                className="jeux3-newsletter__input"
-                placeholder="Votre adresse email"
-                aria-label="Email pour la Mega-Grille"
-              />
-              <button type="submit" className="jeux3-newsletter__submit" id="newsletter-submit-btn">
-                S'inscrire
-              </button>
-            </form>
+            {newsletterSuccess ? (
+              <div style={{ background: 'rgba(139, 0, 42, 0.1)', color: '#8B002A', padding: '16px', borderRadius: '4px', textAlign: 'center', fontWeight: '600', fontSize: '13px' }}>
+                ✓ Vous êtes inscrit(e) à la Mega-Grille du Weekend ! rendez-vous vendredi à 8h.
+              </div>
+            ) : (
+              <form className="jeux3-newsletter__form" onSubmit={(e) => { e.preventDefault(); setNewsletterSuccess(true); }}>
+                <input
+                  type="email"
+                  required
+                  className="jeux3-newsletter__input"
+                  placeholder="Votre adresse email"
+                  aria-label="Email pour la Mega-Grille"
+                />
+                <button type="submit" className="jeux3-newsletter__submit" id="newsletter-submit-btn">
+                  S'inscrire
+                </button>
+              </form>
+            )}
             <p className="jeux3-newsletter__legal">Désinscription possible à tout moment. Zéro distraction.</p>
           </div>
         </div>
       </section>
+
+      {/* ─── MODALES INTERACTIVES ────────────────────────────────────────── */}
+
+      {/* 1. Modal Archive des Jeux */}
+      {showArchiveModal && (
+        <div className="jeux-modal-overlay">
+          <div className="jeux-modal-card">
+            <button type="button" className="jeux-modal-close" onClick={() => setShowArchiveModal(false)}>×</button>
+            <h3 style={{ fontFamily: "Playfair Display, serif", fontSize: "24px", color: "#8B002A", marginBottom: "10px" }}>
+              Archive des Énigmes & Jeux du Cercle
+            </h3>
+            <p style={{ fontSize: "13px", color: "#666", marginBottom: "20px" }}>
+              Explorez les défis passés publiés dans DONA Magazine et mesurez votre esprit d'analyse.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+              {ARCHIVE_ITEMS.map((item) => (
+                <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", border: "1px solid #EFEFEF", borderRadius: "4px", background: "#FAF9F6" }}>
+                  <div>
+                    <span style={{ fontSize: "10px", fontWeight: "700", color: "#8B002A", textTransform: "uppercase" }}>{item.num} • {item.date}</span>
+                    <h4 style={{ fontSize: "14px", margin: "4px 0 0 0", color: "#111" }}>{item.title}</h4>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="jeux-btn-action" 
+                    style={{ padding: "6px 12px", fontSize: "11px" }}
+                    onClick={() => { setShowArchiveModal(false); setShowPlayModal({ title: item.title, category: item.num, subtitle: "Énigme d'archive du Cercle DONA." }); }}
+                  >
+                    Rejouer
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "right" }}>
+              <button type="button" onClick={() => setShowArchiveModal(false)} style={{ background: "#eee", border: "none", padding: "8px 16px", borderRadius: "2px", cursor: "pointer", fontSize: "12px" }}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Modal Bibliothèque des Cas Pratiques */}
+      {showCasModal && (
+        <div className="jeux-modal-overlay">
+          <div className="jeux-modal-card">
+            <button type="button" className="jeux-modal-close" onClick={() => setShowCasModal(false)}>×</button>
+            <h3 style={{ fontFamily: "Playfair Display, serif", fontSize: "24px", color: "#8B002A", marginBottom: "10px" }}>
+              Bibliothèque des Cas Pratiques
+            </h3>
+            <p style={{ fontSize: "13px", color: "#666", marginBottom: "20px" }}>
+              12 simulations stratégiques et cas réels d'entreprises réservés aux décideurs du Cercle.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+              {CAS_PRATIQUES.map((cas) => (
+                <div key={cas.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", border: "1px solid #EFEFEF", borderRadius: "4px", background: "#FAF9F6" }}>
+                  <div>
+                    <span style={{ fontSize: "10px", fontWeight: "700", color: "#8B002A", textTransform: "uppercase" }}>{cas.code} • {cas.difficulty} ({cas.time})</span>
+                    <h4 style={{ fontSize: "14px", margin: "4px 0 0 0", color: "#111" }}>{cas.title}</h4>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="jeux-btn-action" 
+                    style={{ padding: "6px 12px", fontSize: "11px" }}
+                    onClick={() => { setShowCasModal(false); setShowPlayModal({ title: cas.title, category: cas.code, subtitle: "Simulation de stratégie corporative." }); }}
+                  >
+                    Lancer
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "right" }}>
+              <button type="button" onClick={() => setShowCasModal(false)} style={{ background: "#eee", border: "none", padding: "8px 16px", borderRadius: "2px", cursor: "pointer", fontSize: "12px" }}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Modal Énigme du Jour */}
+      {showHeroRiddleModal && (
+        <div className="jeux-modal-overlay">
+          <div className="jeux-modal-card">
+            <button type="button" className="jeux-modal-close" onClick={() => setShowHeroRiddleModal(false)}>×</button>
+            <span style={{ fontSize: "10px", fontWeight: "700", color: "#8B002A", letterSpacing: "2px", textTransform: "uppercase" }}>Énigme du Jour · N° 402</span>
+            <h3 style={{ fontFamily: "Playfair Display, serif", fontSize: "24px", color: "#111", margin: "8px 0 16px 0" }}>
+              Le Labyrinthe des Ambitions
+            </h3>
+
+            <p style={{ fontSize: "14px", lineHeight: "1.6", color: "#444", background: "#FAF9F6", padding: "16px", borderRadius: "4px", marginBottom: "20px", borderLeft: "3px solid #8B002A" }}>
+              "Quatre dirigeants siègent à des distances égales. Le premier contrôle la ressource, le deuxième détient l'information, le troisième possède l'influence. Où devez-vous vous placer pour diriger la décision sans jamais révéler votre rôle ?"
+            </p>
+
+            {riddleResult === 'success' ? (
+              <div style={{ background: "rgba(16, 185, 129, 0.1)", color: "#10B981", padding: "16px", borderRadius: "4px", marginBottom: "20px", textAlign: "center", fontWeight: "600" }}>
+                ✓ Félicitations ! Vous avez identifié le point d'équilibre central. Votre score progresse de +120 pts dans le classement !
+              </div>
+            ) : riddleResult === 'error' ? (
+              <div style={{ background: "rgba(239, 68, 68, 0.1)", color: "#EF4444", padding: "16px", borderRadius: "4px", marginBottom: "20px", textAlign: "center", fontSize: "13px" }}>
+                ✗ Ce n'est pas la position optimale. Réfléchissez au point focal où les flux de pouvoir convergent. (Indice : le centre).
+              </div>
+            ) : null}
+
+            <form onSubmit={handleValidateRiddle}>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", marginBottom: "6px" }}>Votre Réponse</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Ex: Le centre / Au point d'intersection..." 
+                  value={userRiddleAnswer}
+                  onChange={(e) => setUserRiddleAnswer(e.target.value)}
+                  style={{ width: "100%", padding: "12px", border: "1px solid #ccc", borderRadius: "4px", fontSize: "14px" }} 
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button type="button" onClick={() => setShowHeroRiddleModal(false)} style={{ background: "#eee", border: "none", padding: "10px 18px", borderRadius: "2px", cursor: "pointer", fontSize: "12px" }}>
+                  Fermer
+                </button>
+                <button type="submit" className="jeux-btn-action">
+                  Soumettre la Réponse
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Modal Launcher de Jeu */}
+      {showPlayModal && (
+        <div className="jeux-modal-overlay">
+          <div className="jeux-modal-card" style={{ textAlign: "center" }}>
+            <button type="button" className="jeux-modal-close" onClick={() => setShowPlayModal(null)}>×</button>
+            <span style={{ fontSize: "10px", fontWeight: "700", color: "#8B002A", letterSpacing: "2px", textTransform: "uppercase" }}>{showPlayModal.category || "SESSION EN COURS"}</span>
+            <h3 style={{ fontFamily: "Playfair Display, serif", fontSize: "28px", color: "#111", margin: "10px 0 16px 0" }}>
+              {showPlayModal.title}
+            </h3>
+            <p style={{ fontSize: "14px", color: "#666", lineHeight: "1.6", marginBottom: "30px" }}>
+              {showPlayModal.subtitle || "Initialisation de l'environnement interactif de simulation..."}
+            </p>
+
+            <div style={{ background: "#111", color: "#FFF", padding: "40px 20px", borderRadius: "4px", marginBottom: "24px" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "48px", color: "#8B002A", display: "block", marginBottom: "12px" }}>
+                sports_esports
+              </span>
+              <p style={{ fontSize: "13px", color: "#ccc", margin: 0 }}>
+                Chronomètre activé · 90 secondes par décision · Mode Compétition
+              </p>
+            </div>
+
+            <button type="button" onClick={() => { alert("Session lancée avec succès ! Bon jeu !"); setShowPlayModal(null); }} className="jeux-btn-action" style={{ width: "100%", padding: "16px" }}>
+              Commencer la Partie
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Modal Tournoi des Décideurs */}
+      {showTournoiModal && (
+        <div className="jeux-modal-overlay">
+          <div className="jeux-modal-card">
+            <button type="button" className="jeux-modal-close" onClick={() => setShowTournoiModal(false)}>×</button>
+            <span style={{ fontSize: "10px", fontWeight: "700", color: "#8B002A", letterSpacing: "2px", textTransform: "uppercase" }}>Saison 4 · Tournoi des Décideurs</span>
+            <h3 style={{ fontFamily: "Playfair Display, serif", fontSize: "24px", color: "#111", margin: "8px 0 16px 0" }}>
+              Inscription au Tournoi
+            </h3>
+            <p style={{ fontSize: "14px", color: "#444", lineHeight: "1.6", marginBottom: "20px" }}>
+              Vous êtes sur le point de réserver votre place pour le prochain tournoi mensuel du <strong>28 Juillet 2026</strong>. Votre score influencera votre qualification pour la Grande Finale à Paris.
+            </p>
+
+            <div style={{ background: "#FAF9F6", border: "1px solid #EFEFEF", padding: "16px", borderRadius: "4px", marginBottom: "24px" }}>
+              <div style={{ fontSize: "12px", fontWeight: "700", color: "#8B002A" }}>Conditions de participation :</div>
+              <ul style={{ fontSize: "13px", color: "#666", paddingLeft: "20px", marginTop: "8px", margin: 0 }}>
+                <li>Statut membre du Cercle DONA actif</li>
+                <li>Disponibilité le 28 juillet pour 3 manches de 15 minutes</li>
+              </ul>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button type="button" onClick={() => setShowTournoiModal(false)} style={{ background: "#eee", border: "none", padding: "10px 18px", borderRadius: "2px", cursor: "pointer", fontSize: "12px" }}>
+                Annuler
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setShowTournoiModal(false);
+                  alert("✓ Inscription au Tournoi des Décideurs confirmée ! Vous recevrez un rappel par email 24h avant le lancement.");
+                }} 
+                className="jeux-btn-action"
+              >
+                Confirmer mon Inscription
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

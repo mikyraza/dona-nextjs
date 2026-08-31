@@ -19,7 +19,24 @@ function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  // Password strength scoring
+  const getPasswordStrength = (pwd) => {
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (pwd.length >= 12) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    return score; // 0-5
+  };
+
+  const passwordStrength = getPasswordStrength(password);
+  const strengthLabels = ['', 'Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort'];
+  const strengthColors = ['', '#EF4444', '#F97316', '#EAB308', '#22C55E', '#10B981'];
+  const strengthPct = password.length > 0 ? (passwordStrength / 5) * 100 : 0;
 
   const fileInputRef = useRef(null);
 
@@ -46,57 +63,85 @@ function SignupForm() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    const newFieldErrors = {};
+
+    // Validation côté client (doublon de sécurité avant l'appel API)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      newFieldErrors.email = "Adresse email invalide.";
+    }
 
     if (password.length < 8) {
-      setError('Le mot de passe doit comporter au moins 8 caractères.');
-      return;
+      newFieldErrors.password = 'Le mot de passe doit comporter au moins 8 caractères.';
+    } else if (!/[A-Z]/.test(password)) {
+      newFieldErrors.password = 'Le mot de passe doit contenir au moins une lettre majuscule.';
+    } else if (!/[0-9]/.test(password)) {
+      newFieldErrors.password = 'Le mot de passe doit contenir au moins un chiffre.';
     }
 
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas.');
+      newFieldErrors.confirmPassword = 'Les mots de passe ne correspondent pas.';
+    }
+
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
       return;
     }
-
+    setFieldErrors({});
     setLoading(true);
 
-    const todayStr = new Date().toLocaleDateString('fr-FR');
-    const newMember = {
-      id: `mem-${Date.now()}`,
-      name: `${firstName} ${lastName}`.trim() || 'Nouveau Membre',
-      email: email,
-      phone: phone,
-      avatar: avatar,
-      plan: selectedPlan.name,
-      status: 'Active',
-      joined: todayStr
-    };
-
     try {
-      // 1. Add to Admin Members DB
-      const existing = localStorage.getItem('dona_admin_members_db');
-      const membersList = existing ? JSON.parse(existing) : [];
-      localStorage.setItem('dona_admin_members_db', JSON.stringify([newMember, ...membersList]));
+      // ─── APPEL API SERVER-SIDE : Persistance réelle (cross-devices) ──────────
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+          phone,
+          plan: selectedPlan.name,
+          avatar: avatar || null,
+        }),
+      });
 
-      // 2. Set active member profile for member-profile page
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Erreurs retournées par l'API (email dupliqué, validation, etc.)
+        setError(data.error || 'Erreur lors de la création du compte.');
+        setLoading(false);
+        return;
+      }
+
+      // ─── Succès : cache local pour l'UI (profil visible immédiatement) ───
+      const serverUser = data.user;
       localStorage.setItem('dona_member_profile', JSON.stringify({
-        firstName: firstName || 'Ernest',
-        lastName: lastName || 'Dupont',
-        email: email || 'ernest@example.com',
-        phone: phone || '',
-        avatar: avatar || null
+        id: serverUser.id,
+        firstName: serverUser.firstName,
+        lastName: serverUser.lastName,
+        email: serverUser.email,
+        phone: serverUser.phone || '',
+        avatar: serverUser.avatar || null,
+        plan: serverUser.plan,
+        status: serverUser.status,
       }));
-    } catch (e) {
-      console.error('Error saving registration data:', e);
-    }
+      localStorage.setItem('dona_user_plan', serverUser.plan);
 
-    setTimeout(() => {
-      setLoading(false);
+      // Navigation vers le profil membre
       router.push('/member-profile');
-    }, 600);
+
+    } catch (networkErr) {
+      console.error('[signup] Erreur réseau:', networkErr);
+      setError('Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.');
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "540px", width: "100%", borderRadius: "2px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center"}}>
@@ -216,18 +261,19 @@ function SignupForm() {
           {/* Email */}
           <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
               <label style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", color: "var(--color-text)", textTransform: "uppercase", letterSpacing: "0.05em"}}>Email</label>
-              <div className="login-input-container">
+              <div className={`login-input-container${fieldErrors.email ? ' input-error' : ''}`}>
                   <span className="material-symbols-outlined" style={{fontSize: "20px", color: "var(--color-text-muted)"}}>mail</span>
                   <input 
                     type="email" 
                     placeholder="jane.doe@example.com" 
                     className="login-input" 
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => { setEmail(e.target.value); if(fieldErrors.email) setFieldErrors(p => ({...p, email: null})); }}
                     required 
                     disabled={loading}
                   />
               </div>
+              {fieldErrors.email && <div style={{ color: "#EF4444", fontSize: "11px", marginTop: "4px", fontWeight: "500" }}>{fieldErrors.email}</div>}
           </div>
 
           {/* Phone */}
@@ -268,9 +314,19 @@ function SignupForm() {
                     {showPassword ? "visibility" : "visibility_off"}
                   </span>
               </div>
-              <div style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-text-muted)", marginTop: "4px"}}>
-                  8 caractères minimum, une majuscule et un chiffre.
-              </div>
+              {/* Password strength meter */}
+              {password.length > 0 && (
+                <div style={{ marginTop: "8px" }}>
+                  <div style={{ background: "var(--color-border)", borderRadius: "4px", height: "4px", overflow: "hidden" }}>
+                    <div style={{ width: `${strengthPct}%`, height: "100%", background: strengthColors[passwordStrength], transition: "width 0.3s ease, background 0.3s ease", borderRadius: "4px" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+                    <span style={{ fontSize: "11px", color: strengthColors[passwordStrength], fontWeight: "600" }}>{strengthLabels[passwordStrength]}</span>
+                    <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>8 car. min · Majuscule · Chiffre</span>
+                  </div>
+                </div>
+              )}
+              {fieldErrors.password && <div style={{ color: "#EF4444", fontSize: "11px", marginTop: "4px", fontWeight: "500" }}>{fieldErrors.password}</div>}
           </div>
 
           {/* Confirm Password */}
@@ -283,11 +339,12 @@ function SignupForm() {
                     placeholder="••••••••" 
                     className="login-input" 
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => { setConfirmPassword(e.target.value); if(fieldErrors.confirmPassword) setFieldErrors(p => ({...p, confirmPassword: null})); }}
                     required 
                     disabled={loading}
                   />
               </div>
+              {fieldErrors.confirmPassword && <div style={{ color: "#EF4444", fontSize: "11px", marginTop: "4px", fontWeight: "500" }}>{fieldErrors.confirmPassword}</div>}
           </div>
 
           {/* Submit Button */}
@@ -357,6 +414,10 @@ export default function Page() {
         }
         .login-input-container:focus-within {
           border-color: var(--color-accent);
+        }
+        .login-input-container.input-error {
+          border-color: #EF4444 !important;
+          background: rgba(239, 68, 68, 0.03);
         }
         .login-input {
           background: transparent;

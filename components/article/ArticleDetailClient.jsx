@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { getActiveUserSubscription, canAccessMagazine } from '@/lib/subscriptionPermissions';
 import SaveArticleButton from '@/components/article/SaveArticleButton';
+import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
 
 export default function ArticleDetailClient({ magazine, article, magazineSlug, articleSlug }) {
   const { data: session } = useSession();
+  const { loadTrack } = useAudioPlayer();
   const [activeSub, setActiveSub] = useState({ isGuest: true, plan: 'Essentiel' });
   const [mounted, setMounted] = useState(false);
 
@@ -63,7 +65,16 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
             
             {isAllowed ? (
               <>
-                <button style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}>
+                <button 
+                  onClick={() => loadTrack({
+                    src: article.audioFile || '/assets/core/media/article-ambient.wav',
+                    title: article.title,
+                    source: magazine.title.toUpperCase(),
+                    duration: article.audioDuration || 240
+                  })}
+                  style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}
+                  aria-label={`Écouter l'article : ${article.title}`}
+                >
                   <span className="material-symbols-outlined">volume_up</span>
                   <span style={{ fontSize: "9px", fontWeight: "700" }}>ÉCOUTER</span>
                 </button>

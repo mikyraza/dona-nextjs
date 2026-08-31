@@ -8,7 +8,7 @@ import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
 export default function Page() {
   const [userSub, setUserSub] = useState({ plan: 'Essentiel', status: 'Active', isGuest: true });
   const [paywallModal, setPaywallModal] = useState({ isOpen: false, title: '', message: '' });
-  const { loadTrack } = useAudioPlayer();
+  const { loadTrack, loadPlaylist } = useAudioPlayer();
 
   const syncUserSub = () => {
     setUserSub(getActiveUserSubscription());
@@ -24,7 +24,7 @@ export default function Page() {
     };
   }, []);
 
-  const handleAudioClick = (e, title = 'Contenu Audio') => {
+  const handleAudioClick = (e, title = 'Contenu Audio', src = null) => {
     const access = canAccessAudioAndReplay(userSub.plan, userSub.status);
     if (!access.allowed) {
       if (e) e.preventDefault();
@@ -35,6 +35,7 @@ export default function Page() {
       });
     } else {
       loadTrack({
+        src: src || '/assets/core/media/podcast-01.wav',
         title: title,
         source: 'DONA STUDIO AUDIO',
         duration: 2520
@@ -63,7 +64,7 @@ export default function Page() {
             </div>
             <button 
               type="button"
-              onClick={(e) => handleAudioClick(e, 'The Brief: L\'État de l\'Art')} 
+              onClick={(e) => handleAudioClick(e, 'The Brief: L\'État de l\'Art', '/assets/core/media/podcast-01.wav')} 
               className="btn-primary" 
               style={{ border: 'none', cursor: 'pointer' }}
             >
@@ -82,22 +83,22 @@ export default function Page() {
           </div>
         </div>
         <div className="chroniques-grid">
-          <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'La Revue de Mode')} style={{ cursor: 'pointer' }}>
+          <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'La Revue de Mode', '/assets/core/media/podcast-01.wav')} style={{ cursor: 'pointer' }}>
             <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-1.png" alt="Revue" className="card-img" /></div>
             <h3 className="card-title">La Revue de Mode</h3>
             <div className="card-meta">15 FÉVRIER — 24 MIN</div>
           </article>
-          <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'Architecture Invisible')} style={{ cursor: 'pointer' }}>
+          <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'Architecture Invisible', '/assets/core/media/podcast-02.wav')} style={{ cursor: 'pointer' }}>
             <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-2.png" alt="Architecture" className="card-img" /></div>
             <h3 className="card-title">Architecture Invisible</h3>
             <div className="card-meta">12 FÉVRIER — 31 MIN</div>
           </article>
-          <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'Le Son de Demain')} style={{ cursor: 'pointer' }}>
+          <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'Le Son de Demain', '/assets/core/media/podcast-03.wav')} style={{ cursor: 'pointer' }}>
             <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-3.png" alt="Son" className="card-img" /></div>
             <h3 className="card-title">Le Son de Demain</h3>
             <div className="card-meta">08 FÉVRIER — 19 MIN</div>
           </article>
-          <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'L\'Art de Conversation')} style={{ cursor: 'pointer' }}>
+          <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'L\'Art de Conversation', '/assets/core/media/podcast-04.wav')} style={{ cursor: 'pointer' }}>
             <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-4.png" alt="Conversation" className="card-img" /></div>
             <h3 className="card-title">L'Art de Conversation</h3>
             <div className="card-meta">05 FÉVRIER — 45 MIN</div>
@@ -112,7 +113,7 @@ export default function Page() {
           <div className="live-tag"><span className="dot"></span> DIRECT <span className="tag-text">ANTENNE DONA RADIO</span></div>
           <h2 className="live-title">En ce moment :<br />Session de Nuit<br />avec Julian B.</h2>
           <div className="live-player-area">
-            <button className="btn-play-large" onClick={(e) => handleAudioClick(e, 'Direct Dona Radio')} style={{ border: 'none', cursor: 'pointer' }}>
+            <button className="btn-play-large" onClick={(e) => handleAudioClick(e, 'Direct Dona Radio', '/assets/core/media/radio-live.wav')} style={{ border: 'none', cursor: 'pointer' }}>
               <span className="material-symbols-outlined">play_arrow</span>
             </button>
             <div className="live-upcoming">
@@ -131,7 +132,7 @@ export default function Page() {
           <p className="section-desc">Une collection de récits immersifs, de l'exploration des archives oubliées aux enquêtes<br />sur les nouveaux paradigmes de l'élégance.</p>
         </div>
         <div className="series-list">
-          <div className="series-item" onClick={(e) => handleAudioClick(e, 'Les Fantômes de la Haute Couture')} style={{ cursor: 'pointer' }}>
+          <div className="series-item" onClick={(e) => handleAudioClick(e, 'Les Fantômes de la Haute Couture', '/assets/core/media/serie-01.wav')} style={{ cursor: 'pointer' }}>
             <div className="series-number">01 / 06</div>
             <div className="series-info">
               <h3 className="series-title">Les Fantômes de la Haute Couture</h3>
@@ -139,7 +140,7 @@ export default function Page() {
             </div>
             <div className="series-duration">3H 45M TOTAL</div>
           </div>
-          <div className="series-item" onClick={(e) => handleAudioClick(e, 'L\'Écho du Silence')} style={{ cursor: 'pointer' }}>
+          <div className="series-item" onClick={(e) => handleAudioClick(e, 'L\'Écho du Silence', '/assets/core/media/serie-02.wav')} style={{ cursor: 'pointer' }}>
             <div className="series-number">02 / 04</div>
             <div className="series-info">
               <h3 className="series-title">L'Écho du Silence</h3>

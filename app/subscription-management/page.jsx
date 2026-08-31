@@ -1,9 +1,116 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
+import { generateInvoicePDF } from '@/lib/generateInvoicePDF';
 
 export default function Page() {
+  const router = useRouter();
+
+  // Modals state
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [cancelConfirmed, setCancelConfirmed] = useState(false);
+  const [subStatus, setSubStatus] = useState('Active');
+  const [subMessage, setSubMessage] = useState(null);
+  const [loadingAction, setLoadingAction] = useState(false);
+  const [cardInput, setCardInput] = useState({ number: '', expiry: '', cvc: '' });
+
+  const getMemberEmail = () => {
+    try {
+      const profile = JSON.parse(localStorage.getItem('dona_member_profile') || '{}');
+      return profile.email || 'ernest@example.com';
+    } catch(e) {
+      return 'ernest@example.com';
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    setLoadingAction(true);
+    try {
+      const email = getMemberEmail();
+      const res = await fetch('/api/subscription/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel', email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCancelConfirmed(true);
+        setSubStatus('Cancelled at period end');
+        setShowCancelModal(false);
+        setSubMessage({ type: 'success', text: data.message });
+      } else {
+        alert(data.error || 'Erreur lors de la demande de résiliation.');
+      }
+    } catch (e) {
+      alert('Erreur réseau lors de la communication avec le serveur de facturation.');
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
+  const handleUpdatePaymentMethodSubmit = async (e) => {
+    e.preventDefault();
+    setLoadingAction(true);
+    try {
+      const email = getMemberEmail();
+      const res = await fetch('/api/subscription/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update-payment-method',
+          email,
+          paymentDetails: { cardNumber: cardInput.number, expiry: cardInput.expiry }
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setShowPaymentModal(false);
+        setSubMessage({ type: 'success', text: data.message });
+        setTimeout(() => setSubMessage(null), 5000);
+      } else {
+        alert(data.error || 'Erreur lors de la mise à jour bancaire.');
+      }
+    } catch (e) {
+      alert('Erreur réseau lors de la validation avec le serveur bancaire.');
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
+  const handleDownloadInvoice = (invoiceId, date, amount) => {
+    let memberName = 'Membre DONA';
+    let memberEmail = '';
+    try {
+      const profile = JSON.parse(localStorage.getItem('dona_member_profile') || '{}');
+      if (profile.firstName) memberName = `${profile.firstName} ${profile.lastName || ''}`.trim();
+      if (profile.email) memberEmail = profile.email;
+    } catch(e) {}
+
+    generateInvoicePDF({
+      invoiceId,
+      date,
+      amount,
+      plan: 'Premium',
+      memberName,
+      memberEmail,
+      paymentMethod: 'VISA •••• 4242'
+    });
+  };
+
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+      await signOut({ callbackUrl: '/login' });
+    } catch (err) {
+      router.push('/login');
+    }
+  };
+
   return (
     <main className="vip-container">
       
@@ -76,6 +183,10 @@ export default function Page() {
           font-weight: 600;
           padding: 15px 0;
           transition: color 0.3s ease;
+          background: none;
+          border: none;
+          cursor: pointer;
+          width: 100%;
         }
         .logout-link:hover {
           color: var(--color-accent);
@@ -116,30 +227,38 @@ export default function Page() {
           color: #8B002A;
           border-color: #8B002A;
         }
-        .advanced-settings-link {
+        .advanced-settings-button {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          width: 100%;
           padding: 16px 0;
-          text-decoration: none;
+          background: none;
+          border: none;
           color: var(--color-text);
           font-size: 14px;
           font-weight: 500;
+          cursor: pointer;
           transition: color 0.3s ease;
+          text-align: left;
         }
-        .advanced-settings-link:hover {
+        .advanced-settings-button:hover {
           color: var(--color-accent);
         }
-        .facturation-link {
+        .facturation-button {
           color: var(--color-accent);
-          text-decoration: none;
+          background: none;
+          border: none;
           font-weight: 600;
           display: flex;
           align-items: center;
           gap: 5px;
+          cursor: pointer;
+          font-size: 13px;
           transition: color 0.3s ease;
+          padding: 0;
         }
-        .facturation-link:hover {
+        .facturation-button:hover {
           color: #8B002A;
         }
         .sub-layout {
@@ -154,6 +273,25 @@ export default function Page() {
         }
         .table-min-width {
           min-width: 600px;
+        }
+        .modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 20px;
+        }
+        .modal-card {
+          background: #FFFFFF;
+          color: #111111;
+          border-radius: 6px;
+          padding: 36px;
+          max-width: 480px;
+          width: 100%;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         }
         @media (max-width: 900px) {
           .vip-container {
@@ -194,16 +332,36 @@ export default function Page() {
               </Link>
           </div>
           <div style={{padding: "0 20px", marginTop: "auto"}}>
-              <Link href="#" className="logout-link">
+              <button type="button" onClick={handleLogout} className="logout-link">
                   <span className="material-symbols-outlined" style={{fontSize: "18px"}}>logout</span> 
                   SE DÉCONNECTER
-              </Link>
+              </button>
           </div>
       </aside>
   
       {/* Main Content Area */}
       <div className="vip-content">
           <h1 className="vip-title">Mon Abonnement & Facturation</h1>
+          
+          {subMessage && (
+            <div style={{
+              padding: "14px 18px",
+              borderRadius: "4px",
+              marginBottom: "24px",
+              background: subMessage.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+              border: subMessage.type === 'success' ? '1px solid #10B981' : '1px solid #EF4444',
+              color: subMessage.type === 'success' ? '#065F46' : '#991B1B',
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px"
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                {subMessage.type === 'success' ? 'check_circle' : 'error'}
+              </span>
+              <span>{subMessage.text}</span>
+            </div>
+          )}
           
           <div className="sub-layout">
               {/* Left Column */}
@@ -231,7 +389,9 @@ export default function Page() {
                           </div>
                       </div>
                       
-                      <button className="btn-crimson" style={{width: "100%"}}>GÉRER MON ABONNEMENT</button>
+                      <button className="btn-crimson" style={{width: "100%"}} onClick={() => router.push('/abonnement')}>
+                        CHANGER OU SURPASSER MON OFFRE
+                      </button>
                   </div>
                   
                   {/* Billing History */}
@@ -251,13 +411,21 @@ export default function Page() {
                                   <td style={{padding: "15px 20px", color: "var(--color-text)"}}>15 Mai 2026</td>
                                   <td style={{padding: "15px 20px", color: "var(--color-text)"}}>29.00€</td>
                                   <td style={{padding: "15px 20px"}}><span style={{background: "rgba(16, 185, 129, 0.1)", color: "#10B981", padding: "4px 8px", borderRadius: "2px", fontSize: "11px", fontWeight: "600"}}>Payé</span></td>
-                                  <td style={{padding: "15px 20px"}}><Link href="#" className="facturation-link"><span className="material-symbols-outlined" style={{fontSize: "16px"}}>download</span> PDF</Link></td>
+                                  <td style={{padding: "15px 20px"}}>
+                                    <button type="button" onClick={() => handleDownloadInvoice('INV-2026-0515', '15 Mai 2026', '29.00€')} className="facturation-button">
+                                      <span className="material-symbols-outlined" style={{fontSize: "16px"}}>download</span> Télécharger PDF
+                                    </button>
+                                  </td>
                               </tr>
                               <tr style={{borderBottom: "none"}}>
                                   <td style={{padding: "15px 20px", color: "var(--color-text)"}}>15 Avr 2026</td>
                                   <td style={{padding: "15px 20px", color: "var(--color-text)"}}>29.00€</td>
                                   <td style={{padding: "15px 20px"}}><span style={{background: "rgba(16, 185, 129, 0.1)", color: "#10B981", padding: "4px 8px", borderRadius: "2px", fontSize: "11px", fontWeight: "600"}}>Payé</span></td>
-                                  <td style={{padding: "15px 20px"}}><Link href="#" className="facturation-link"><span className="material-symbols-outlined" style={{fontSize: "16px"}}>download</span> PDF</Link></td>
+                                  <td style={{padding: "15px 20px"}}>
+                                    <button type="button" onClick={() => handleDownloadInvoice('INV-2026-0415', '15 Avril 2026', '29.00€')} className="facturation-button">
+                                      <span className="material-symbols-outlined" style={{fontSize: "16px"}}>download</span> Télécharger PDF
+                                    </button>
+                                  </td>
                               </tr>
                           </tbody>
                       </table>
@@ -275,23 +443,169 @@ export default function Page() {
                               <div style={{fontSize: "12px", color: "var(--color-text-muted)"}}>Expire 12/28</div>
                           </div>
                       </div>
-                      <button className="btn-outline-crimson" style={{width: "100%"}}>METTRE À JOUR</button>
+                      <button type="button" onClick={() => setShowPaymentModal(true)} className="btn-outline-crimson" style={{width: "100%"}}>METTRE À JOUR</button>
                   </div>
                   
                   <h3 style={{fontSize: "16px", fontWeight: "600", margin: "0 0 20px 0", color: "var(--color-text)"}}>Paramètres Avancés</h3>
                   <div style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "2px", padding: "20px"}}>
-                      <Link href="#" className="advanced-settings-link" style={{borderBottom: "1px solid var(--color-border)"}}>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowNotificationModal(true)} 
+                        className="advanced-settings-button" 
+                        style={{borderBottom: "1px solid var(--color-border)"}}
+                      >
                           Gérer les notifications
                           <span className="material-symbols-outlined" style={{color: "var(--color-text-muted)"}}>arrow_forward</span>
-                      </Link>
-                      <Link href="#" className="advanced-settings-link" style={{color: "var(--color-accent)", paddingBottom: "0"}}>
-                          Résilier mon abonnement
-                          <span className="material-symbols-outlined" style={{color: "var(--color-accent)"}}>cancel</span>
-                      </Link>
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowCancelModal(true)} 
+                        className="advanced-settings-button" 
+                        style={{color: "var(--color-accent)", paddingBottom: "0"}}
+                      >
+                          {cancelConfirmed ? "Abonnement résilié à l'échéance" : "Résilier mon abonnement"}
+                          <span className="material-symbols-outlined" style={{color: "var(--color-accent)"}}>
+                            {cancelConfirmed ? "check_circle" : "cancel"}
+                          </span>
+                      </button>
                   </div>
               </div>
           </div>
       </div>
+
+      {/* Modal 1: Notification Preferences */}
+      {showNotificationModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "22px", margin: "0 0 16px 0", color: "#8B002A" }}>
+              Préférences de Notifications
+            </h3>
+            <p style={{ fontSize: "13px", color: "#666", marginBottom: "20px" }}>
+              Choisissez les communications que vous souhaitez recevoir de DONA MAGAZINE.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", cursor: "pointer" }}>
+                <input 
+                  type="checkbox" 
+                  checked={notifSettings.newsletter} 
+                  onChange={(e) => setNotifSettings(prev => ({ ...prev, newsletter: e.target.checked }))} 
+                />
+                Brief quotidien & Newsletter VIP
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", cursor: "pointer" }}>
+                <input 
+                  type="checkbox" 
+                  checked={notifSettings.nouveautesMag} 
+                  onChange={(e) => setNotifSettings(prev => ({ ...prev, nouveautesMag: e.target.checked }))} 
+                />
+                Nouveaux numéros & éditions spéciales
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", cursor: "pointer" }}>
+                <input 
+                  type="checkbox" 
+                  checked={notifSettings.masterclasses} 
+                  onChange={(e) => setNotifSettings(prev => ({ ...prev, masterclasses: e.target.checked }))} 
+                />
+                Invitations Masterclasses & Audios Replays
+              </label>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button type="button" onClick={() => setShowNotificationModal(false)} className="btn-crimson" style={{ padding: "10px 20px" }}>
+                Enregistrer & Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Payment Method Update */}
+      {showPaymentModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "22px", margin: "0 0 16px 0", color: "#8B002A" }}>
+              Mettre à jour le moyen de paiement
+            </h3>
+            <p style={{ fontSize: "13px", color: "#666", marginBottom: "20px" }}>
+              Saisissez les coordonnées de votre nouvelle carte bancaire pour le renouvellement automatique.
+            </p>
+            <form onSubmit={handleUpdatePaymentMethodSubmit}>
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", marginBottom: "6px" }}>Numéro de Carte</label>
+                <input 
+                  type="text" 
+                  required 
+                  placeholder="4532 •••• •••• 4242" 
+                  value={cardInput.number}
+                  onChange={e => setCardInput({ ...cardInput, number: e.target.value })}
+                  style={{ width: "100%", padding: "12px", border: "1px solid #ccc", borderRadius: "4px" }} 
+                />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", marginBottom: "6px" }}>Expiration</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="12/28" 
+                    value={cardInput.expiry}
+                    onChange={e => setCardInput({ ...cardInput, expiry: e.target.value })}
+                    style={{ width: "100%", padding: "12px", border: "1px solid #ccc", borderRadius: "4px" }} 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", marginBottom: "6px" }}>CVC</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="123" 
+                    value={cardInput.cvc}
+                    onChange={e => setCardInput({ ...cardInput, cvc: e.target.value })}
+                    style={{ width: "100%", padding: "12px", border: "1px solid #ccc", borderRadius: "4px" }} 
+                  />
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button type="button" onClick={() => setShowPaymentModal(false)} style={{ background: "#eee", border: "none", padding: "10px 18px", borderRadius: "4px", cursor: "pointer" }}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn-crimson" disabled={loadingAction} style={{ padding: "10px 20px" }}>
+                  {loadingAction ? "Validation..." : "Valider la carte"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 3: Cancellation Confirmation */}
+      {showCancelModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "22px", margin: "0 0 16px 0", color: "#8B002A" }}>
+              Résiliation de l'abonnement
+            </h3>
+            <p style={{ fontSize: "14px", color: "#444", lineHeight: "1.6", marginBottom: "20px" }}>
+              Êtes-vous sûre de vouloir résilier votre formule <strong>DONA Premium</strong> ?
+              Votre demande sera communiquée au serveur de facturation récurrente et vous conserverez l'accès à tous vos privilèges jusqu'à la fin de la période en cours.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button type="button" onClick={() => setShowCancelModal(false)} style={{ background: "#eee", border: "none", padding: "10px 18px", borderRadius: "4px", cursor: "pointer" }}>
+                Conserver mon offre
+              </button>
+              <button 
+                type="button" 
+                onClick={handleCancelSubscription} 
+                disabled={loadingAction}
+                className="btn-crimson" 
+                style={{ padding: "10px 20px", background: "#333" }}
+              >
+                {loadingAction ? "Transmission..." : "Confirmer la résiliation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

@@ -178,7 +178,7 @@ export default function Page() {
               ))}
             </ul>
             
-            <Link href={`/signup?plan=premium&billing=${billingPeriod}`} className="pricing-btn-accent">Devenir Premium</Link>
+            <Link href={`/signup?plan=premium&billing=${billingPeriod}`} className="pricing-btn-accent">Devenir Premium → Payer {billingPeriod === 'monthly' ? '29€/mois' : '278€/an'}</Link>
         </div>
 
         {/* Plan 3: Élite */}
@@ -199,7 +199,7 @@ export default function Page() {
               ))}
             </ul>
             
-            <Link href={`/signup?plan=elite&billing=${billingPeriod}`} className="pricing-btn-dark">Rejoindre l'Élite</Link>
+            <Link href={`/signup?plan=elite&billing=${billingPeriod}`} className="pricing-btn-dark">Rejoindre l'Élite → Payer {billingPeriod === 'monthly' ? '79€/mois' : '758€/an'}</Link>
         </div>
       </section>
 

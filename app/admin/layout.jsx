@@ -197,6 +197,27 @@ function AdminInnerLayout({ children }) {
             </div>
           )}
 
+          {/* COMMUNICATION & RECRUTEMENT Group */}
+          {(isSuperAdmin || isEditor) && (
+            <div className="nav-group">
+              <span className="group-title">Communication & RH</span>
+              <Link 
+                href="/admin/messages" 
+                className={`nav-item ${isActiveRoute('/admin/messages') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">mail</span>
+                Messages Contact
+              </Link>
+              <Link 
+                href="/admin/candidatures" 
+                className={`nav-item ${isActiveRoute('/admin/candidatures') ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined">work</span>
+                Candidatures & CV
+              </Link>
+            </div>
+          )}
+
           {/* SETTINGS Group */}
           {(isSuperAdmin || isTranslator || isEditor || isJournalist) && (
             <div className="nav-group">
@@ -223,6 +244,13 @@ function AdminInnerLayout({ children }) {
                   >
                     <span className="material-symbols-outlined">menu</span>
                     Navigation
+                  </Link>
+                  <Link 
+                    href="/admin/settings/equipe" 
+                    className={`nav-item ${isActiveRoute('/admin/settings/equipe') ? 'active' : ''}`}
+                  >
+                    <span className="material-symbols-outlined">badge</span>
+                    Équipe & Rédaction
                   </Link>
                 </>
               )}

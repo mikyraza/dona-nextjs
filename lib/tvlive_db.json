@@ -1,42 +1,13 @@
 {
-  "isLive": false,
-  "streamUrl": "",
-  "hlsUrl": "",
-  "currentTitle": "The Global Intelligence Summit",
-  "currentSubtitle": "Live depuis le Grand Palais — Interviews exclusives avec les grandes figures de l'économie mondiale",
-  "currentGuest": "Jean Nouvel",
-  "format": "Keynote · Q&A",
-  "location": "Grand Palais, Paris",
-  "epg": [
-    {
-      "id": "epg-1",
-      "title": "The Global Intelligence Summit — Ouverture",
-      "duration": "45MIN",
-      "scheduledAt": "2026-08-20T14:00:00Z",
-      "type": "live"
-    },
-    {
-      "id": "epg-2",
-      "title": "Table ronde : Économie & Innovation",
-      "duration": "1H 20MIN",
-      "scheduledAt": "2026-08-20T15:00:00Z",
-      "type": "live"
-    },
-    {
-      "id": "epg-3",
-      "title": "Masterclass : L'Art de la Négociation",
-      "duration": "1H 18MIN",
-      "scheduledAt": "2026-08-20T16:30:00Z",
-      "type": "replay",
-      "videoId": "vid-008"
-    },
-    {
-      "id": "epg-4",
-      "title": "Clôture & Networking",
-      "duration": "30MIN",
-      "scheduledAt": "2026-08-20T18:00:00Z",
-      "type": "live"
-    }
-  ],
-  "updatedAt": "2026-08-20T14:06:46.580Z"
+  "isLive": true,
+  "streamUrl": "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  "hlsUrl": "https://www.youtube.com/watch?v=kFpac4dj9RQ",
+  "currentTitle": "Vidéo en direct",
+  "currentSubtitle": "Edition spéciale",
+  "currentGuest": "Studio DONA",
+  "format": "Direct",
+  "location": "",
+  "epg": [],
+  "updatedAt": "2026-08-28T12:14:30.413Z",
+  "liveStartTime": 1787919247925
 }

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
+
 const TVLIVE_DB_PATH = path.join(process.cwd(), 'lib', 'tvlive_db.json');
 
 function readTvLiveDB() {
@@ -31,6 +33,9 @@ export async function POST(request) {
     const body = await request.json();
     const current = readTvLiveDB();
 
+    const isStartingLive = (body.isLive === true && !current.isLive) || 
+                           (body.isLive === true && body.streamUrl && body.streamUrl !== current.streamUrl);
+
     const updated = {
       ...current,
       isLive: body.isLive !== undefined ? body.isLive : current.isLive,
@@ -42,6 +47,7 @@ export async function POST(request) {
       format: body.format !== undefined ? body.format : current.format,
       location: body.location !== undefined ? body.location : current.location,
       updatedAt: new Date().toISOString(),
+      liveStartTime: isStartingLive ? Date.now() : (current.liveStartTime || Date.now())
     };
 
     writeTvLiveDB(updated);

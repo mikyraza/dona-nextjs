@@ -10,6 +10,7 @@ export default function PlayoutDrawer({ isOpen, onClose, onAdd, targetType, dbAr
   const [fileDuration, setFileDuration] = useState('10:00');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -18,6 +19,7 @@ export default function PlayoutDrawer({ isOpen, onClose, onAdd, targetType, dbAr
       setFileName('');
       setUploadProgress(0);
       setIsUploading(false);
+      setUploadedUrl('');
     }
   }, [isOpen]);
 
@@ -31,23 +33,41 @@ export default function PlayoutDrawer({ isOpen, onClose, onAdd, targetType, dbAr
     (filterFormat === 'audio' && (art.category === "11. Culture & Médias" || art.title.toLowerCase().includes("podcast")))
   );
 
-  const handleFileUploadChange = (e) => {
+  const handleFileUploadChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setFileName(file.name);
       setIsUploading(true);
-      setUploadProgress(0);
+      setUploadProgress(10);
       
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setIsUploading(false);
-            return 100;
-          }
-          return prev + 20;
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
         });
-      }, 250);
+
+        setUploadProgress(70);
+        const data = await res.json();
+
+        if (data.success && data.url) {
+          setUploadedUrl(data.url);
+          setUploadProgress(100);
+          // Auto-detect duration could be added here if needed
+        } else {
+          console.error("Upload failed:", data.error);
+          alert("Erreur lors de l'upload: " + data.error);
+          setUploadProgress(0);
+        }
+      } catch (err) {
+        console.error("PlayoutDrawer upload error:", err);
+        alert("Erreur serveur lors de l'upload.");
+        setUploadProgress(0);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -71,7 +91,8 @@ export default function PlayoutDrawer({ isOpen, onClose, onAdd, targetType, dbAr
         id: `q-${Date.now()}`,
         title: fileName,
         format: targetType === 'radio' ? 'Audio' : 'Vidéo',
-        duration: fileDuration || "10:00"
+        duration: fileDuration || "10:00",
+        url: uploadedUrl,
       });
     }
     

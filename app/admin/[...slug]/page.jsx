@@ -100,6 +100,8 @@ export default function AdminCatchAllPage({ params }) {
   const [tvLiveLoading, setTvLiveLoading] = useState(false);
   const [tvHlsUrl, setTvHlsUrl] = useState('');
   const [tvTitle, setTvTitle] = useState('');
+  const [tvSubtitle, setTvSubtitle] = useState('');
+  const [tvFormat, setTvFormat] = useState('Direct');
   const [tvGuest, setTvGuest] = useState('');
 
   const fetchTvLive = async () => {
@@ -111,10 +113,13 @@ export default function AdminCatchAllPage({ params }) {
         setTvLiveState(data);
         setTvHlsUrl(data.hlsUrl || '');
         setTvTitle(data.currentTitle || '');
+        setTvSubtitle(data.currentSubtitle || '');
+        setTvFormat(data.format || 'Direct');
         setTvGuest(data.currentGuest || '');
-        // Sync EPG into tvQueue for display
-        if (data.epg && data.epg.length > 0) {
-          setTvQueue(data.epg.map(e => ({ id: e.id, title: e.title, format: e.type === 'replay' ? 'Replay' : 'Direct', duration: e.duration })));
+        if (data.epg && Array.isArray(data.epg)) {
+          setTvQueue(data.epg);
+        } else {
+          setTvQueue([]);
         }
       }
     } catch (e) {
@@ -129,18 +134,38 @@ export default function AdminCatchAllPage({ params }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section]);
 
-  const handleToggleLive = async (newState) => {
+  const syncTvLiveState = async (newIsLive, newQueue) => {
+    const activeItem = newQueue && newQueue.length > 0 ? newQueue[0] : null;
+    const streamUrl = activeItem?.url || (newIsLive ? 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' : '');
+
     try {
       const res = await fetch('/api/admin/tv-live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isLive: newState, hlsUrl: tvHlsUrl, currentTitle: tvTitle, currentGuest: tvGuest }),
+        body: JSON.stringify({
+          isLive: newIsLive,
+          hlsUrl: tvOverride ? tvHlsUrl : streamUrl,
+          streamUrl: streamUrl,
+          epg: newQueue
+        }),
       });
       const data = await res.json();
-      if (data.success !== false) setTvLiveState(prev => ({ ...prev, isLive: newState }));
+      if (data.success !== false) {
+        setTvLiveState({
+          ...data,
+          isLive: newIsLive,
+          hlsUrl: streamUrl,
+          epg: newQueue
+        });
+        setTvHlsUrl(streamUrl);
+      }
     } catch (e) {
-      console.error('Toggle live error:', e);
+      console.error('syncTvLiveState error:', e);
     }
+  };
+
+  const handleToggleLive = async (newState) => {
+    await syncTvLiveState(newState, tvQueue);
   };
 
   const handleSaveTvMeta = async () => {
@@ -148,7 +173,13 @@ export default function AdminCatchAllPage({ params }) {
       await fetch('/api/admin/tv-live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hlsUrl: tvHlsUrl, currentTitle: tvTitle, currentGuest: tvGuest }),
+        body: JSON.stringify({ 
+          hlsUrl: tvHlsUrl, 
+          currentTitle: tvTitle, 
+          currentSubtitle: tvSubtitle,
+          format: tvFormat,
+          currentGuest: tvGuest 
+        }),
       });
       alert('Métadonnées TV sauvegardées !');
     } catch (e) {
@@ -340,6 +371,118 @@ export default function AdminCatchAllPage({ params }) {
     seoDescription: "Magazine d'intelligence, d'art de vivre et d'analyse premium.",
     contactEmail: "contact@dona-magazine.com"
   });
+
+  // 5.5 Équipe Page Settings State
+  const DEFAULT_EQUIPE_SETTINGS = {
+    heroTitle: "Les voix de DONA",
+    heroSubtitle: "Des expertes mondiales au service de votre excellence.",
+    introText: "DONA rassemble des intellectuelles, dirigeantes et créatrices qui partagent une vision : celle d'une femme solaire, affirmée et bâtisseuse. Chaque contributrice apporte son expertise unique pour vous accompagner dans votre parcours d'excellence.",
+    categories: ["Tous", "Intelligence", "Lifestyle", "Impact", "Culture"],
+    expertes: [
+      {
+        id: "exp-1",
+        name: "Pr Nora Patrius",
+        role: "Géopolitologue & Stratège",
+        tags: "GEOPOLITIQUE   INTELLIGENCE ECONOMIQUE   PROSPECTIVE",
+        websiteUrl: "/article-trends-intelligence",
+        emailUrl: "mailto:nora.patrius@dona-magazine.com",
+        photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"
+      },
+      {
+        id: "exp-2",
+        name: "Dr Clarisse Bama",
+        role: "Sociologue & Leadership",
+        tags: "SOCIOLOGIE   PSYCHOLOGIE DU LEADERSHIP   DIVERSITE",
+        websiteUrl: "/article-trends-intelligence",
+        emailUrl: "",
+        photoUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=300&auto=format&fit=crop"
+      }
+    ],
+    contributrices: [
+      { id: "con-1", name: "Elena Rostova", role: "Critique d'Art Contemporain", category: "Culture", contributionsUrl: "/today", photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=120&auto=format&fit=crop" },
+      { id: "con-2", name: "Sarah Jenks", role: "Experte en Finance Durable", category: "Impact", contributionsUrl: "/today", photoUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=120&auto=format&fit=crop" },
+      { id: "con-3", name: "Amira Kassis", role: "Innovatrice Tech & IA", category: "Intelligence", contributionsUrl: "/today", photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=120&auto=format&fit=crop" },
+      { id: "con-4", name: "Juliette Moreau", role: "Architecte d'Intérieur", category: "Lifestyle", contributionsUrl: "/today", photoUrl: "https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=120&auto=format&fit=crop" },
+      { id: "con-5", name: "Fatima Diop", role: "Chef Gastronomique", category: "Lifestyle", contributionsUrl: "/today", photoUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1bf98c?q=80&w=120&auto=format&fit=crop" },
+      { id: "con-6", name: "Chloé Lin", role: "Directrice Créative", category: "Culture", contributionsUrl: "/today", photoUrl: "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?q=80&w=120&auto=format&fit=crop" }
+    ],
+    ctaTitle: "Rejoignez l'aventure DONA",
+    ctaDescription: "Vous partagez nos valeurs et souhaitez contribuer à notre vision éditoriale ? Découvrez nos opportunités ou proposez votre plume.",
+    ctaOffresLabel: "Voir les offres",
+    ctaOffresUrl: "/emploi",
+    ctaSpontaneeLabel: "Candidature spontanée",
+    ctaSpontaneeUrl: "/recrutement"
+  };
+
+  const [equipeSettings, setEquipeSettings] = useState(DEFAULT_EQUIPE_SETTINGS);
+  const [equipeSubTab, setEquipeSubTab] = useState('page-equipe'); // 'page-equipe' | 'rejoignez-redaction'
+
+  // 5.6 Rejoignez la Rédaction Settings State
+  const DEFAULT_REJOIGNEZ_SETTINGS = {
+    headerCategory: "CARRIÈRES & OPPORTUNITÉS",
+    title: "Rejoignez la Rédaction",
+    description: "Nous pensons que les récits d'excellence ne naissent que de collaborations d'exception. DONA MAGAZINE propose un environnement stimulant où la liberté de ton et l'exigence intellectuelle sont reines.",
+    contactEmail: "recrutement@dona-magazine.com",
+    jobs: [
+      {
+        id: "job-1",
+        category: "ÉDITORIAL",
+        title: "Journaliste de Mode & Art de Vivre",
+        contract: "CDI • Paris 2e",
+        description: "Rédaction de dossiers exclusifs, enquêtes sur la haute couture éthique et couverture des événements parisiens majeurs.",
+        missions: "Rédaction d'articles de fond et d'interviews de créateurs. Veille sur les tendances émergentes du luxe responsable.",
+        profil: "Minimum 3 ans d'expérience en journalisme de mode haut de gamme. Style d'écriture impeccable, rigoureux et poétique.",
+        posteSlug: "journaliste-mode"
+      },
+      {
+        id: "job-2",
+        category: "ART & GRAPHISME",
+        title: "Concepteur Visuel / UX Designer",
+        contract: "CDI • Paris / Hybride",
+        description: "Conception et mise en scène interactive de nos éditions numériques et de l'expérience de lecture mobile.",
+        missions: "Design d'interfaces de lecture immersives. Création d'animations interactives et de transitions haut de gamme.",
+        profil: "Maîtrise avancée des outils de design interactif et prototypage. Forte sensibilité esthétique minimaliste.",
+        posteSlug: "concepteur-visuel"
+      },
+      {
+        id: "job-3",
+        category: "LITTÉRAIRE",
+        title: "Rédacteur Culture & Société",
+        contract: "CDD (12 mois) • Paris",
+        description: "Production de chroniques littéraires, d'analyses philosophiques contemporaines et d'essais critiques de société.",
+        missions: "Rédaction d'essais critiques mensuels et d'interviews culturelles. Animation de rubriques de débats d'idées.",
+        profil: "Formation supérieure littéraire ou philosophique. Style rigoureux, érudit mais accessible.",
+        posteSlug: "redacteur-culture"
+      }
+    ]
+  };
+
+  const [rejoignezSettings, setRejoignezSettings] = useState(DEFAULT_REJOIGNEZ_SETTINGS);
+
+  useEffect(() => {
+    fetch('/api/admin/settings/equipe')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.equipeSettings) setEquipeSettings(data.equipeSettings);
+        if (data && data.rejoignezSettings) setRejoignezSettings(data.rejoignezSettings);
+      })
+      .catch(err => console.error("API load error for equipe settings:", err));
+
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('dona_settings_equipe');
+        if (stored) {
+          setEquipeSettings(JSON.parse(stored));
+        }
+        const storedRejoignez = localStorage.getItem('dona_settings_rejoignez_redaction');
+        if (storedRejoignez) {
+          setRejoignezSettings(JSON.parse(storedRejoignez));
+        }
+      } catch (e) {
+        console.error('Error loading equipe / rejoignez settings:', e);
+      }
+    }
+  }, []);
 
   // 6. SEO Settings State (Phase 4.7)
   const [seoSettings, setSeoSettings] = useState({
@@ -534,10 +677,7 @@ export default function AdminCatchAllPage({ params }) {
     { id: "q-r-3", title: "Discussion : Tech et Éthique du 12 Juillet", format: "Audio", duration: "24:10" }
   ]);
 
-  const [tvQueue, setTvQueue] = useState([
-    { id: "q-t-1", title: "Reportage: Les coulisses de DONA", format: "Vidéo", duration: "14:20" },
-    { id: "q-t-2", title: "Le Pouvoir du Design Intemporel", format: "Vidéo", duration: "08:45" }
-  ]);
+  const [tvQueue, setTvQueue] = useState([]);
 
   const [radioNowPlaying, setRadioNowPlaying] = useState({
     title: "Intro Édito DONA Radio",
@@ -552,13 +692,6 @@ export default function AdminCatchAllPage({ params }) {
     }
   }, [radioNowPlaying]);
 
-  const [tvNowPlaying, setTvNowPlaying] = useState({
-    title: "Loop Visuelle DONA TV v2",
-    duration: "05:00",
-    remaining: "03:45",
-    progress: 25
-  });
-
   const [radioOverride, setRadioOverride] = useState(false);
   const [tvOverride, setTvOverride] = useState(false);
 
@@ -566,9 +699,8 @@ export default function AdminCatchAllPage({ params }) {
   const [playoutTarget, setPlayoutTarget] = useState('radio'); // 'radio' | 'tv'
 
   // Queue Reordering logic (Up/Down)
-  const handleMoveQueueItem = (target, index, direction) => {
+  const handleMoveQueueItem = async (target, index, direction) => {
     const queue = target === 'radio' ? [...radioQueue] : [...tvQueue];
-    const setQueue = target === 'radio' ? setRadioQueue : setTvQueue;
 
     if (direction === 'up' && index > 0) {
       const temp = queue[index];
@@ -579,19 +711,53 @@ export default function AdminCatchAllPage({ params }) {
       queue[index] = queue[index + 1];
       queue[index + 1] = temp;
     }
-    setQueue(queue);
+
+    if (target === 'radio') {
+      setRadioQueue(queue);
+    } else {
+      setTvQueue(queue);
+      await syncTvLiveState(tvLiveState.isLive, queue);
+    }
   };
 
   // Queue Remove logic
-  const handleRemoveQueueItem = (target, id) => {
-    const setQueue = target === 'radio' ? setRadioQueue : setTvQueue;
-    setQueue(prev => prev.filter(item => item.id !== id));
+  const handleRemoveQueueItem = async (target, id) => {
+    if (target === 'radio') {
+      setRadioQueue(prev => prev.filter(item => item.id !== id));
+    } else {
+      const newQueue = tvQueue.filter(item => item.id !== id);
+      setTvQueue(newQueue);
+      await syncTvLiveState(tvLiveState.isLive, newQueue);
+    }
+  };
+
+  // Skip current playing media in TV Live queue
+  const handleSkipTvMedia = async () => {
+    if (tvQueue.length <= 1) {
+      const emptyQueue = [];
+      setTvQueue(emptyQueue);
+      await syncTvLiveState(false, emptyQueue);
+    } else {
+      const nextQueue = tvQueue.slice(1);
+      setTvQueue(nextQueue);
+      await syncTvLiveState(true, nextQueue);
+    }
+  };
+
+  // Stop TV Live broadcast completely
+  const handleStopTvLive = async () => {
+    await syncTvLiveState(false, tvQueue);
   };
 
   // Add to Playout Queue from drawer
-  const handleAddToPlayoutQueue = (newItem) => {
-    const setQueue = playoutTarget === 'radio' ? setRadioQueue : setTvQueue;
-    setQueue(prev => [...prev, newItem]);
+  const handleAddToPlayoutQueue = async (newItem) => {
+    if (playoutTarget === 'radio') {
+      setRadioQueue(prev => [...prev, newItem]);
+    } else {
+      const newQueue = [...tvQueue, newItem];
+      setTvQueue(newQueue);
+      await syncTvLiveState(tvLiveState.isLive, newQueue);
+    }
   };
 
   // 6. Dossiers State (Phase 4.2)
@@ -2589,6 +2755,717 @@ export default function AdminCatchAllPage({ params }) {
           );
         }
 
+        if (subsection === 'equipe') {
+          const handleSaveEquipeSubmit = async (e) => {
+            e.preventDefault();
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('dona_settings_equipe', JSON.stringify(equipeSettings));
+            }
+            try {
+              await fetch('/api/admin/settings/equipe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'equipe', settings: equipeSettings })
+              });
+            } catch (err) {
+              console.error('Error saving equipe settings to API:', err);
+            }
+            alert("Configuration de la page Équipe & Rédaction enregistrée avec succès !");
+          };
+
+          const handleSaveRejoignezSubmit = async (e) => {
+            e.preventDefault();
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('dona_settings_rejoignez_redaction', JSON.stringify(rejoignezSettings));
+            }
+            try {
+              await fetch('/api/admin/settings/equipe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'rejoignez', settings: rejoignezSettings })
+              });
+            } catch (err) {
+              console.error('Error saving rejoignez settings to API:', err);
+            }
+            alert("Configuration de la page Rejoignez la Rédaction & Offres enregistrée avec succès !");
+          };
+
+          const handleAddExperte = () => {
+            const newExp = {
+              id: `exp-${Date.now()}`,
+              name: "Nouvelle Experte",
+              role: "Spécialiste & Consultante",
+              tags: "EXPERTISE   PROSPECTIVE",
+              websiteUrl: "/article-trends-intelligence",
+              emailUrl: "mailto:contact@dona-magazine.com",
+              photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"
+            };
+            setEquipeSettings(prev => ({ ...prev, expertes: [...prev.expertes, newExp] }));
+          };
+
+          const handleRemoveExperte = (id) => {
+            setEquipeSettings(prev => ({ ...prev, expertes: prev.expertes.filter(e => e.id !== id) }));
+          };
+
+          const handleAddContributrice = () => {
+            const defaultCat = (equipeSettings.categories && equipeSettings.categories.length > 1) ? equipeSettings.categories[1] : "Intelligence";
+            const newCon = {
+              id: `con-${Date.now()}`,
+              name: "Nouvelle Contributrice",
+              role: "Rédactrice Invité",
+              category: defaultCat,
+              contributionsUrl: "/today",
+              photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=120&auto=format&fit=crop"
+            };
+            setEquipeSettings(prev => ({ ...prev, contributrices: [...prev.contributrices, newCon] }));
+          };
+
+          const handleRemoveContributrice = (id) => {
+            setEquipeSettings(prev => ({ ...prev, contributrices: prev.contributrices.filter(c => c.id !== id) }));
+          };
+
+          const handleAddCategoryTag = (newCatName) => {
+            const name = (newCatName || '').trim();
+            if (!name) return;
+            const currentCats = equipeSettings.categories || ["Tous"];
+            if (!currentCats.includes(name)) {
+              setEquipeSettings(prev => ({ ...prev, categories: [...(prev.categories || []), name] }));
+            }
+          };
+
+          const handleRemoveCategoryTag = (catToRemove) => {
+            if (catToRemove === 'Tous') return;
+            setEquipeSettings(prev => ({
+              ...prev,
+              categories: (prev.categories || []).filter(c => c !== catToRemove)
+            }));
+          };
+
+          const handleAddJob = () => {
+            const newJob = {
+              id: `job-${Date.now()}`,
+              category: "ÉDITORIAL",
+              title: "Nouveau Poste Éditorial",
+              contract: "CDI • Paris",
+              description: "Description synthétique du rôle...",
+              missions: "Missions et responsabilités principales...",
+              profil: "Profil et compétences requises...",
+              posteSlug: "nouveau-poste"
+            };
+            setRejoignezSettings(prev => ({ ...prev, jobs: [...(prev.jobs || []), newJob] }));
+          };
+
+          const handleRemoveJob = (id) => {
+            setRejoignezSettings(prev => ({ ...prev, jobs: (prev.jobs || []).filter(j => j.id !== id) }));
+          };
+
+          return (
+            <>
+              <div className="dashboard-title-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '16px' }}>
+                <h1>Gestion Équipe & Recrutement</h1>
+                
+                {/* Sub-tabs Navigation Bar */}
+                <div style={{ display: 'flex', gap: '12px', borderBottom: '2px solid var(--admin-border-color)', width: '100%', paddingBottom: '0' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setEquipeSubTab('page-equipe')}
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      padding: '10px 18px',
+                      fontSize: '13px',
+                      fontWeight: equipeSubTab === 'page-equipe' ? '700' : '500',
+                      color: equipeSubTab === 'page-equipe' ? '#8B002A' : 'var(--admin-text-muted)',
+                      borderBottom: equipeSubTab === 'page-equipe' ? '3px solid #8B002A' : '3px solid transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '-2px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>badge</span>
+                    1. Page Équipe & Rédaction
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={() => setEquipeSubTab('rejoignez-redaction')}
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      padding: '10px 18px',
+                      fontSize: '13px',
+                      fontWeight: equipeSubTab === 'rejoignez-redaction' ? '700' : '500',
+                      color: equipeSubTab === 'rejoignez-redaction' ? '#8B002A' : 'var(--admin-text-muted)',
+                      borderBottom: equipeSubTab === 'rejoignez-redaction' ? '3px solid #8B002A' : '3px solid transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '-2px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>work</span>
+                    2. Rejoignez la Rédaction (Carrières)
+                  </button>
+                </div>
+              </div>
+
+              {/* Sub-tab 1: Page Équipe & Rédaction */}
+              {equipeSubTab === 'page-equipe' && (
+                <form onSubmit={handleSaveEquipeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px', marginTop: '20px' }}>
+                  
+                  {/* 1. Hero & Introduction */}
+                  <div className="table-card" style={{ padding: '30px' }}>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      1. En-tête & Présentation (Hero & Intro)
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                      <div className="drawer-input-group">
+                        <label>Titre Principal (H1)</label>
+                        <input 
+                          type="text" 
+                          className="drawer-text-input" 
+                          value={equipeSettings.heroTitle} 
+                          onChange={(e) => setEquipeSettings(prev => ({ ...prev, heroTitle: e.target.value }))} 
+                          required
+                        />
+                      </div>
+                      <div className="drawer-input-group">
+                        <label>Sous-titre / Slogan</label>
+                        <input 
+                          type="text" 
+                          className="drawer-text-input" 
+                          value={equipeSettings.heroSubtitle} 
+                          onChange={(e) => setEquipeSettings(prev => ({ ...prev, heroSubtitle: e.target.value }))} 
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="drawer-input-group" style={{ marginTop: '20px' }}>
+                      <label>Texte d'Introduction Éditoriale</label>
+                      <textarea 
+                        className="drawer-text-input" 
+                        style={{ height: '80px', resize: 'vertical' }}
+                        value={equipeSettings.introText} 
+                        onChange={(e) => setEquipeSettings(prev => ({ ...prev, introText: e.target.value }))} 
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* 2. Expertes Référentes avec Gestion des Photos */}
+                  <div className="table-card" style={{ padding: '30px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', margin: 0, color: 'var(--admin-text-color)' }}>
+                        2. Nos Expertes Référentes ({equipeSettings.expertes.length})
+                      </h3>
+                      <button type="button" onClick={handleAddExperte} className="btn-drawer secondary" style={{ width: 'auto', padding: '6px 14px', fontSize: '12px' }}>
+                        + Ajouter une experte
+                      </button>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {equipeSettings.expertes.map((exp, index) => (
+                        <div key={exp.id} style={{ border: '1px solid var(--admin-border-color)', borderRadius: '6px', padding: '20px', background: '#FAF9F6' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: '700', color: '#8B002A' }}>Experte #{index + 1} : {exp.name}</span>
+                            <button type="button" onClick={() => handleRemoveExperte(exp.id)} style={{ border: 'none', background: 'none', color: 'red', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
+                              Supprimer
+                            </button>
+                          </div>
+                          
+                          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: '16px', alignItems: 'start' }}>
+                            {/* Aperçu & Upload Photo */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                              <img 
+                                src={exp.photoUrl || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"} 
+                                alt={exp.name} 
+                                style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--admin-border-color)' }} 
+                              />
+                              <label style={{ fontSize: '10px', color: '#888', cursor: 'pointer', textAlign: 'center', background: '#fff', border: '1px solid #ccc', padding: '3px 6px', borderRadius: '3px' }}>
+                                Changer photo
+                                <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  style={{ display: 'none' }} 
+                                  onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      const newUrl = URL.createObjectURL(e.target.files[0]);
+                                      setEquipeSettings(prev => ({
+                                        ...prev,
+                                        expertes: prev.expertes.map(item => item.id === exp.id ? { ...item, photoUrl: newUrl } : item)
+                                      }));
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+
+                            {/* Form Champs 1 */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              <div className="drawer-input-group">
+                                <label>Nom & Titre académique</label>
+                                <input type="text" className="drawer-text-input" value={exp.name} onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEquipeSettings(prev => ({
+                                    ...prev,
+                                    expertes: prev.expertes.map(item => item.id === exp.id ? { ...item, name: val } : item)
+                                  }));
+                                }} />
+                              </div>
+                              <div className="drawer-input-group">
+                                <label>Rôle / Fonction</label>
+                                <input type="text" className="drawer-text-input" value={exp.role} onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEquipeSettings(prev => ({
+                                    ...prev,
+                                    expertes: prev.expertes.map(item => item.id === exp.id ? { ...item, role: val } : item)
+                                  }));
+                                }} />
+                              </div>
+                              <div className="drawer-input-group">
+                                <label>URL de la photo (Lien ou Asset)</label>
+                                <input type="text" className="drawer-text-input" value={exp.photoUrl || ''} onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEquipeSettings(prev => ({
+                                    ...prev,
+                                    expertes: prev.expertes.map(item => item.id === exp.id ? { ...item, photoUrl: val } : item)
+                                  }));
+                                }} />
+                              </div>
+                            </div>
+
+                            {/* Form Champs 2 */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              <div className="drawer-input-group">
+                                <label>Domaines / Tags</label>
+                                <input type="text" className="drawer-text-input" value={exp.tags || ''} onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEquipeSettings(prev => ({
+                                    ...prev,
+                                    expertes: prev.expertes.map(item => item.id === exp.id ? { ...item, tags: val } : item)
+                                  }));
+                                }} />
+                              </div>
+                              <div className="drawer-input-group">
+                                <label>Lien du Site Web / Publication</label>
+                                <input type="text" className="drawer-text-input" value={exp.websiteUrl} onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEquipeSettings(prev => ({
+                                    ...prev,
+                                    expertes: prev.expertes.map(item => item.id === exp.id ? { ...item, websiteUrl: val } : item)
+                                  }));
+                                }} />
+                              </div>
+                              <div className="drawer-input-group">
+                                <label>Lien Email / Contact (mailto:)</label>
+                                <input type="text" className="drawer-text-input" value={exp.emailUrl} onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEquipeSettings(prev => ({
+                                    ...prev,
+                                    expertes: prev.expertes.map(item => item.id === exp.id ? { ...item, emailUrl: val } : item)
+                                  }));
+                                }} />
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 3. Onglets de Catégories du Cercle */}
+                  <div className="table-card" style={{ padding: '30px' }}>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      3. Onglets de Filtres du Cercle (Thématiques Magazines)
+                    </h3>
+                    
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '16px' }}>
+                      {(equipeSettings.categories || ["Tous", "Intelligence", "Lifestyle", "Impact", "Culture"]).map((cat) => (
+                        <span key={cat} style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: cat === 'Tous' ? '#8B002A' : '#EFEFEF',
+                          color: cat === 'Tous' ? '#FFFFFF' : '#333333',
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}>
+                          {cat}
+                          {cat !== 'Tous' && (
+                            <button 
+                              type="button" 
+                              onClick={() => handleRemoveCategoryTag(cat)} 
+                              style={{ border: 'none', background: 'none', color: '#888', cursor: 'pointer', fontSize: '12px', padding: 0 }}
+                              title="Supprimer la catégorie"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Field for adding category */}
+                    <div style={{ display: 'flex', gap: '10px', maxWidth: '400px' }}>
+                      <input 
+                        id="new-cat-input"
+                        type="text" 
+                        placeholder="Ex: Santé, Art de Vivre..." 
+                        className="drawer-text-input" 
+                        style={{ fontSize: '12px' }} 
+                      />
+                      <button 
+                        type="button" 
+                        className="btn-drawer secondary" 
+                        style={{ width: 'auto', whiteSpace: 'nowrap', padding: '6px 14px', fontSize: '12px' }}
+                        onClick={() => {
+                          const input = document.getElementById('new-cat-input');
+                          if (input && input.value) {
+                            handleAddCategoryTag(input.value);
+                            input.value = '';
+                          }
+                        }}
+                      >
+                        + Ajouter Onglet
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4. Le Cercle des Contributrices avec Catégories et Photos */}
+                  <div className="table-card" style={{ padding: '30px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', margin: 0, color: 'var(--admin-text-color)' }}>
+                        4. Le Cercle des Contributrices ({equipeSettings.contributrices.length})
+                      </h3>
+                      <button type="button" onClick={handleAddContributrice} className="btn-drawer secondary" style={{ width: 'auto', padding: '6px 14px', fontSize: '12px' }}>
+                        + Ajouter une contributrice
+                      </button>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                      {equipeSettings.contributrices.map((con) => (
+                        <div key={con.id} style={{ border: '1px solid var(--admin-border-color)', borderRadius: '6px', padding: '16px', background: '#FFFFFF' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <img 
+                                src={con.photoUrl || "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=120&auto=format&fit=crop"} 
+                                alt={con.name} 
+                                style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} 
+                              />
+                              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--admin-text-color)' }}>{con.name}</span>
+                            </div>
+                            <button type="button" onClick={() => handleRemoveContributrice(con.id)} style={{ border: 'none', background: 'none', color: 'red', cursor: 'pointer', fontSize: '11px' }}>
+                              Supprimer
+                            </button>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="drawer-input-group">
+                              <label style={{ fontSize: '10px' }}>Nom complet</label>
+                              <input type="text" placeholder="Nom complet" className="drawer-text-input" style={{ fontSize: '12px', padding: '6px 10px' }} value={con.name} onChange={(e) => {
+                                const val = e.target.value;
+                                setEquipeSettings(prev => ({
+                                  ...prev,
+                                  contributrices: prev.contributrices.map(item => item.id === con.id ? { ...item, name: val } : item)
+                                }));
+                              }} />
+                            </div>
+
+                            <div className="drawer-input-group">
+                              <label style={{ fontSize: '10px' }}>Rôle / Titre</label>
+                              <input type="text" placeholder="Rôle / Titre" className="drawer-text-input" style={{ fontSize: '12px', padding: '6px 10px' }} value={con.role} onChange={(e) => {
+                                const val = e.target.value;
+                                setEquipeSettings(prev => ({
+                                  ...prev,
+                                  contributrices: prev.contributrices.map(item => item.id === con.id ? { ...item, role: val } : item)
+                                }));
+                              }} />
+                            </div>
+
+                            <div className="drawer-input-group">
+                              <label style={{ fontSize: '10px' }}>Catégorie Thématique (Onglet Magazine)</label>
+                              <select 
+                                className="drawer-text-input" 
+                                style={{ fontSize: '12px', padding: '6px 10px' }} 
+                                value={con.category || 'Intelligence'} 
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEquipeSettings(prev => ({
+                                    ...prev,
+                                    contributrices: prev.contributrices.map(item => item.id === con.id ? { ...item, category: val } : item)
+                                  }));
+                                }}
+                              >
+                                {(equipeSettings.categories || ["Tous", "Intelligence", "Lifestyle", "Impact", "Culture"])
+                                  .filter(c => c !== 'Tous')
+                                  .map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                  ))}
+                              </select>
+                            </div>
+
+                            <div className="drawer-input-group">
+                              <label style={{ fontSize: '10px' }}>URL Photo Avatar</label>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <input type="text" placeholder="https://... ou /assets/..." className="drawer-text-input" style={{ fontSize: '11px', padding: '6px 10px' }} value={con.photoUrl || ''} onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEquipeSettings(prev => ({
+                                    ...prev,
+                                    contributrices: prev.contributrices.map(item => item.id === con.id ? { ...item, photoUrl: val } : item)
+                                  }));
+                                }} />
+                                <label style={{ fontSize: '10px', whiteSpace: 'nowrap', cursor: 'pointer', padding: '6px 10px', background: '#eee', border: '1px solid #ccc', borderRadius: '2px' }}>
+                                  Fichier
+                                  <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    style={{ display: 'none' }} 
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        const newUrl = URL.createObjectURL(e.target.files[0]);
+                                        setEquipeSettings(prev => ({
+                                          ...prev,
+                                          contributrices: prev.contributrices.map(item => item.id === con.id ? { ...item, photoUrl: newUrl } : item)
+                                        }));
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                            </div>
+
+                            <div className="drawer-input-group">
+                              <label style={{ fontSize: '10px' }}>Lien 'Voir ses contributions'</label>
+                              <input type="text" placeholder="Lien 'Voir ses contributions'" className="drawer-text-input" style={{ fontSize: '12px', padding: '6px 10px' }} value={con.contributionsUrl} onChange={(e) => {
+                                const val = e.target.value;
+                                setEquipeSettings(prev => ({
+                                  ...prev,
+                                  contributrices: prev.contributrices.map(item => item.id === con.id ? { ...item, contributionsUrl: val } : item)
+                                }));
+                              }} />
+                            </div>
+
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 5. Boutons CTA Recrutement */}
+                  <div className="table-card" style={{ padding: '30px' }}>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      5. Section Recrutement / Opportunités (CTA Bas de Page)
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                      <div className="drawer-input-group">
+                        <label>Titre de la Section CTA</label>
+                        <input type="text" className="drawer-text-input" value={equipeSettings.ctaTitle} onChange={(e) => setEquipeSettings(prev => ({ ...prev, ctaTitle: e.target.value }))} />
+                      </div>
+                      <div className="drawer-input-group">
+                        <label>Description CTA</label>
+                        <input type="text" className="drawer-text-input" value={equipeSettings.ctaDescription} onChange={(e) => setEquipeSettings(prev => ({ ...prev, ctaDescription: e.target.value }))} />
+                      </div>
+                      <div className="drawer-input-group">
+                        <label>Bouton Offres (Libellé)</label>
+                        <input type="text" className="drawer-text-input" value={equipeSettings.ctaOffresLabel} onChange={(e) => setEquipeSettings(prev => ({ ...prev, ctaOffresLabel: e.target.value }))} />
+                        <label style={{ marginTop: '6px', fontSize: '11px' }}>Lien Offres</label>
+                        <input type="text" className="drawer-text-input" value={equipeSettings.ctaOffresUrl} onChange={(e) => setEquipeSettings(prev => ({ ...prev, ctaOffresUrl: e.target.value }))} />
+                      </div>
+                      <div className="drawer-input-group">
+                        <label>Bouton Spontanée (Libellé)</label>
+                        <input type="text" className="drawer-text-input" value={equipeSettings.ctaSpontaneeLabel} onChange={(e) => setEquipeSettings(prev => ({ ...prev, ctaSpontaneeLabel: e.target.value }))} />
+                        <label style={{ marginTop: '6px', fontSize: '11px' }}>Lien Spontanée</label>
+                        <input type="text" className="drawer-text-input" value={equipeSettings.ctaSpontaneeUrl} onChange={(e) => setEquipeSettings(prev => ({ ...prev, ctaSpontaneeUrl: e.target.value }))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit button */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '40px' }}>
+                    <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
+                      Enregistrer la configuration de la page Équipe
+                    </button>
+                  </div>
+
+                </form>
+              )}
+
+              {/* Sub-tab 2: Rejoignez la Rédaction (Carrières) */}
+              {equipeSubTab === 'rejoignez-redaction' && (
+                <form onSubmit={handleSaveRejoignezSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px', marginTop: '20px' }}>
+                  
+                  {/* 1. En-tête de la Page Carrières */}
+                  <div className="table-card" style={{ padding: '30px' }}>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', marginBottom: '16px', color: 'var(--admin-text-color)', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      1. En-tête de la Page Carrières & Recrutement
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                      <div className="drawer-input-group">
+                        <label>Catégorie / Sur-titre</label>
+                        <input 
+                          type="text" 
+                          className="drawer-text-input" 
+                          value={rejoignezSettings.headerCategory || ''} 
+                          onChange={(e) => setRejoignezSettings(prev => ({ ...prev, headerCategory: e.target.value }))} 
+                        />
+                      </div>
+                      <div className="drawer-input-group">
+                        <label>Titre Principal (H1)</label>
+                        <input 
+                          type="text" 
+                          className="drawer-text-input" 
+                          value={rejoignezSettings.title || ''} 
+                          onChange={(e) => setRejoignezSettings(prev => ({ ...prev, title: e.target.value }))} 
+                        />
+                      </div>
+                    </div>
+                    <div className="drawer-input-group" style={{ marginTop: '16px' }}>
+                      <label>Description / Texte de Présentation</label>
+                      <textarea 
+                        className="drawer-text-input" 
+                        style={{ height: '80px', resize: 'vertical' }}
+                        value={rejoignezSettings.description || ''} 
+                        onChange={(e) => setRejoignezSettings(prev => ({ ...prev, description: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="drawer-input-group" style={{ marginTop: '16px' }}>
+                      <label>Email de Réception des Candidatures</label>
+                      <input 
+                        type="email" 
+                        className="drawer-text-input" 
+                        value={rejoignezSettings.contactEmail || ''} 
+                        onChange={(e) => setRejoignezSettings(prev => ({ ...prev, contactEmail: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+
+                  {/* 2. Liste des Offres d'Emploi Disponibles */}
+                  <div className="table-card" style={{ padding: '30px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--admin-border-color)', paddingBottom: '8px' }}>
+                      <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: '20px', fontStyle: 'italic', margin: 0, color: 'var(--admin-text-color)' }}>
+                        2. Offres d'Emploi & Postes Ouverts ({(rejoignezSettings.jobs || []).length})
+                      </h3>
+                      <button type="button" onClick={handleAddJob} className="btn-drawer secondary" style={{ width: 'auto', padding: '6px 14px', fontSize: '12px' }}>
+                        + Ajouter une offre d'emploi
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {(rejoignezSettings.jobs || []).map((job, index) => (
+                        <div key={job.id} style={{ border: '1px solid var(--admin-border-color)', borderRadius: '6px', padding: '20px', background: '#FAF9F6' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: '700', color: '#8B002A' }}>Offre #{index + 1} : {job.title}</span>
+                            <button type="button" onClick={() => handleRemoveJob(job.id)} style={{ border: 'none', background: 'none', color: 'red', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
+                              Supprimer
+                            </button>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                            <div className="drawer-input-group">
+                              <label>Titre de l'Offre / Poste</label>
+                              <input type="text" className="drawer-text-input" value={job.title} onChange={(e) => {
+                                const val = e.target.value;
+                                setRejoignezSettings(prev => ({
+                                  ...prev,
+                                  jobs: prev.jobs.map(item => item.id === job.id ? { ...item, title: val } : item)
+                                }));
+                              }} />
+                            </div>
+
+                            <div className="drawer-input-group">
+                              <label>Département / Catégorie (ex: ÉDITORIAL, ART & GRAPHISME)</label>
+                              <input type="text" className="drawer-text-input" value={job.category} onChange={(e) => {
+                                const val = e.target.value;
+                                setRejoignezSettings(prev => ({
+                                  ...prev,
+                                  jobs: prev.jobs.map(item => item.id === job.id ? { ...item, category: val } : item)
+                                }));
+                              }} />
+                            </div>
+
+                            <div className="drawer-input-group">
+                              <label>Type de Contrat & Lieu (ex: CDI • Paris 2e)</label>
+                              <input type="text" className="drawer-text-input" value={job.contract} onChange={(e) => {
+                                const val = e.target.value;
+                                setRejoignezSettings(prev => ({
+                                  ...prev,
+                                  jobs: prev.jobs.map(item => item.id === job.id ? { ...item, contract: val } : item)
+                                }));
+                              }} />
+                            </div>
+
+                            <div className="drawer-input-group">
+                              <label>Identifiant Poste / Slug (ex: journaliste-mode)</label>
+                              <input type="text" className="drawer-text-input" value={job.posteSlug} onChange={(e) => {
+                                const val = e.target.value;
+                                setRejoignezSettings(prev => ({
+                                  ...prev,
+                                  jobs: prev.jobs.map(item => item.id === job.id ? { ...item, posteSlug: val } : item)
+                                }));
+                              }} />
+                            </div>
+                          </div>
+
+                          <div className="drawer-input-group" style={{ marginTop: '12px' }}>
+                            <label>Description synthétique de l'offre</label>
+                            <input type="text" className="drawer-text-input" value={job.description} onChange={(e) => {
+                              const val = e.target.value;
+                              setRejoignezSettings(prev => ({
+                                ...prev,
+                                jobs: prev.jobs.map(item => item.id === job.id ? { ...item, description: val } : item)
+                              }));
+                            }} />
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '12px' }}>
+                            <div className="drawer-input-group">
+                              <label>Détails des Missions</label>
+                              <textarea className="drawer-text-input" style={{ height: '70px', resize: 'vertical' }} value={job.missions} onChange={(e) => {
+                                const val = e.target.value;
+                                setRejoignezSettings(prev => ({
+                                  ...prev,
+                                  jobs: prev.jobs.map(item => item.id === job.id ? { ...item, missions: val } : item)
+                                }));
+                              }} />
+                            </div>
+
+                            <div className="drawer-input-group">
+                              <label>Profil Recherché</label>
+                              <textarea className="drawer-text-input" style={{ height: '70px', resize: 'vertical' }} value={job.profil} onChange={(e) => {
+                                const val = e.target.value;
+                                setRejoignezSettings(prev => ({
+                                  ...prev,
+                                  jobs: prev.jobs.map(item => item.id === job.id ? { ...item, profil: val } : item)
+                                }));
+                              }} />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submit button */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '40px' }}>
+                    <button type="submit" className="btn-drawer primary" style={{ width: 'auto' }}>
+                      Enregistrer les offres de recrutement & carrières
+                    </button>
+                  </div>
+
+                </form>
+              )}
+            </>
+          );
+        }
+
         // Fallback for general settings / SEO Settings
         return (
           <>
@@ -2893,27 +3770,151 @@ export default function AdminCatchAllPage({ params }) {
             <div className="playout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '30px' }}>
               {/* Column 1: Now Playing & Override */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div className="now-playing-card">
-                  <span className="now-playing-badge">ON AIR</span>
-                  <label className="group-title" style={{ padding: 0 }}>En Cours de Lecture</label>
-                  <h3 className="now-playing-title">{tvNowPlaying.title}</h3>
-                  <div className="now-playing-meta">
-                    <span>Durée : {tvNowPlaying.duration}</span>
-                    <span>Restant : {tvNowPlaying.remaining}</span>
+                {(() => {
+                  const activeItem = tvQueue.length > 0 ? tvQueue[0] : null;
+                  const isLive = tvLiveState.isLive;
+
+                  if (!isLive) {
+                    return (
+                      <div className="now-playing-card" style={{ borderLeft: '4px solid #666' }}>
+                        <span className="now-playing-badge" style={{ background: '#444', color: '#fff' }}>OFFLINE</span>
+                        <label className="group-title" style={{ padding: 0 }}>Statut Antenne</label>
+                        <h3 className="now-playing-title" style={{ color: '#888', marginTop: '8px' }}>Antenne Éteinte (Hors Antenne)</h3>
+                        <p style={{ fontSize: '12px', color: '#888', marginTop: '8px', lineHeight: '1.5' }}>
+                          Aucune vidéo en cours de diffusion. Activez le bouton <strong>DONA TV — EN DIRECT</strong> ci-dessus pour démarrer la diffusion vers le public.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  if (!activeItem) {
+                    return (
+                      <div className="now-playing-card" style={{ borderLeft: '4px solid #E65100' }}>
+                        <span className="now-playing-badge" style={{ background: '#E65100', color: '#fff' }}>ATTENTE</span>
+                        <label className="group-title" style={{ padding: 0 }}>Direct Actif</label>
+                        <h3 className="now-playing-title" style={{ color: '#E65100', marginTop: '8px' }}>Attente de média (File d&apos;attente vide)</h3>
+                        <p style={{ fontSize: '12px', color: '#666', marginTop: '8px', lineHeight: '1.5' }}>
+                          Le direct est ouvert. Cliquez sur <strong>+ AJOUTER</strong> à droite pour programmer une vidéo à diffuser.
+                        </p>
+                        <div style={{ marginTop: '16px' }}>
+                          <button 
+                            type="button" 
+                            className="btn-drawer secondary" 
+                            onClick={handleStopTvLive}
+                            style={{ padding: '8px 16px', fontSize: '12px', borderColor: '#A30626', color: '#A30626' }}
+                          >
+                            Éteindre l&apos;antenne
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="now-playing-card" style={{ borderLeft: '4px solid #A30626' }}>
+                      <span className="now-playing-badge" style={{ background: '#A30626', color: '#fff' }}>ON AIR</span>
+                      <label className="group-title" style={{ padding: 0 }}>En Cours de Lecture (Direct)</label>
+                      <h3 className="now-playing-title" style={{ marginTop: '8px' }}>{activeItem.title}</h3>
+                      <div className="now-playing-meta" style={{ marginTop: '8px' }}>
+                        <span>Format : {activeItem.format || 'Vidéo'}</span>
+                        <span>Durée : {activeItem.duration || '10:00'}</span>
+                      </div>
+                      <div style={{ marginTop: '12px', color: '#A30626', fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>sensors</span>
+                        En cours de diffusion...
+                      </div>
+                      
+                      <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button 
+                          type="button" 
+                          className="btn-drawer secondary" 
+                          onClick={handleSkipTvMedia}
+                          style={{ padding: '8px 16px', fontSize: '12px' }}
+                        >
+                          Retirer / Sauter ce média
+                        </button>
+                        <button 
+                          type="button" 
+                          className="btn-drawer secondary" 
+                          onClick={handleStopTvLive}
+                          style={{ padding: '8px 16px', fontSize: '12px', borderColor: '#A30626', color: '#A30626' }}
+                        >
+                          Arrêter le direct
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Text Metadata block */}
+                <div className="playout-override-block">
+                  <div className="override-header">
+                    <div>
+                      <span className="override-title">Textes de l'Antenne</span>
+                      <p className="override-desc">Personnalisez les textes affichés sur la page Studio.</p>
+                    </div>
                   </div>
-                  <div className="progress-bar-container" style={{ height: '6px' }}>
-                    <div className="progress-bar-fill" style={{ width: `${tvNowPlaying.progress}%` }} />
-                  </div>
-                  
-                  <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-                    <button 
-                      type="button" 
-                      className="btn-drawer secondary" 
-                      onClick={() => setTvNowPlaying({ title: "Loop Visuelle Spéciale Mode", duration: "10:00", remaining: "10:00", progress: 0 })}
-                      style={{ padding: '8px 16px' }}
-                    >
-                      Sauter le média
-                    </button>
+                  <div className="rtmp-keys-box" style={{ marginTop: '16px' }}>
+                    <div className="rtmp-key-row">
+                      <label>Titre affiché</label>
+                      <div className="rtmp-key-input-group">
+                        <input 
+                          type="text" 
+                          className="rtmp-input" 
+                          placeholder="Ex: Le Journal de 20h"
+                          value={tvTitle}
+                          onChange={(e) => setTvTitle(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="rtmp-key-row" style={{ marginTop: '16px' }}>
+                      <label>Sous-titre / Description</label>
+                      <div className="rtmp-key-input-group">
+                        <input 
+                          type="text" 
+                          className="rtmp-input" 
+                          placeholder="Ex: Édition spéciale"
+                          value={tvSubtitle}
+                          onChange={(e) => setTvSubtitle(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                      <div className="rtmp-key-row">
+                        <label>Format</label>
+                        <div className="rtmp-key-input-group">
+                          <input 
+                            type="text" 
+                            className="rtmp-input" 
+                            placeholder="Ex: Direct"
+                            value={tvFormat}
+                            onChange={(e) => setTvFormat(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="rtmp-key-row">
+                        <label>Invité(s)</label>
+                        <div className="rtmp-key-input-group">
+                          <input 
+                            type="text" 
+                            className="rtmp-input" 
+                            placeholder="Ex: Jean Dupont"
+                            value={tvGuest}
+                            onChange={(e) => setTvGuest(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '16px' }}>
+                      <button 
+                        type="button" 
+                        className="btn-admin-action primary"
+                        onClick={handleSaveTvMeta}
+                        style={{ width: '100%', background: '#333' }}
+                      >
+                        Enregistrer les Textes
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -2937,41 +3938,28 @@ export default function AdminCatchAllPage({ params }) {
                   {tvOverride && (
                     <div className="rtmp-keys-box">
                       <div className="rtmp-key-row">
-                        <label>URL du Serveur RTMP</label>
+                        <label>Lien du Direct (ex: YouTube Live)</label>
                         <div className="rtmp-key-input-group">
                           <input 
                             type="text" 
-                            readOnly 
                             className="rtmp-input" 
-                            value="rtmp://live.dona-magazine.com/tv" 
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            value={tvHlsUrl}
+                            onChange={(e) => setTvHlsUrl(e.target.value)}
                           />
-                          <button 
-                            type="button" 
-                            className="btn-rtmp-copy"
-                            onClick={() => { navigator.clipboard.writeText("rtmp://live.dona-magazine.com/tv"); alert("URL copiée !"); }}
-                          >
-                            Copier
-                          </button>
                         </div>
                       </div>
-                      <div className="rtmp-key-row">
-                        <label>Clé de stream (Stream Key)</label>
-                        <div className="rtmp-key-input-group">
-                          <input 
-                            type="password" 
-                            readOnly 
-                            className="rtmp-input" 
-                            value="dona_tv_key_prod_3728f1" 
-                          />
-                          <button 
-                            type="button" 
-                            className="btn-rtmp-copy"
-                            onClick={() => { navigator.clipboard.writeText("dona_tv_key_prod_3728f1"); alert("Clé copiée !"); }}
-                          >
-                            Copier
-                          </button>
-                        </div>
+                      <div style={{ marginTop: '16px' }}>
+                        <button 
+                          type="button" 
+                          className="btn-admin-action primary"
+                          onClick={handleSaveTvMeta}
+                          style={{ width: '100%' }}
+                        >
+                          Sauvegarder le Lien
+                        </button>
                       </div>
+
                     </div>
                   )}
                 </div>

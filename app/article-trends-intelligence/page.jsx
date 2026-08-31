@@ -42,7 +42,7 @@ export default function Page() {
         <article className="mag-article-layout" style={{MagThemePrimary: "#a31835", MagThemeSecondary: "#3d0c1b", MagAccent: "#a31835"}}>
             
             {/* Breadcrumbs */}
-            <div className="container" style={{paddingTop: "130px", paddingBottom: "10px"}}>
+            <div className="container" style={{paddingTop: "20px", paddingBottom: "10px"}}>
                 <nav className="breadcrumbs" style={{fontSize: "0.75rem", fontWeight: "600", letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--color-text-muted)"}}>
                     <a href="/" style={{textDecoration: "none", color: "inherit", transition: "color 0.3s"}}>ACCUEIL</a> &nbsp;/&nbsp; 
                     <Link  href="/magazines" style={{textDecoration: "none", color: "inherit", transition: "color 0.3s"}}>NOS MAGAZINES</Link> &nbsp;/&nbsp; 
@@ -99,7 +99,7 @@ export default function Page() {
             </section>
 
             {/* Two-Column Body Wrapper */}
-            <div className="article-body-wrapper">
+            <div className="article-body-wrapper" style={{ alignItems: "start", paddingBottom: "0px", marginBottom: "0px" }}>
                 
                 {/* Left Reading Column (2/3) */}
                 <section className="article-reading-zone">
@@ -190,8 +190,8 @@ export default function Page() {
                         <h3 className="widget-title">Trend Simulator 2026</h3>
                         <p className="widget-desc">Simulez l’impact des biais cognitifs majeurs sur le ROI opérationnel de vos équipes de R&D selon vos paramètres d'organisation.</p>
                         <div className="widget-actions">
-                            <Link  href="#" className="widget-btn-primary">Lancer la Simulation</Link>
-                            <Link  href="#" className="widget-btn-secondary">
+                            <Link href="/magazines/magazine-01-intelligence/vip" className="widget-btn-primary">Lancer la Simulation</Link>
+                            <Link href="/magazines/magazine-01-intelligence" className="widget-btn-secondary">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -203,18 +203,48 @@ export default function Page() {
                     </div>
 
                     {/* Locked VIP Paywall Section */}
-                    <div className="vip-paywall-container">
-                        <div className="vip-blurred-text">
+                    <div className="vip-paywall-container" style={{ position: "relative", margin: "40px 0 60px 0" }}>
+                        <div className="vip-blurred-text" style={{ filter: "blur(4px)", opacity: 0.45, userSelect: "none" }}>
                             <p>Pour contrer efficacement ces dérives, certaines organisations d'élite intègrent des comités de résonance technique. Ces instances, totalement découplées de la hiérarchie managériale directe, ont pour rôle unique de certifier la faisabilité réelle des projets d'innovation et d'auditer la pertinence des rapports d'étape.</p>
                             <p>En retirant aux managers intermédiaires le monopole de la transmission d'information, les comités exécutifs s'assurent un accès direct à des métriques non biaisées, limitant de fait l'effet de halo produit par les profils charismatiques mais incompétents.</p>
                             <p>La mise en place de ces structures nécessite cependant un courage politique interne fort, car elle remet en cause la structure pyramidale traditionnelle et redistribue une part significative du pouvoir d'influence vers les couches techniques opérationnelles. Le retour sur investissement de cette restructuration se mesure sur le long terme par une diminution drastique des dépassements budgétaires.</p>
                         </div>
                         
                         {/* Simulated Front-End Paywall card overlay */}
-                        <div className="vip-subscription-card">
-                            <h3>Contenu Exclusif Premium</h3>
-                            <p>Cet article fait partie de nos grandes enquêtes réservées aux membres du Club DONA. Abonnez-vous pour lever le voile sur l'intégralité de nos analyses prospectives.</p>
-                            <Link  href="#" className="btn-subscribe-premium">S'ABONNER POUR 1€</Link>
+                        <div className="vip-subscription-card" style={{
+                            position: "relative",
+                            background: "#FFFFFF",
+                            border: "1px solid #E5E0DB",
+                            borderRadius: "12px",
+                            padding: "36px 28px",
+                            textAlign: "center",
+                            boxShadow: "0 20px 40px rgba(0,0,0,0.10)",
+                            margin: "-90px auto 20px",
+                            maxWidth: "540px",
+                            zIndex: 10
+                        }}>
+                            <h3 style={{ fontFamily: "var(--font-secondary, serif)", fontSize: "24px", fontWeight: "700", color: "#1C1B1B", margin: "0 0 12px" }}>Contenu Exclusif Premium</h3>
+                            <p style={{ fontSize: "14px", color: "#555555", margin: "0 0 24px", lineHeight: "1.6" }}>Cet article fait partie de nos grandes enquêtes réservées aux membres du Club DONA. Abonnez-vous pour lever le voile sur l'intégralité de nos analyses prospectives.</p>
+                            <Link 
+                              href="/abonnement" 
+                              className="btn-subscribe-premium"
+                              style={{
+                                display: "inline-block",
+                                background: "#8B002A",
+                                color: "#FFFFFF",
+                                padding: "16px 32px",
+                                borderRadius: "6px",
+                                fontWeight: "700",
+                                fontSize: "13px",
+                                letterSpacing: "0.12em",
+                                textTransform: "uppercase",
+                                textDecoration: "none",
+                                boxShadow: "0 6px 16px rgba(139,0,42,0.30)",
+                                transition: "transform 0.2s"
+                              }}
+                            >
+                              S'ABONNER POUR 1€
+                            </Link>
                         </div>
                     </div>
 
@@ -231,7 +261,7 @@ export default function Page() {
                     </div>
 
                     {/* Espace Commentaires */}
-                    <div className="comments-section">
+                    <div className="comments-section" style={{ marginBottom: "0px", paddingBottom: "0px" }}>
                         <h3 className="comments-title">Espace d'Échange (3 commentaires)</h3>
                         <form className="comment-form">
                             <textarea placeholder="Partagez votre point de vue sur cette étude prospectiviste..." required></textarea>
@@ -284,19 +314,19 @@ export default function Page() {
                     <div className="sidebar-related-articles">
                         <h4 className="related-title-overline">DANS LE MÊME NUMÉRO</h4>
                         <div className="related-articles-list">
-                            <Link  href="#" className="related-article-card">
+                            <Link href="/magazines/magazine-01-intelligence" className="related-article-card">
                                 <div className="related-card-img-box">
                                     <img src="/assets/core/img/home_alaune_side1_1782125709654.png" alt="Intelligence Collective" />
                                 </div>
                                 <h4 className="related-card-title">Curation et Intelligence Artificielle collective</h4>
                             </Link>
-                            <Link  href="#" className="related-article-card">
+                            <Link href="/magazines/magazine-01-intelligence" className="related-article-card">
                                 <div className="related-card-img-box">
                                     <img src="/assets/core/img/home_alaune_side2_1782125722981.png" alt="Biais cognitifs" />
                                 </div>
                                 <h4 className="related-card-title">Les Biais invisibles de la modération algorithmique</h4>
                             </Link>
-                            <Link  href="#" className="related-article-card">
+                            <Link href="/magazines/magazine-01-intelligence" className="related-article-card">
                                 <div className="related-card-img-box">
                                     <img src="/assets/core/img/home_alaune_main_1782125698619.png" alt="Prise de décision" />
                                 </div>
@@ -306,10 +336,36 @@ export default function Page() {
                     </div>
 
                     {/* VIP Premium Promo Card */}
-                    <div className="sidebar-vip-promo-card">
-                        <h3 className="promo-title">Le Club DONA</h3>
-                        <p className="promo-desc">Rejoignez le cercle restreint de nos lecteurs Premium et participez à nos comités de prospective réguliers.</p>
-                        <Link  href="#" className="promo-btn-white">Rejoindre le Club</Link>
+                    <div className="sidebar-vip-promo-card" style={{
+                        background: "#8B002A",
+                        color: "#FFFFFF",
+                        borderRadius: "12px",
+                        padding: "32px 24px",
+                        marginTop: "32px",
+                        boxShadow: "0 12px 30px rgba(139,0,42,0.25)"
+                    }}>
+                        <h3 className="promo-title" style={{ fontFamily: "var(--font-secondary, serif)", fontSize: "22px", fontWeight: "700", color: "#FFFFFF", margin: "0 0 12px" }}>Le Club DONA</h3>
+                        <p className="promo-desc" style={{ fontSize: "13px", color: "rgba(255,255,255,0.85)", margin: "0 0 20px", lineHeight: "1.6" }}>Rejoignez le cercle restreint de nos lecteurs Premium et participez à nos comités de prospective réguliers.</p>
+                        <Link 
+                          href="/club" 
+                          className="promo-btn-white"
+                          style={{
+                            display: "block",
+                            textAlign: "center",
+                            background: "#FFFFFF",
+                            color: "#8B002A",
+                            padding: "14px 20px",
+                            borderRadius: "6px",
+                            fontWeight: "700",
+                            fontSize: "12px",
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            textDecoration: "none",
+                            boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
+                          }}
+                        >
+                          Rejoindre le Club
+                        </Link>
                     </div>
 
                 </aside>
@@ -317,7 +373,7 @@ export default function Page() {
             </div>
 
             {/* Full-Width Newsletter Banner */}
-            <section className="article-newsletter-banner">
+            <section className="article-newsletter-banner" style={{ marginTop: "0px", paddingTop: "50px", paddingBottom: "50px" }}>
                 <span className="nl-banner-overline">LE BRIEF DIRECT</span>
                 <h2 className="nl-banner-title">Recevez chaque matin l'analyse des signaux faibles</h2>
                 <form className="nl-banner-form">
@@ -513,7 +569,7 @@ export default function Page() {
             <button id="lang-confirm-btn" style={{display: "block", width: "100%", background: "#8B002A", color: "#fff", border: "none", borderRadius: "4px", padding: "18px", fontFamily: "'Inter',sans-serif", fontSize: "14px", fontWeight: "600", cursor: "pointer", transition: "background .2s", marginBottom: "16px", letterSpacing: ".03em"}}>Confirmer mon choix</button>
 
             {/* International link */}
-            <Link  href="#" id="lang-international-link" style={{display: "block", textAlign: "center", fontSize: "13px", color: "#888", textDecoration: "none", transition: "color .2s"}}>Continuer en version internationale</Link>
+            <Link href="/today" id="lang-international-link" style={{display: "block", textAlign: "center", fontSize: "13px", color: "#888", textDecoration: "none", transition: "color .2s"}}>Continuer en version internationale</Link>
         </div>
     </div>
 

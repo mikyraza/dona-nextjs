@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import ReactPlayer from 'react-player';
 import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
 
 // ─── Category filter tabs ────────────────────────────────────────────────────
@@ -178,6 +179,8 @@ function VipGate({ isLive }) {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function StudioPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [hubData, setHubData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('Tout');
@@ -197,7 +200,7 @@ export default function StudioPage() {
   const fetchHub = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/videos');
+      const res = await fetch('/api/videos', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) setHubData(data);
     } catch (e) {
@@ -295,13 +298,7 @@ export default function StudioPage() {
             {userIsVip || !liveTv.isLive ? (
               <div className="vh-player-frame">
                 {liveTv.isLive && liveTv.hlsUrl ? (
-                  <video
-                    className="vh-player-video"
-                    src={liveTv.hlsUrl}
-                    controls
-                    autoPlay
-                    playsInline
-                  />
+                  <ReactPlayer className="vh-player-video" url={liveTv.hlsUrl} controls playing width="100%" height="100%" />
                 ) : (
                   /* Placeholder éditorial quand le flux est offline */
                   <div className="vh-player-placeholder">
@@ -365,13 +362,7 @@ export default function StudioPage() {
             </div>
             <div className="vh-inline-player__wrapper">
               {playerVideo.videoUrl ? (
-                <video
-                  className="vh-player-video"
-                  src={playerVideo.videoUrl}
-                  controls
-                  autoPlay
-                  playsInline
-                />
+                <ReactPlayer className="vh-player-video" url={playerVideo.videoUrl} controls playing width="100%" height="100%" />
               ) : (
                 <div className="vh-player-placeholder" style={{ minHeight: '360px' }}>
                   <p style={{ color: '#888', fontSize: '14px' }}>Flux vidéo à configurer dans l'administration</p>

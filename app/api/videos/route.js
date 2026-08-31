@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+
+export const dynamic = 'force-dynamic';
 import fs from 'fs';
 import path from 'path';
 
@@ -90,8 +92,9 @@ export async function GET(request) {
     format: tvLive.format,
     location: tvLive.location,
     epg: tvLive.epg,
-    // Only expose HLS URL if user is VIP
-    hlsUrl: userIsVip ? (tvLive.hlsUrl || '') : '',
+    // Expose Live stream URL and start time
+    hlsUrl: tvLive.hlsUrl || '',
+    liveStartTime: tvLive.liveStartTime || Date.now(),
     isUserVip: userIsVip,
   };
 

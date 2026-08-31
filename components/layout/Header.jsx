@@ -203,19 +203,8 @@ export default function Header() {
                 href="/ecouter"
                 className="nav-link"
                 onClick={closeAllMenus}
-                onMouseEnter={() => setActiveMenu('ecouter')}
               >
                 ÉCOUTER
-              </Link>
-            </li>
-            <li className={`nav-item has-submenu ${activeMenu === 'jeux' ? 'submenu-active' : ''} ${isItemActive('jeux', pathname?.startsWith('/jeux')) ? 'active' : ''}`}>
-              <Link 
-                href="/jeux"
-                className="nav-link"
-                onClick={closeAllMenus}
-                onMouseEnter={() => setActiveMenu('jeux')}
-              >
-                JEUX
               </Link>
             </li>
           </ul>
@@ -994,130 +983,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mega Menu Panel: Jeux */}
-      <div 
-        id="mega-menu-jeux" 
-        className={`mega-menu-panel ${activeMenu === 'jeux' ? 'open' : ''}`}
-      >
-        <div className="container mega-menu-inner jeux-menu-inner">
-          <div className="jeux-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h3 className="jeux-header-title" style={{ margin: 0 }}>Espace Jeux & Distractions</h3>
-              <span className="live-tag">NOUVEAU</span>
-            </div>
-            <Link href="/jeux" onClick={closeAllMenus} style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              ACCÉDER À TOUS LES JEUX <span style={{ fontSize: '14px' }}>→</span>
-            </Link>
-          </div>
-
-          <div className="jeux-menu-grid">
-            {/* Left Column (Categories & Tournoi Promo) */}
-            <div className="jeux-col-left">
-              <div className="jeux-categories-section">
-                <h4 className="jeux-section-title">CATÉGORIES</h4>
-                <ul className="jeux-categories-list">
-                  <li><Link href="/jeux" className="jeux-category-link" onClick={closeAllMenus}>Énigmes Littéraires</Link></li>
-                  <li><Link href="/jeux" className="jeux-category-link" onClick={closeAllMenus}>Puzzles Architecturaux</Link></li>
-                  <li><Link href="/jeux" className="jeux-category-link active" onClick={closeAllMenus}>Jeux de Logique</Link></li>
-                  <li><Link href="/jeux" className="jeux-category-link" onClick={closeAllMenus}>Culture G / DONA</Link></li>
-                  <li><Link href="/jeux" className="jeux-category-link" onClick={closeAllMenus}>Archives de Jeux</Link></li>
-                </ul>
-              </div>
-              <div className="jeux-promo-card">
-                <span className="jeux-promo-badge">DONA CLUB EXCLUSIF</span>
-                <h4 className="jeux-promo-title">Participez au Grand Tournoi de Printemps</h4>
-                <Link href="/abonnement" className="jeux-promo-action" onClick={closeAllMenus}>S'INSCRIRE</Link>
-              </div>
-            </div>
-
-            {/* Center Column (Featured game + Grid) */}
-            <div className="jeux-col-center">
-              <div className="jeux-featured-header">
-                <h3 className="jeux-featured-title">Le Puzzle du Louvre</h3>
-                <span className="jeux-featured-badge">À LA UNE</span>
-              </div>
-
-              <div className="jeux-featured-card">
-                <Link href="/jeux" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }} onClick={closeAllMenus}>
-                  <div className="jeux-featured-img-container">
-                    <img src="/assets/core/img/louvre-puzzle.png" alt="Le Puzzle du Louvre" className="jeux-featured-img" />
-                    <div className="jeux-featured-overlay">
-                      <span className="jeux-diff-tag">DIFFICULTÉ : EXPERT</span>
-                      <p className="jeux-featured-desc">Reconstituez la structure de I.M. Pei dans ce défi de logique architecturale pure.</p>
-                      <span className="btn-play-game" style={{ display: 'inline-block' }}>JOUER MAINTENANT</span>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-
-              <div className="jeux-secondary-grid">
-                {/* Game 1 */}
-                <Link href="/jeux" className="jeux-secondary-card" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
-                  <div className="jeux-secondary-img-container">
-                    <img src="/assets/core/img/chess-game.png" alt="Échecs Modulables" className="jeux-secondary-img" />
-                  </div>
-                  <h4 className="jeux-secondary-title">Échecs Modulables</h4>
-                  <span className="jeux-secondary-desc">Variantes exclusives DONA</span>
-                </Link>
-                {/* Game 2 */}
-                <Link href="/jeux" className="jeux-secondary-card" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
-                  <div className="jeux-secondary-img-container">
-                    <img src="/assets/core/img/paper-maze.png" alt="Labyrinthe de Papier" className="jeux-secondary-img" />
-                  </div>
-                  <h4 className="jeux-secondary-title">Labyrinthe de Papier</h4>
-                  <span className="jeux-secondary-desc">Design géométrique minimaliste</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Column (Scores & Leaderboard) */}
-            <div className="jeux-col-right">
-              {/* Score section */}
-              <div className="jeux-score-section">
-                <h4 className="jeux-right-title">Votre score</h4>
-                <div className="jeux-score-box">
-                  <span className="jeux-score-label">AUJOUR'HUI</span>
-                  <div className="jeux-score-value">1 420</div>
-                  <div className="jeux-stars">★★★★☆</div>
-                  <button type="button" className="btn-share-score">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="18" cy="5" r="3"></circle>
-                      <circle cx="6" cy="12" r="3"></circle>
-                      <circle cx="18" cy="19" r="3"></circle>
-                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                    </svg>
-                    PARTAGER LE SCORE
-                  </button>
-                </div>
-              </div>
-
-              {/* Leaderboard */}
-              <div className="jeux-leaderboard-section">
-                <h4 className="jeux-right-title italic">Le Club - Top 3</h4>
-                <ul className="jeux-leaderboard-list">
-                  <li className="jeux-leaderboard-item">
-                    <span className="leaderboard-rank">01</span>
-                    <span className="leaderboard-name">H. KESSELMAN</span>
-                    <span className="leaderboard-pts">1 890 pts</span>
-                  </li>
-                  <li className="jeux-leaderboard-item">
-                    <span className="leaderboard-rank">02</span>
-                    <span className="leaderboard-name">M. ARAD</span>
-                    <span className="leaderboard-pts">1 745 pts</span>
-                  </li>
-                  <li className="jeux-leaderboard-item">
-                    <span className="leaderboard-rank">03</span>
-                    <span className="leaderboard-name">E. GRAY</span>
-                    <span className="leaderboard-pts">1 620 pts</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ═══════════════════════════════════════════
           MOBILE FULL-SCREEN DRAWER
       ═══════════════════════════════════════════ */}
@@ -1147,7 +1012,6 @@ export default function Header() {
           <Link href="/studio"       className="mobile-nav-link" onClick={closeMobileMenu}>STUDIO</Link>
           <Link href="/club"         className="mobile-nav-link" onClick={closeMobileMenu}>CLUB</Link>
           <Link href="/ecouter"      className="mobile-nav-link" onClick={closeMobileMenu}>ÉCOUTER</Link>
-          <Link href="/jeux"         className="mobile-nav-link" onClick={closeMobileMenu}>JEUX</Link>
         </nav>
 
         {/* Auxiliary Controls (Moved from header bar to prevent clutter) */}

@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { readUsersDB, verifyPassword } from '@/lib/users_db';
 
 const authOptions = {
   providers: [
@@ -50,13 +51,32 @@ const authOptions = {
         }
         */
 
-        // MOCK AUTHENTICATION LOGIC FOR ADMIN TEAM
         const { email, password } = credentials || {};
         
         if (!email || !password || !email.includes("@")) {
           return null;
         }
 
+        // ─── 1. Vérifier d'abord les membres inscrits via /signup (users_db.json) ──
+        const registeredUsers = readUsersDB();
+        const registeredUser = registeredUsers.find(
+          u => u.email.toLowerCase() === email.toLowerCase()
+        );
+        if (registeredUser) {
+          if (!registeredUser.passwordHash || !verifyPassword(password, registeredUser.passwordHash)) {
+            return null; // Mauvais mot de passe
+          }
+          return {
+            id: registeredUser.id,
+            name: registeredUser.name || `${registeredUser.firstName} ${registeredUser.lastName}`.trim(),
+            email: registeredUser.email,
+            jwt_token: `jwt-member-${registeredUser.id}`,
+            role: registeredUser.role || 'USER',
+            plan: registeredUser.plan || 'Essentiel',
+          };
+        }
+
+        // ─── 2. Équipe DONA (comptes admin mockés) ────────────────────────────────
         const mockUsers = [
           { id: "u-1", name: "Elena Moretti", email: "elena@donamagazine.com", role: "Super-Admin", active: true },
           { id: "u-2", name: "Marc Dubois", email: "marc@donamagazine.com", role: "Éditeur", active: true },
@@ -77,7 +97,7 @@ const authOptions = {
           };
         }
 
-        // Generic user authentication fallback for any regular user testing the platform
+        // ─── 3. Fallback générique (tests locaux) ────────────────────────────────
         const userName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         const userRole = email.toLowerCase().includes("admin@dona.com") ? "Super-Admin" : "USER";
 
@@ -97,6 +117,7 @@ const authOptions = {
         token.role = user.role;
         token.jwt_token = user.jwt_token;
         token.id = user.id;
+        token.plan = user.plan;
       }
       return token;
     },
@@ -105,6 +126,7 @@ const authOptions = {
         session.user.role = token.role;
         session.user.jwt_token = token.jwt_token;
         session.user.id = token.id;
+        session.user.plan = token.plan;
       }
       return session;
     }
@@ -118,3 +140,4 @@ const authOptions = {
 const handler = NextAuth(authOptions);
 
 export { authOptions, handler as GET, handler as POST };
+
