@@ -65,8 +65,23 @@ export default function RootLayout({ children }) {
                   observer.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['bis_skin_checked'] });
                 }
 
-                // 3. Filter extension noise from console in development
+                // 3. Filter extension noise and unhandled chrome-extension errors
                 if (typeof window !== 'undefined') {
+                  window.addEventListener('error', function(e) {
+                    if (e.filename && e.filename.indexOf('chrome-extension://') !== -1) {
+                      e.stopImmediatePropagation();
+                      e.preventDefault();
+                    }
+                  }, true);
+
+                  window.addEventListener('unhandledrejection', function(e) {
+                    var str = (e && e.reason && (e.reason.stack || e.reason.message || String(e.reason))) || '';
+                    if (str.indexOf('chrome-extension://') !== -1 || str.indexOf('M_ID') !== -1) {
+                      e.stopImmediatePropagation();
+                      e.preventDefault();
+                    }
+                  }, true);
+
                   var origError = console.error;
                   console.error = function() {
                     var msg = arguments[0];

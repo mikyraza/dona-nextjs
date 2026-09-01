@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { magazines as staticMagazines } from '../data';
-import { fetchArticles, fetchMagazineConfig } from '@/lib/wordpress';
+import { magazines as staticMagazines } from '../data.js';
+import { fetchArticles, fetchMagazineConfig } from '@/lib/wordpress.js';
 import MagazineArticlesSection from '@/components/magazine/MagazineArticlesSection';
 
 export const dynamic = 'force-dynamic';
@@ -86,7 +86,7 @@ export default async function Page({ params }) {
               display: "block",
               marginBottom: "16px"
             }}>
-              MAGAZINE NUMÉRO {magazine.id.toString().padStart(2, '0')}
+              MAGAZINE NUMÉRO {String(magazine.id || '01').padStart(2, '0')}
             </span>
             <h1 className="mag-hero-title" style={{
               fontFamily: "var(--font-secondary)",
@@ -122,7 +122,7 @@ export default async function Page({ params }) {
                 fontWeight: "700",
                 letterSpacing: "0.1em"
               }}>
-                {magazine.features.map((feat, idx) => (
+                {(magazine.features || []).map((feat, idx) => (
                   <li key={idx}>
                     <Link href={`#feature-${idx}`} style={{ color: "#FFFFFF", textDecoration: "none", textTransform: "uppercase" }}>
                       {feat.title}
@@ -374,7 +374,7 @@ export default async function Page({ params }) {
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
               gap: "24px"
             }}>
-              {magazine.tools.map((tool, idx) => {
+              {(magazine.tools || []).map((tool, idx) => {
                 // Determine appropriate redirect destination for each tool
                 let targetUrl = tool.url || tool.link || tool.href;
                 if (!targetUrl) {

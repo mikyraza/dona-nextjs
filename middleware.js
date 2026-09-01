@@ -34,7 +34,12 @@ function isRouteAllowed(role, path) {
 }
 
 export async function middleware(req) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || "dona-magazine-super-secret-key-987654321" });
+  let token = null;
+  try {
+    token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || "dona-magazine-super-secret-key-987654321" });
+  } catch (err) {
+    token = null;
+  }
   const path = req.nextUrl.pathname;
 
   const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur"];

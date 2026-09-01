@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import ReactPlayer from 'react-player';
+import dynamic from 'next/dynamic';
 import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
 import { getMediaFormatInfo } from '@/lib/mediaFormatHelper';
+
+const ReactPlayer = dynamic(() => import('react-player').catch(() => () => null), { ssr: false });
 
 // ─── Category filter tabs ────────────────────────────────────────────────────
 const CATEGORIES = ['Tout', 'Économie', 'Culture', 'Masterclass', 'Événement', 'Documentaire'];
