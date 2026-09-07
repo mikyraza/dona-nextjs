@@ -46,7 +46,13 @@ export default async function Home() {
     coverImage: "/assets/core/img/home_alaune_main_1782125698619.png"
   };
 
-  const sideFeatures = articles.filter(a => a.id !== mainFeature.id).slice(0, 2);
+  let sideFeatures = articles.filter(a => a.id !== mainFeature.id && (a.placementTarget === 'HERO_SIDE' || a.placementTarget === 'FEATURED'));
+  if (sideFeatures.length < 2) {
+    const fallback = articles.filter(a => a.id !== mainFeature.id && a.placementTarget !== 'HERO_SIDE' && a.placementTarget !== 'FEATURED');
+    sideFeatures = [...sideFeatures, ...fallback];
+  }
+  sideFeatures = sideFeatures.slice(0, 2);
+
   const side1 = sideFeatures[0] || {
     title: "L'Art de la Transmission",
     category: "HÉRITAGE",
