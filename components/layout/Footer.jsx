@@ -132,7 +132,7 @@ export default function Footer() {
             </a>
           </div>
           <div className="footer-copyright">
-            &copy; DONA MAGAZINE. {t('footer_rights_reserved')}
+            &copy; {new Date().getFullYear()} DONA MAGAZINE. {t('footer_rights_reserved')}
           </div>
         </div>
 
