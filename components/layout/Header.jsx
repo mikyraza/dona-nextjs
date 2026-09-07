@@ -56,11 +56,15 @@ export default function Header() {
     try {
       localStorage.removeItem('dona_member_profile');
       localStorage.removeItem('dona_user_plan');
+      localStorage.removeItem('dona_saved_items');
+      localStorage.removeItem('dona_saved_articles_data');
+      localStorage.removeItem('dona_last_order');
+      localStorage.removeItem('dona_admin_members_db');
       const eventPayload = { detail: { plan: 'Essentiel', profile: { isGuest: true, plan: 'Essentiel' } } };
       window.dispatchEvent(new CustomEvent('dona_subscription_changed', eventPayload));
       document.dispatchEvent(new CustomEvent('dona_subscription_changed', eventPayload));
     } catch (e) {}
-    signOut({ callbackUrl: '/' });
+    await signOut({ callbackUrl: '/' });
   };
 
   // Load video hub data for the Studio Mega Menu

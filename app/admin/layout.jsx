@@ -43,6 +43,21 @@ function AdminInnerLayout({ children }) {
   const isJournalist = userRole === "Journaliste";
   const isTranslator = userRole === "Traducteur";
 
+  const handleSignOut = async () => {
+    try {
+      localStorage.removeItem('dona_member_profile');
+      localStorage.removeItem('dona_user_plan');
+      localStorage.removeItem('dona_saved_items');
+      localStorage.removeItem('dona_saved_articles_data');
+      localStorage.removeItem('dona_last_order');
+      localStorage.removeItem('dona_admin_members_db');
+      const eventPayload = { detail: { plan: 'Essentiel', profile: { isGuest: true, plan: 'Essentiel' } } };
+      window.dispatchEvent(new CustomEvent('dona_subscription_changed', eventPayload));
+      document.dispatchEvent(new CustomEvent('dona_subscription_changed', eventPayload));
+    } catch (e) {}
+    await signOut({ callbackUrl: '/admin/login' });
+  };
+
   return (
     <div className="admin-layout-wrapper" suppressHydrationWarning>
       {/* Sidebar Navigation */}
@@ -344,7 +359,7 @@ function AdminInnerLayout({ children }) {
                   <div className="user-dropdown-divider"></div>
                   <button 
                     className="user-dropdown-item" 
-                    onClick={() => signOut({ callbackUrl: '/admin/login' })}
+                    onClick={handleSignOut}
                     style={{ color: '#A30626' }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
