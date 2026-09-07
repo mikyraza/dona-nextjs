@@ -4,6 +4,21 @@ import { validateAdminSession } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
+function parseDurationToMinutes(durationInput) {
+  if (typeof durationInput === 'number') return durationInput;
+  if (!durationInput) return 0;
+  const str = String(durationInput).toLowerCase().trim();
+  if (/^\d+$/.test(str)) return parseInt(str, 10);
+  let totalMinutes = 0;
+  const hoursMatch = str.match(/(\d+(?:\.\d+)?)\s*(?:h|hour|heure)/);
+  if (hoursMatch) totalMinutes += parseFloat(hoursMatch[1]) * 60;
+  const minsMatch = str.match(/(\d+(?:\.\d+)?)\s*(?:m|min|minute)/);
+  if (minsMatch) totalMinutes += parseFloat(minsMatch[1]);
+  const timeMatch = str.match(/^(\d{1,2}):(\d{2})$/);
+  if (timeMatch) totalMinutes += parseInt(timeMatch[1], 10) * 60 + parseInt(timeMatch[2], 10);
+  return Math.round(totalMinutes) || parseInt(str, 10) || 0;
+}
+
 // GET /api/admin/tv-live — get live state + EPG from relational SQL DB
 export async function GET(request) {
   try {
@@ -54,7 +69,7 @@ export async function PUT(request) {
       const newItem = {
         id: `epg-${Date.now()}`,
         title: body.item.title || '',
-        duration: body.item.duration || '',
+        duration: parseDurationToMinutes(body.item.duration),
         scheduledAt: body.item.scheduledAt || new Date().toISOString(),
         type: body.item.type || 'live',
         videoId: body.item.videoId || null,
@@ -73,7 +88,10 @@ export async function PUT(request) {
         [epg[idx], epg[idx + 1]] = [epg[idx + 1], epg[idx]];
       }
     } else if (body.action === 'replace' && body.epg) {
-      epg = body.epg;
+      epg = body.epg.map(item => ({
+        ...item,
+        duration: parseDurationToMinutes(item.duration)
+      }));
     }
 
     const updated = dbUpdateTvLive({ epg });
