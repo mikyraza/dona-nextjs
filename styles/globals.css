@@ -63,9 +63,11 @@ ul {
     border-bottom: 1px solid var(--color-border);
     padding: 24px 0;
     background-color: var(--color-bg);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+}
+
+.header-spacer {
+    height: 113px; /* Matches default desktop header height */
+    width: 100%;
 }
 
 .header-inner {
@@ -7602,6 +7604,9 @@ img, picture, video {
     }
     .site-header {
         padding: 14px 0 !important;
+    }
+    .header-spacer {
+        height: 77px !important;
     }
     /* Header logo scaling on small viewports */
     .logo-image {

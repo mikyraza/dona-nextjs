@@ -164,12 +164,14 @@ export default function Header() {
   };
 
   return (
-    <header className="site-header" ref={headerRef} onMouseLeave={closeAllMenus}>
-      <div className="container header-inner">
-        {/* Logo */}
-        <Link href="/" className="header-logo" aria-label="Page d'accueil" onClick={closeAllMenus}>
-          <img src="/assets/core/img/logo.png?v=3" alt="DONA Magazine" className="logo-image" width="80" height="64" />
-        </Link>
+    <>
+      <div className="header-spacer"></div>
+      <header className="site-header" ref={headerRef} onMouseLeave={closeAllMenus} style={{ position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 1000 }}>
+        <div className="container header-inner">
+          {/* Logo */}
+          <Link href="/" className="header-logo" aria-label="Page d'accueil" onClick={closeAllMenus}>
+            <img src="/assets/core/img/logo.png?v=3" alt="DONA Magazine" className="logo-image" width="80" height="64" />
+          </Link>
 
         {/* Main Navigation */}
         <nav className="main-nav">
@@ -1297,6 +1299,8 @@ export default function Header() {
           .mobile-backdrop { display: none !important; }
         }
       `}</style>
+      </div>
     </header>
+    </>
   );
 }
