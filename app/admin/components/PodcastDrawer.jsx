@@ -627,7 +627,7 @@ export default function PodcastDrawer({ isOpen, onClose, onSave, podcast }) {
                     <div className="media-compact-row">
                       <div className="media-compact-thumb">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={coverUrl} alt="Pochette Podcast" />
+                        <img src={coverUrl} alt="Pochette Podcast" width="80" height="80" />
                       </div>
                       <div className="media-compact-info">
                         <div className="media-compact-filename">{coverFileName || 'pochette-podcast.jpg'}</div>
@@ -852,7 +852,7 @@ export default function PodcastDrawer({ isOpen, onClose, onSave, podcast }) {
                     }}>
                       {coverUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={coverUrl} alt="Pochette" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={coverUrl} alt="Pochette" width="80" height="80" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
                           <span className="material-symbols-outlined" style={{ fontSize: '36px', opacity: 0.3 }}>podcasts</span>

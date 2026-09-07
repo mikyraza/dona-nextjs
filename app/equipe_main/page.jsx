@@ -91,7 +91,7 @@ export default function Page() {
           {data.expertes.map((exp) => (
             <div key={exp.id} style={{background: "var(--color-bg-alt)", borderRadius: "3px", padding: "48px 32px 40px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center"}}>
               <div style={{width: "100px", height: "100px", borderRadius: "6px", overflow: "hidden", marginBottom: "20px"}}>
-                <img src={exp.photoUrl || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"} alt={exp.name} style={{width: "100%", height: "100%", objectFit: "cover"}} />
+                <img src={exp.photoUrl || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"} alt={exp.name} width="100" height="100" style={{width: "100%", height: "100%", objectFit: "cover"}} />
               </div>
               <h3 style={{fontFamily: "'Inter',sans-serif", fontSize: "17px", fontWeight: "700", color: "var(--color-text)", margin: "0 0 6px 0"}}>{exp.name}</h3>
               <p style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", fontWeight: "600", color: "#8B002A", margin: "0 0 20px 0"}}>{exp.role}</p>
@@ -152,7 +152,7 @@ export default function Page() {
         <div style={{display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "14px", marginBottom: "28px"}}>
           {filteredContributrices.map((con) => (
             <div key={con.id} style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "3px", padding: "18px 16px", display: "flex", alignItems: "center", gap: "14px"}}>
-              <img src={con.photoUrl || "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=120&auto=format&fit=crop"} alt={con.name} style={{width: "52px", height: "52px", borderRadius: "3px", objectFit: "cover", flexShrink: "0"}} />
+              <img src={con.photoUrl || "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=120&auto=format&fit=crop"} alt={con.name} width="52" height="52" style={{width: "52px", height: "52px", borderRadius: "3px", objectFit: "cover", flexShrink: "0"}} />
               <div>
                 <p style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", fontWeight: "700", color: "var(--color-text)", margin: "0 0 2px 0"}}>{con.name}</p>
                 <p style={{fontFamily: "'Inter',sans-serif", fontSize: "11px", color: "var(--color-text-muted)", margin: "0 0 5px 0"}}>{con.role}</p>

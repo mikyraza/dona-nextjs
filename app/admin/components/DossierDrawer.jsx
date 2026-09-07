@@ -578,7 +578,7 @@ export default function DossierDrawer({ isOpen, onClose, onSave, articles = [], 
                     <div className="media-compact-row">
                       <div className="media-compact-thumb">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={coverUrl} alt="Couverture Dossier" />
+                        <img src={coverUrl} alt="Couverture Dossier" width="80" height="45" />
                       </div>
                       <div className="media-compact-info">
                         <div className="media-compact-filename">{coverFileName || 'couverture-dossier.jpg'}</div>
@@ -788,6 +788,8 @@ export default function DossierDrawer({ isOpen, onClose, onSave, articles = [], 
                     <img
                       src={coverUrl}
                       alt="Couverture Dossier"
+                      width="320"
+                      height="180"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (

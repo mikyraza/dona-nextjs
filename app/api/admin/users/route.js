@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { dbGetUsers, dbUpsertUser, dbDeleteUser, dbToggleUserStatus, exportDatabaseToSqlFile } from '@/lib/db';
+import { validateAdminSession } from '@/lib/adminAuth';
 
 export async function GET(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     const role = searchParams.get('role') || 'all';
@@ -18,6 +24,11 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const body = await req.json();
     if (!body.name || !body.email) {
       return NextResponse.json({ success: false, error: "Nom et email obligatoires" }, { status: 400 });
@@ -34,6 +45,11 @@ export async function POST(req) {
 
 export async function PATCH(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const body = await req.json();
     if (!body.id) {
       return NextResponse.json({ success: false, error: "ID utilisateur manquant" }, { status: 400 });
@@ -54,6 +70,11 @@ export async function PATCH(req) {
 
 export async function DELETE(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     if (!id) {

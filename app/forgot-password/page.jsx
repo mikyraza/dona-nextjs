@@ -99,7 +99,7 @@ export default function Page() {
         
         {/* Logo */}
         <Link href="/" style={{ marginBottom: "32px", display: "flex", justifyContent: "center", cursor: "pointer" }}>
-          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" style={{ height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease" }} />
+          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" width="150" height="120" style={{ height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease" }} />
         </Link>
 
         {/* Heading */}

@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function LoginForm() {
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -104,7 +106,7 @@ function LoginForm() {
     return (
       <div className="login-card" style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "500px", width: "100%", borderRadius: "4px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center"}}>
         <Link href="/" style={{marginBottom: "24px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
-          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" style={{height: "120px", width: "auto", objectFit: "contain"}} />
+          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" width="150" height="120" style={{height: "120px", width: "auto", objectFit: "contain"}} />
         </Link>
 
         <div style={{
@@ -201,7 +203,7 @@ function LoginForm() {
       
       {/* Logo */}
       <Link href="/" style={{marginBottom: "24px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
-          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" style={{height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease"}} />
+          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" width="150" height="120" style={{height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease"}} />
       </Link>
 
       {/* VIP Intent Badge */}

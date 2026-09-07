@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
 export default function SearchPage() {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -26,6 +29,17 @@ export default function SearchPage() {
     { label: "Masterclass & Replays", query: "Masterclass" },
     { label: "01. Intelligence Géopolitique", query: "Intelligence" }
   ];
+
+  // Read URL query params on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('q');
+      if (q) {
+        setSearchQuery(q);
+      }
+    }
+  }, []);
 
   // Fetch search results from /api/search whenever query, category, or format changes
   useEffect(() => {
@@ -87,30 +101,52 @@ export default function SearchPage() {
     return item.format === activeTab || item.type === activeTab;
   });
 
+  const resolveItemHref = (item) => {
+    if (item.href && item.href !== '#' && item.href !== '') return item.href;
+    if (item.type === 'article' || item.format === 'article') {
+      return `/magazines/magazine-01-intelligence/articles/${item.slug || item.id || 'article-trends-intelligence'}`;
+    }
+    if (item.type === 'magazine' || item.format === 'magazine') {
+      return `/magazines/${item.slug || 'magazine-01-intelligence'}`;
+    }
+    if (item.type === 'video' || item.format === 'video') {
+      return item.id ? `/studio?v=${item.id}` : '/studio';
+    }
+    if (item.type === 'podcast' || item.format === 'podcast') {
+      return '/ecouter';
+    }
+    if (item.type === 'expert' || item.format === 'expert') {
+      return '/equipe';
+    }
+    return '/magazines';
+  };
   return (
     <main>
       <style dangerouslySetInnerHTML={{ __html: `
         :root, [data-theme="light"] {
-            --page-bg: #fff;
-            --page-card-bg: #fcfcfb;
-            --page-border: #ede8e4;
-            --page-border-focus: #1c1b1b;
-            --page-text: #1c1b1b;
-            --page-text-muted: #888;
-            --page-text-light: #aaa;
-            --page-btn-hover: #111;
-            --page-banner-bg: #f9f6f3;
+            --page-bg: #FFFFFF;
+            --page-card-bg: #FCFCFB;
+            --page-border: #EDE8E4;
+            --page-border-focus: #1C1B1B;
+            --page-text: #1C1B1B;
+            --page-text-muted: #666666;
+            --page-text-light: #999999;
+            --page-btn-hover: #111111;
+            --page-banner-bg: #F9F6F3;
         }
-        [data-theme="dark"] {
-            --page-bg: var(--color-bg);
-            --page-card-bg: #111;
-            --page-border: var(--color-border);
-            --page-border-focus: var(--color-accent);
-            --page-text: var(--color-text);
-            --page-text-muted: var(--color-text-muted);
-            --page-text-light: rgba(255, 255, 255, 0.3);
-            --page-btn-hover: #333;
-            --page-banner-bg: #151515;
+        :root[data-theme="dark"],
+        [data-theme="dark"],
+        .dark,
+        html.dark {
+            --page-bg: #0A0A0A;
+            --page-card-bg: #141414;
+            --page-border: rgba(255, 255, 255, 0.1);
+            --page-border-focus: var(--color-accent, #A30626);
+            --page-text: rgba(255, 255, 255, 0.9);
+            --page-text-muted: rgba(255, 255, 255, 0.55);
+            --page-text-light: rgba(255, 255, 255, 0.35);
+            --page-btn-hover: #222222;
+            --page-banner-bg: #161616;
         }
         .search-tab-btn {
           padding: 8px 16px;
@@ -133,31 +169,44 @@ export default function SearchPage() {
           background: var(--page-card-bg);
           padding: 20px;
           border-radius: 4px;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
         .result-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        [data-theme="dark"] .result-card:hover {
+          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+          border-color: rgba(255,255,255,0.2);
+        }
+        select option {
+          background-color: var(--page-card-bg);
+          color: var(--page-text);
         }
       ` }} />
 
       {/* Page Hero: Centered Title */}
-      <section style={{padding: "90px 60px 36px", textAlign: "center"}}>
-        <h1 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "48px", fontWeight: "400", color: "var(--page-text)", margin: "0 0 12px 0", letterSpacing: "-0.01em"}}>
-          Recherche Globale DONA
-        </h1>
-        <p style={{fontFamily: "'Inter',sans-serif", fontSize: "14px", color: "var(--page-text-muted)", margin: "0"}}>
-          Recherchez en direct parmi nos 16 Univers, nos articles, masterclass vidéos, podcasts et experts
-        </p>
+      <section style={{padding: "60px 60px 24px", maxWidth: "980px", margin: "0 auto"}}>
+        <div style={{ marginBottom: "20px" }}>
+          <Breadcrumbs items={[{ label: t('search_hero_title') || 'Recherche' }]} />
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <h1 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "48px", fontWeight: "400", color: "var(--page-text)", margin: "0 0 12px 0", letterSpacing: "-0.01em"}}>
+            {t('search_hero_title')}
+          </h1>
+          <p style={{fontFamily: "'Inter',sans-serif", fontSize: "14px", color: "var(--page-text-muted)", margin: "0"}}>
+            {t('search_hero_sub')}
+          </p>
+        </div>
       </section>
 
       {/* Search Bar & Filters Section */}
       <section style={{padding: "0 60px 48px", maxWidth: "980px", margin: "0 auto"}}>
-        <div style={{background: "var(--page-bg)", border: "1px solid #e8e4e4", borderRadius: "4px", padding: "28px 32px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)"}}>
+        <div style={{background: "var(--page-bg)", border: "1px solid var(--page-border)", borderRadius: "4px", padding: "28px 32px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)"}}>
 
           {/* Search Input Row */}
           <div style={{display: "flex", alignItems: "center", gap: "0", marginBottom: "16px"}}>
-            <div style={{display: "flex", alignItems: "center", flex: "1", border: "1px solid #e0dada", borderRadius: "2px 0 0 2px", padding: "0 16px", height: "52px", background: "var(--page-card-bg)"}}>
+            <div style={{display: "flex", alignItems: "center", flex: "1", border: "1px solid var(--page-border)", borderRadius: "2px 0 0 2px", padding: "0 16px", height: "52px", background: "var(--page-card-bg)"}}>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B002A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink: "0", marginRight: "12px"}}>
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
@@ -165,7 +214,7 @@ export default function SearchPage() {
                 type="text" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tapez un sujet, un nom d'expert ou un terme de recherche..." 
+                placeholder={t('search_input_ph') || "Tapez un sujet, un nom d'expert ou un terme de recherche..."} 
                 style={{flex: "1", border: "none", outline: "none", fontFamily: "'Inter',sans-serif", fontSize: "14px", color: "var(--page-text)", background: "transparent", height: "100%"}} 
                 autoFocus
               />
@@ -173,7 +222,7 @@ export default function SearchPage() {
                 <button 
                   type="button" 
                   onClick={() => setSearchQuery('')}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: '4px', display: 'flex', alignItems: 'center' }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--page-text-muted)', padding: '4px', display: 'flex', alignItems: 'center' }}
                   title="Effacer la recherche"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -182,11 +231,11 @@ export default function SearchPage() {
             </div>
             
             <button 
-              type="button"
+              type="button" 
               onClick={() => {}}
               style={{background: "#8B002A", color: "#fff", border: "none", borderRadius: "0 2px 2px 0", height: "52px", padding: "0 24px", fontFamily: "'Inter',sans-serif", fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", justifyContent: "center"}}
             >
-              {isLoading ? "RECHERCHE..." : "RECHERCHER"}
+              {isLoading ? (t('search_btn_loading') || "RECHERCHE...") : (t('search_btn_submit') || "RECHERCHER")}
             </button>
           </div>
 
@@ -198,7 +247,7 @@ export default function SearchPage() {
               style={{background: "none", border: "none", padding: 0, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px", fontFamily: "'Inter',sans-serif", fontSize: "11px", color: "#8B002A", fontWeight: "600"}}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-              Filtres avancés par Univers & Formats
+              {t('search_adv_filters') || "Filtres avancés par Univers & Formats"}
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
             </button>
 
@@ -206,9 +255,9 @@ export default function SearchPage() {
               <button 
                 type="button" 
                 onClick={() => { setSearchQuery(''); setSelectedCategory('all'); setSelectedFormat('all'); setActiveTab('all'); }}
-                style={{ background: 'none', border: 'none', color: '#666', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', color: 'var(--page-text-muted)', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}
               >
-                Réinitialiser les filtres
+                {t('search_reset') || "Réinitialiser les filtres"}
               </button>
             )}
           </div>
@@ -270,7 +319,7 @@ export default function SearchPage() {
           {/* Quick Filter Tags / Popular Suggestions when search query is empty */}
           {!searchQuery && (
             <div style={{ marginTop: "12px" }}>
-              <span style={{ fontSize: "11px", color: "var(--page-text-muted)", marginRight: "10px", fontWeight: "600" }}>Suggestions :</span>
+              <span style={{ fontSize: "11px", color: "var(--page-text-muted)", marginRight: "10px", fontWeight: "600" }}>{t('search_suggestions') || "Suggestions :"}</span>
               <div style={{ display: "inline-flex", flexWrap: "wrap", gap: "8px" }}>
                 {popularSearches.map((item, idx) => (
                   <button 
@@ -326,16 +375,16 @@ export default function SearchPage() {
         {/* Results Grid */}
         {isLoading ? (
           <div style={{ textAlign: "center", padding: "60px 0", color: "var(--page-text-muted)", fontSize: "14px" }}>
-            Chargement des résultats de recherche...
+            {t('search_btn_loading') || "Chargement des résultats de recherche..."}
           </div>
         ) : filteredFlatResults.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 0", background: "var(--page-banner-bg)", borderRadius: "4px" }}>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8B002A" strokeWidth="1.5" style={{ marginBottom: "12px" }}>
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <h3 style={{ fontSize: "18px", color: "var(--page-text)", margin: "0 0 8px 0" }}>Aucun résultat trouvé</h3>
+            <h3 style={{ fontSize: "18px", color: "var(--page-text)", margin: "0 0 8px 0" }}>{t('search_no_results') || "Aucun résultat trouvé"}</h3>
             <p style={{ fontSize: "13px", color: "var(--page-text-muted)", margin: 0 }}>
-              Essayez de rechercher un autre terme (ex: "Leadership", "Longevity", "Impact") ou réinitialisez vos filtres.
+              {t('search_no_results_desc') || "Essayez de rechercher un autre terme ou réinitialisez vos filtres."}
             </p>
           </div>
         ) : (
@@ -366,7 +415,7 @@ export default function SearchPage() {
                     </div>
 
                     <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "20px", fontWeight: "600", color: "var(--page-text)", margin: "0 0 8px 0" }}>
-                      <Link href={item.href || '#'} style={{ textDecoration: "none", color: "inherit" }}>
+                      <Link href={resolveItemHref(item)} style={{ textDecoration: "none", color: "inherit" }}>
                         {item.title || item.name}
                       </Link>
                     </h3>
@@ -383,26 +432,35 @@ export default function SearchPage() {
                   </div>
 
                   {item.image && (
-                    <div style={{ width: "120px", height: "80px", borderRadius: "2px", overflow: "hidden", flexShrink: 0 }}>
-                      <img src={item.image} alt={item.title || "Vignette"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    </div>
+                    <Link href={resolveItemHref(item)} style={{ width: "120px", height: "80px", borderRadius: "2px", overflow: "hidden", flexShrink: 0, display: "block" }}>
+                      <img src={item.image} alt={item.title || "Vignette"} width="120" height="80" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </Link>
                   )}
 
-                  <div>
+                  <div style={{ alignSelf: "center", marginLeft: "8px" }}>
                     <Link 
-                      href={item.href || '#'} 
+                      href={resolveItemHref(item)} 
                       style={{ 
                         display: "inline-flex", 
                         alignItems: "center", 
-                        gap: "4px", 
+                        gap: "6px", 
                         fontSize: "11px", 
                         fontWeight: "700", 
-                        color: "#8B002A", 
+                        letterSpacing: "0.08em",
+                        color: "#FFFFFF", 
+                        backgroundColor: "#8B002A",
+                        padding: "8px 16px",
+                        borderRadius: "2px",
                         textDecoration: "none",
-                        whiteSpace: "nowrap"
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 2px 8px rgba(139, 0, 42, 0.15)",
+                        transition: "all 0.2s ease"
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#6B0020'; e.currentTarget.style.transform = 'translateX(2px)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#8B002A'; e.currentTarget.style.transform = 'translateX(0)'; }}
                     >
-                      CONSULTER →
+                      <span>{t('search_consult') || "CONSULTER"}</span>
+                      <span style={{ fontSize: "13px" }}>→</span>
                     </Link>
                   </div>
                 </div>
@@ -415,7 +473,7 @@ export default function SearchPage() {
         <div style={{ marginTop: "48px", paddingTop: "24px", borderTop: "1px solid var(--page-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <h4 style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--page-text-muted)", margin: "0 0 8px 0" }}>
-              Recherches fréquentes du Cercle
+              {t('search_frequent_title') || "Recherches fréquentes du Cercle"}
             </h4>
             <div style={{ display: "flex", gap: "16px" }}>
               {recentSearches.map((item, idx) => (
@@ -432,7 +490,7 @@ export default function SearchPage() {
           </div>
 
           <Link href="/today" style={{ fontSize: "12px", fontWeight: "600", color: "var(--page-text)", textDecoration: "none" }}>
-            Voir tout l'actualité →
+            {t('view_all') || "Voir tout"} →
           </Link>
         </div>
 

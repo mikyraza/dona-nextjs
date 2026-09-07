@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 const initialConfig = {
   hero: {
@@ -21,14 +22,17 @@ const initialConfig = {
     { id: 7, label: "CULTURE", url: "#" }
   ],
   urgentArticle: {
+    id: "news-1",
     title: "Accord historique sur la parité salariale au sein de l'Union Européenne",
     desc: "Après des mois de négociations intenses, le Parlement a adopté ce matin une directive contraignante, marquant un tournant décisif pour l'égalité économique.",
-    image: "assets/core/img/featured_urgent.png"
+    image: "/assets/core/img/featured_urgent.png",
+    category: "ÉCONOMIE",
+    isFeatured: true
   },
   newsTimeline: [
-    { id: 1, time: "14:30", isNew: true, title: "Nominations à la tête des grandes banques centrales", desc: "Trois femmes pressenties pour diriger les institutions clés en Asie et en Europe, un signal fort pour les marchés financiers." },
-    { id: 2, time: "13:15", isNew: false, title: "COP29 : Les initiatives climatiques portées par des entrepreneures", desc: "Le sommet met en lumière des solutions innovantes développées par des startups dirigées par des femmes dans les pays du Sud." },
-    { id: 3, time: "11:45", isNew: false, title: "Rétrospective : L'impact de l'architecture inclusive", desc: "Comment la nouvelle vague de designers redessine les espaces publics pour plus de sécurité et de convivialité urbaine." }
+    { id: "news-2", time: "14:30", isNew: true, title: "Nominations à la tête des grandes banques centrales", desc: "Trois femmes pressenties pour diriger les institutions clés en Asie et en Europe, un signal fort pour les marchés financiers.", category: "ÉCONOMIE", image: "/assets/core/img/home_alaune_side1_1782125709654.png" },
+    { id: "news-3", time: "13:15", isNew: false, title: "COP29 : Les initiatives climatiques portées par des entrepreneures", desc: "Le sommet met en lumière des solutions innovantes développées par des startups dirigées par des femmes dans les pays du Sud.", category: "INNOVATION", image: "/assets/core/img/home_alaune_side2_1782125722981.png" },
+    { id: "news-4", time: "11:45", isNew: false, title: "Rétrospective : L'impact de l'architecture inclusive", desc: "Comment la nouvelle vague de designers redessine les espaces publics pour plus de sécurité et de convivialité urbaine.", category: "SOCIÉTÉ", image: "/assets/core/img/mag_hero_04.png" }
   ],
   editorial: {
     title: "Notre Vision\nRéconciliée",
@@ -38,7 +42,7 @@ const initialConfig = {
       { id: 2, title: "L'Ambition assumée", desc: "Viser l'excellence dans toutes les sphères de la vie." }
     ],
     quote: "\"L'élégance n'est pas de se faire remarquer, mais de s'en souvenir. C'est cette trace lumineuse que laisse la femme DONA.\"",
-    image: "assets/core/img/vision_portrait.png"
+    image: "/assets/core/img/vision_portrait.png"
   },
   values: [
     { id: 1, title: "Heureuse", desc: "Cultiver la joie quotidienne comme une discipline de vie et un moteur de créativité." },
@@ -47,13 +51,42 @@ const initialConfig = {
     { id: 4, title: "Rayonnante", desc: "Être une source d'inspiration lumineuse pour son entourage et sa communauté." }
   ],
   france: [
-    { id: 1, category: "POLITIQUE", time: "Il y a 45 min", title: "Loi Égalité Professionnelle : Le Sénat adopte le texte en première lecture", desc: "Les quotas dans les comités de direction des grandes entreprises seront renforcés dès 2026.", image: "assets/core/img/france_1.png" },
-    { id: 2, category: "ÉCONOMIE", time: "Il y a 2h", title: "CAC 40 : Les entreprises dirigées par des femmes surperforment", desc: "Une nouvelle étude démontre une rentabilité supérieure de 12% pour les groupes à parité.", image: "assets/core/img/france_2.png" },
-    { id: 3, category: "CULTURE", time: "Il y a 4h", title: "Cannes 2026 : Record historique de femmes réalisatrices en sélection officielle", desc: "Thierry Frémaux annonce une sélection paritaire pour la première fois dans l'histoire du festival.", image: "assets/core/img/france_3.png" }
+    { id: "fr-1", category: "POLITIQUE", time: "Il y a 45 min", title: "Loi Égalité Professionnelle : Le Sénat adopte le texte en première lecture", desc: "Les quotas dans les comités de direction des grandes entreprises seront renforcés dès 2026.", image: "/assets/core/img/france_1.png" },
+    { id: "fr-2", category: "ÉCONOMIE", time: "Il y a 2h", title: "CAC 40 : Les entreprises dirigées par des femmes surperforment", desc: "Une nouvelle étude démontre une rentabilité supérieure de 12% pour les groupes à parité.", image: "/assets/core/img/france_2.png" },
+    { id: "fr-3", category: "CULTURE", time: "Il y a 4h", title: "Cannes 2026 : Record historique de femmes réalisatrices en sélection officielle", desc: "Thierry Frémaux annonce une sélection paritaire pour la première fois dans l'histoire du festival.", image: "/assets/core/img/france_3.png" }
   ]
 };
 
 export default function Page() {
+  const { t } = useLanguage();
+
+  const getFilterLabel = (filter) => {
+    const clean = (filter.label || '').toUpperCase().trim();
+    if (clean.includes('TOUT') || filter.id === 1 || filter.id === 'all' || filter.id === '1') return t('today_filter_all');
+    if (clean.includes('GÉO') || clean.includes('GEO')) return t('today_filter_geopolitics');
+    if (clean.includes('ÉCON') || clean.includes('ECON')) return t('today_filter_economy');
+    if (clean.includes('BUS')) return t('today_filter_business');
+    if (clean.includes('INNOV')) return t('today_filter_innovation');
+    if (clean.includes('SOCI')) return t('today_filter_society');
+    if (clean.includes('CULT')) return t('today_filter_culture');
+    return filter.label || t('today_filter_all');
+  };
+
+  const getValueTitle = (val, idx) => {
+    if (idx === 0) return t('today_val_happy');
+    if (idx === 1) return t('today_val_assertive');
+    if (idx === 2) return t('today_val_ambitious');
+    if (idx === 3) return t('today_val_radiant');
+    return val.title;
+  };
+
+  const getValueDesc = (val, idx) => {
+    if (idx === 0) return t('today_val_happy_desc');
+    if (idx === 1) return t('today_val_assertive_desc');
+    if (idx === 2) return t('today_val_ambitious_desc');
+    if (idx === 3) return t('today_val_radiant_desc');
+    return val.desc;
+  };
   const [config, setConfig] = useState(initialConfig);
   const [activeFilter, setActiveFilter] = useState(initialConfig.filters[0].id);
 
@@ -135,7 +168,7 @@ export default function Page() {
       {/* HERO SECTION */}
         <section className="today-hero">
             <div className="today-hero-bg">
-                <img src={config.hero.image} alt="Cover" className="hero-bg-img" />
+                <img src={config.hero.image} alt="Cover" className="hero-bg-img" width="1440" height="810" />
             </div>
             <div className="today-hero-content">
                 <h1 className="today-hero-title">
@@ -175,9 +208,9 @@ export default function Page() {
                         onClick={() => setActiveFilter(filter.id)} 
                         className={`filter-pill ${isActive ? 'active' : ''}`}
                         style={{ 
-                          background: isActive ? '#8B002A' : 'var(--color-bg, #FFFFFF)', 
-                          color: isActive ? '#FFFFFF' : 'var(--color-text, #1C1B1B)', 
-                          border: isActive ? '1px solid #8B002A' : '1px solid var(--color-border, #CCCCCC)',
+                          background: isActive ? '#8B002A' : 'var(--color-bg-alt)', 
+                          color: isActive ? '#FFFFFF' : 'var(--color-text)', 
+                          border: isActive ? '1px solid #8B002A' : '1px solid var(--color-border)',
                           padding: '8px 20px',
                           borderRadius: '20px',
                           fontSize: '11px',
@@ -192,7 +225,7 @@ export default function Page() {
                           minWidth: '70px'
                         }}
                       >
-                        {labelText}
+                        {getFilterLabel(filter)}
                       </button>
                     </li>
                   );
@@ -205,13 +238,13 @@ export default function Page() {
             <div className="today-content-col">
                 {/* Urgent Article */}
                 {displayUrgent && (
-                  <Link href={`/today/${displayUrgent.id || ''}`} className="urgent-article" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                  <Link href={`/today/${displayUrgent.id || 'news-1'}`} className="urgent-article" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                       <div className="urgent-img-wrapper">
-                          <img src={displayUrgent.image || '/assets/core/img/featured_urgent.png'} alt="Urgent" className="urgent-img" />
+                          <img src={displayUrgent.image || '/assets/core/img/featured_urgent.png'} alt="Urgent" className="urgent-img" width="800" height="450" />
                           {displayUrgent.isFeatured && (
                           <span className="badge-urgent">
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                              À LA UNE
+                              {t('today_badge_urgent')}
                           </span>
                           )}
                       </div>
@@ -225,13 +258,13 @@ export default function Page() {
                 {/* Fil d'actualité */}
                 {displayTimeline.length > 0 && (
                   <div className="news-timeline">
-                      <h3 className="section-overline">FIL D'ACTUALITÉ</h3>
+                      <h3 className="section-overline">{t('today_timeline_title')}</h3>
                       <div className="timeline-list">
                           {displayTimeline.map((news) => (
                             <Link href={`/today/${news.id || ''}`} key={news.id} className={`timeline-item ${news.isNew ? 'is-new' : ''}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
                                 <div className="timeline-time">
                                     {news.time}
-                                    {news.isNew && <span className="badge-new">NOUVEAU</span>}
+                                    {news.isNew && <span className="badge-new">{t('today_badge_new')}</span>}
                                 </div>
                                 <div className="timeline-content">
                                     <h4 className="timeline-title">{news.title}</h4>
@@ -247,7 +280,7 @@ export default function Page() {
             <aside className="today-sidebar-col">
                 {/* Les Plus Lus */}
                 <div className="sidebar-widget">
-                    <h3 className="section-overline">LES PLUS LUS</h3>
+                    <h3 className="section-overline">{t('today_popular_title')}</h3>
                     <ul className="popular-list">
                         <li>
                             <span className="popular-num">01</span>
@@ -275,7 +308,7 @@ export default function Page() {
 
                 {/* Sources en direct */}
                 <div className="sidebar-widget">
-                    <h3 className="section-overline">SOURCES EN DIRECT</h3>
+                    <h3 className="section-overline">{t('today_sources_title')}</h3>
                     <div className="sources-logos">
                         <span>AFP</span>
                         <span>Reuters</span>
@@ -316,7 +349,7 @@ export default function Page() {
                     </blockquote>
                 </div>
                 <div className="philosophy-image">
-                    <img src={config.editorial.image} alt="Vision DONA" />
+                    <img src={config.editorial.image} alt="Vision DONA" width="600" height="600" />
                 </div>
             </div>
         </section>
@@ -333,8 +366,8 @@ export default function Page() {
                           {index === 2 && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>}
                           {index === 3 && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>}
                       </div>
-                      <h3 className="value-title">{value.title}</h3>
-                      <p className="value-desc">{value.desc}</p>
+                      <h3 className="value-title">{getValueTitle(value, index)}</h3>
+                      <p className="value-desc">{getValueDesc(value, index)}</p>
                   </div>
                 ))}
             </div>
@@ -343,14 +376,14 @@ export default function Page() {
         {/* FRANCE EN DIRECT */}
         <section className="today-france">
             <div className="section-header">
-                <h2 className="section-title">France en Direct</h2>
-                <Link href="/today/all" className="link-more">TOUT VOIR &rarr;</Link>
+                <h2 className="section-title">{t('today_france_title')}</h2>
+                <Link href="/today/all" className="link-more">{t('today_france_more')} →</Link>
             </div>
             {filteredFrance.length > 0 ? (
               <div className="france-grid">
                   {filteredFrance.map((article) => (
                     <Link href={`/today/${article.id || ''}`} key={article.id} className="france-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column' }}>
-                        <img src={article.image} alt={article.title} />
+                        <img src={article.image} alt={article.title} width="600" height="750" />
                         <div className="france-meta">
                             <span className="meta-cat">{article.category}</span>
                             <span className="meta-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> {article.time}</span>
@@ -368,35 +401,35 @@ export default function Page() {
         {/* ABONNEMENT ALLIANCE */}
         <section className="today-subscription">
             <div className="sub-header">
-                <h2>Rejoignez l'Alliance DONA</h2>
-                <p>Accédez à un réseau exclusif de femmes solaires, des masterclasses privées et l'intégralité de nos archives éditoriales.</p>
+                <h2>{t('today_alliance_title')}</h2>
+                <p>{t('today_alliance_desc')}</p>
             </div>
             <div className="sub-cards">
                 {/* Découverte */}
                 <div className="sub-card card-transparent">
-                    <h3 className="sub-card-title">Découverte</h3>
-                    <p className="sub-card-subtitle">Accès limité</p>
-                    <div className="sub-price">Gratuit</div>
+                    <h3 className="sub-card-title">{t('today_plan_free_name')}</h3>
+                    <p className="sub-card-subtitle">{t('today_plan_free_sub')}</p>
+                    <div className="sub-price">{t('today_plan_free_price')}</div>
                     <ul className="sub-features">
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Newsletter hebdomadaire</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 3 articles par mois</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> {t('today_plan_free_f1')}</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> {t('today_plan_free_f2')}</li>
                     </ul>
-                    <Link href="/signup" className="btn-sub-outline">S'INSCRIRE</Link>
+                    <Link href="/signup" className="btn-sub-outline">{t('today_plan_free_btn')}</Link>
                 </div>
                 
                 {/* Premium */}
                 <div className="sub-card card-solid">
-                    <div className="badge-recommended">RECOMMANDÉ</div>
-                    <h3 className="sub-card-title">Alliance Premium</h3>
-                    <p className="sub-card-subtitle">L'expérience complète</p>
-                    <div className="sub-price"><span className="price-val">14€</span>/mois</div>
+                    <div className="badge-recommended">{t('today_plan_premium_rec')}</div>
+                    <h3 className="sub-card-title">{t('today_plan_premium_name')}</h3>
+                    <p className="sub-card-subtitle">{t('today_plan_premium_sub')}</p>
+                    <div className="sub-price"><span className="price-val">{t('today_plan_premium_price')}</span>{t('home_plan_per_month')}</div>
                     <ul className="sub-features">
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Accès illimité aux articles</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Masterclasses mensuelles</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Réseau privé d'entraide</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Événements exclusifs</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> {t('today_plan_premium_f1')}</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> {t('today_plan_premium_f2')}</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> {t('today_plan_premium_f3')}</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg> {t('today_plan_premium_f4')}</li>
                     </ul>
-                    <Link href="/abonnement" className="btn-sub-solid">COMMENCER L'ESSAI GRATUIT - 14 JOURS</Link>
+                    <Link href="/abonnement" className="btn-sub-solid">{t('today_plan_premium_btn')}</Link>
                 </div>
             </div>
         </section>

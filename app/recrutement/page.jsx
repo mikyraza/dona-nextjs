@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
 function RecrutementFormContent() {
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const posteParam = searchParams ? searchParams.get('poste') : null;
 
@@ -124,6 +127,9 @@ function RecrutementFormContent() {
 
   return (
     <div className="recrutement-container">
+      <div style={{ paddingTop: "60px", marginBottom: "-60px" }}>
+        <Breadcrumbs items={[{ label: t('footer_recruitment') || 'Recrutement' }]} />
+      </div>
       <header className="recrutement-header">
         <span style={{fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: "600", letterSpacing: "0.3em", textTransform: "uppercase", color: "#8B002A", display: "block", marginBottom: "16px"}}>
           RECRUTEMENT & CANDIDATURE

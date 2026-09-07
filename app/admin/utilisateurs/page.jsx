@@ -198,7 +198,7 @@ export default function AdminUsersPage() {
       {errorMessage && (
         <div style={{
           marginTop: '16px',
-          padding: '12px 18px',
+          padding: '14px 18px',
           backgroundColor: '#FEF2F2',
           border: '1px solid #EF4444',
           borderRadius: '4px',
@@ -206,10 +206,34 @@ export default function AdminUsersPage() {
           fontSize: '13px',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#EF4444' }}>error</span>
-          {errorMessage}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#EF4444' }}>error</span>
+            <span>{errorMessage}</span>
+          </div>
+          {(errorMessage.toLowerCase().includes('authentification') || errorMessage.toLowerCase().includes('autoris')) && (
+            <a
+              href="/admin/login?callbackUrl=/admin/utilisateurs"
+              style={{
+                background: '#A30626',
+                color: '#FFFFFF',
+                padding: '8px 16px',
+                borderRadius: '2px',
+                textDecoration: 'none',
+                fontWeight: '600',
+                fontSize: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>login</span>
+              Se connecter à l&apos;Espace Admin
+            </a>
+          )}
         </div>
       )}
 

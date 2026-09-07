@@ -7,8 +7,11 @@ import { getActiveUserSubscription, canAccessMagazine } from '@/lib/subscription
 import SaveArticleButton from '@/components/article/SaveArticleButton';
 import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
 import { getMediaFormatInfo } from '@/lib/mediaFormatHelper';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
 export default function ArticleDetailClient({ magazine, article, magazineSlug, articleSlug }) {
+  const { t, currentLangObj } = useLanguage();
   const { data: session } = useSession();
   const { loadTrack } = useAudioPlayer();
   const [activeSub, setActiveSub] = useState({ isGuest: true, plan: 'Essentiel' });
@@ -24,9 +27,11 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
     };
 
     window.addEventListener('dona_subscription_changed', handleSubChange);
+    document.addEventListener('dona_subscription_changed', handleSubChange);
     window.addEventListener('storage', handleSubChange);
     return () => {
       window.removeEventListener('dona_subscription_changed', handleSubChange);
+      document.removeEventListener('dona_subscription_changed', handleSubChange);
       window.removeEventListener('storage', handleSubChange);
     };
   }, [session]);
@@ -77,7 +82,7 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                   aria-label={`Écouter l'article : ${article.title}`}
                 >
                   <span className="material-symbols-outlined">volume_up</span>
-                  <span style={{ fontSize: "9px", fontWeight: "700" }}>ÉCOUTER</span>
+                  <span style={{ fontSize: "9px", fontWeight: "700" }}>{t('nav_ecouter')}</span>
                 </button>
                 
                 <SaveArticleButton
@@ -98,13 +103,25 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
 
             <Link href={`/magazines/${magazineSlug}`} style={{ marginTop: "40px", border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text)", textDecoration: "none" }}>
               <span className="material-symbols-outlined">arrow_back</span>
-              <span style={{ fontSize: "9px", fontWeight: "700" }}>RETOUR</span>
+              <span style={{ fontSize: "9px", fontWeight: "700" }}>{t('breadcrumb_back').toUpperCase()}</span>
             </Link>
           </div>
         </aside>
 
         {/* Center Main Article Column */}
         <div style={{ gridColumn: "2" }}>
+          {/* Dynamic Breadcrumbs */}
+          <div style={{ marginBottom: "20px" }}>
+            <Breadcrumbs 
+              items={[
+                { label: 'NOS MAGAZINES', href: '/magazines' },
+                { label: magazine.title.toUpperCase(), href: `/magazines/${magazineSlug}` },
+                { label: article.title, isCurrent: true }
+              ]}
+              accentColor={primaryColor}
+            />
+          </div>
+
           <header style={{ marginBottom: "32px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
               <span style={{ background: primaryColor, color: "#FFFFFF", fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "2px", letterSpacing: "0.15em", textTransform: "uppercase" }}>
@@ -114,12 +131,12 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
               {isAllowed ? (
                 <span style={{ background: "#DCFCE7", color: "#166534", fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "2px", letterSpacing: "0.1em", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>verified</span>
-                  ACCÈS COMPLET • {userPlan.toUpperCase()}
+                  {t('ACCÈS COMPLET')} • {userPlan.toUpperCase()}
                 </span>
               ) : (
                 <span style={{ background: "#FEF3C7", color: "#B45309", fontSize: "10px", fontWeight: "700", padding: "4px 8px", borderRadius: "2px", letterSpacing: "0.1em", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>lock</span>
-                  RÉSUMÉ PUBLIC • DÉTAILS RÉSERVÉS ({requiredPlan.toUpperCase()})
+                  {t('RÉSUMÉ PUBLIC • DÉTAILS RÉSERVÉS')} ({requiredPlan.toUpperCase()})
                 </span>
               )}
             </div>
@@ -129,9 +146,9 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
             </h1>
             
             <div style={{ fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "600", letterSpacing: "0.05em", color: "var(--color-text-muted)", borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)", padding: "12px 0", display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <span>PAR <strong>{authorName}</strong></span>
+              <span>{t('PAR')} <strong>{authorName}</strong></span>
               <span>•</span>
-              <span>{article.updated || "RÉCENT"}</span>
+              <span>{article.updated || t('RÉCENT')}</span>
               {article.format === 'audio' && <><span>•</span><span>🎙 PODCAST</span></>}
               {article.format === 'video' && <><span>•</span><span>▶ VIDÉO</span></>}
             </div>
@@ -149,11 +166,11 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
                 <div style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: primaryColor, display: "flex", alignItems: "center", gap: "6px" }}>
                   <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>short_text</span>
-                  Résumé Éditorial (Extrait Public)
+                  {t('Résumé Éditorial (Extrait Public)')}
                 </div>
                 {!isAllowed && (
                   <span style={{ fontSize: "10px", background: "#FEF3C7", color: "#B45309", padding: "2px 8px", borderRadius: "2px", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                    Restreint : Offre {requiredPlan} Requis
+                    {t('Restreint : Offre')} {requiredPlan} {t('Requis')}
                   </span>
                 )}
               </div>
@@ -175,7 +192,7 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
           {coverImg && (
             <div style={{ width: "100%", aspectRatio: "21/9", borderRadius: "2px", overflow: "hidden", border: "1px solid var(--color-border)", marginBottom: "36px" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={coverImg} alt={article.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={coverImg} alt={article.title} width="1200" height="514" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           )}
 
@@ -209,7 +226,7 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                 <div style={{ background: "var(--color-bg-alt)", border: "1px solid var(--color-border)", borderRadius: "4px", padding: "16px 20px", marginBottom: "32px", display: "flex", alignItems: "center", gap: "16px" }}>
                   <span className="material-symbols-outlined" style={{ fontSize: "28px", color: primaryColor }}>podcasts</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", color: "var(--color-text-muted)" }}>Épisode Audio Exclusif</div>
+                    <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", color: "var(--color-text-muted)" }}>{t('Épisode Audio Exclusif')}</div>
                     <audio controls src={article.audioFile} style={{ width: "100%", marginTop: "8px" }} />
                   </div>
                 </div>
@@ -225,14 +242,14 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
               {/* Photo Gallery */}
               {gallery && gallery.length > 0 && (
                 <div style={{ marginTop: "40px", borderTop: "1px solid var(--color-border)", paddingTop: "32px" }}>
-                  <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "20px", fontWeight: 700, marginBottom: "16px" }}>Galerie Photos</h3>
+                  <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "20px", fontWeight: 700, marginBottom: "16px" }}>{t('Galerie Photos')}</h3>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
                     {gallery.map((photo, pIdx) => {
                       const src = typeof photo === 'string' ? photo : photo.url;
                       return (
                         <div key={pIdx} style={{ borderRadius: "4px", overflow: "hidden", border: "1px solid var(--color-border)" }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={src} alt={`Galerie ${pIdx + 1}`} style={{ width: "100%", height: "160px", objectFit: "cover" }} />
+                          <img src={src} alt={`Galerie ${pIdx + 1}`} width="280" height="160" style={{ width: "100%", height: "160px", objectFit: "cover" }} />
                         </div>
                       );
                     })}
@@ -274,7 +291,7 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                   color: "var(--color-text)",
                   marginBottom: "12px"
                 }}>
-                  Accès aux Détails Réservé aux Abonnés {requiredPlan}
+                  {t('Accès aux Détails Réservé aux Abonnés')} {requiredPlan}
                 </h2>
 
                 {isLoggedIn ? (
@@ -285,7 +302,7 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                     maxWidth: "540px",
                     marginBottom: "32px"
                   }}>
-                    Bonjour <strong>{userName}</strong>. Votre abonnement actuel (<strong>{userPlan}</strong>) ne donne pas accès aux détails du Magazine N°{magId}. Pour débloquer l&apos;intégralité de cet article, passez à la formule <strong>{requiredPlan}</strong>.
+                    {t('Bonjour')} <strong>{userName}</strong>. {t('Votre abonnement actuel')} (<strong>{userPlan}</strong>) {t('ne donne pas accès aux détails du Magazine N°')}{magId}. {t("Pour débloquer l'intégralité de cet article, passez à la formule")} <strong>{requiredPlan}</strong>.
                   </p>
                 ) : (
                   <p style={{
@@ -295,7 +312,7 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                     maxWidth: "540px",
                     marginBottom: "32px"
                   }}>
-                    Vous visualisez le <strong>résumé public</strong>. L&apos;analyse complète et les contenus exclusifs du Magazine N°{magId} sont réservés aux membres abonnés {requiredPlan}.
+                    {t('Vous visualisez le')} <strong>{t('résumé public')}</strong>. {t("L'analyse complète et les contenus exclusifs du Magazine N°")}{magId} {t('sont réservés aux membres abonnés')} {requiredPlan}.
                   </p>
                 )}
 
@@ -319,7 +336,7 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                     }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>stars</span>
-                    {isLoggedIn ? `Passer à la formule ${requiredPlan}` : `Découvrir les offres (${requiredPlan})`}
+                    {isLoggedIn ? `${t('Passer à la formule')} ${requiredPlan}` : `${t('Découvrir les offres')} (${requiredPlan})`}
                   </Link>
 
                   {!isLoggedIn && (
@@ -341,7 +358,7 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                         gap: "8px"
                       }}
                     >
-                      Déjà membre ? Se connecter
+                      {t('Déjà membre ? Se connecter')}
                     </Link>
                   )}
                 </div>

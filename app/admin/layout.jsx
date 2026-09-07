@@ -51,6 +51,8 @@ function AdminInnerLayout({ children }) {
           <img 
             src="/assets/core/img/logo.png" 
             alt="DONA Logo" 
+            width="120"
+            height="30"
             style={{ height: '30px', width: 'auto', objectFit: 'contain' }}
           />
           <span className="logo-text" style={{ fontSize: '11px', letterSpacing: '0.15em', fontWeight: '700', color: '#111111' }}>ADMIN</span>
@@ -321,6 +323,8 @@ function AdminInnerLayout({ children }) {
                   src="/assets/core/img/avatar-1.png" 
                   alt="Avatar" 
                   className="user-avatar"
+                  width="40"
+                  height="40"
                 />
                 <span className="material-symbols-outlined">
                   {showDropdown ? 'expand_less' : 'expand_more'}

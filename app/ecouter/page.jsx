@@ -4,8 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getActiveUserSubscription, canAccessAudioAndReplay } from '@/lib/subscriptionPermissions';
 import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
 export default function Page() {
+  const { t } = useLanguage();
   const [userSub, setUserSub] = useState({ plan: 'Essentiel', status: 'Active', isGuest: true });
   const [paywallModal, setPaywallModal] = useState({ isOpen: false, title: '', message: '' });
   const { loadTrack, loadPlaylist } = useAudioPlayer();
@@ -17,9 +20,11 @@ export default function Page() {
   useEffect(() => {
     syncUserSub();
     window.addEventListener('dona_subscription_changed', syncUserSub);
+    document.addEventListener('dona_subscription_changed', syncUserSub);
     window.addEventListener('storage', syncUserSub);
     return () => {
       window.removeEventListener('dona_subscription_changed', syncUserSub);
+      document.removeEventListener('dona_subscription_changed', syncUserSub);
       window.removeEventListener('storage', syncUserSub);
     };
   }, []);
@@ -45,11 +50,15 @@ export default function Page() {
 
   return (
     <main>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "20px 24px 0" }}>
+        <Breadcrumbs items={[{ label: t('nav_ecouter') || 'Écouter' }]} />
+      </div>
+
       {/* HERO SECTION (À LA UNE) */}
       <section className="ecouter-hero">
         <div className="ecouter-hero-inner">
           <div className="hero-image-wrapper">
-            <img src="/assets/core/img/ecouter-hero.png" alt="Portrait" className="hero-img" />
+            <img src="/assets/core/img/ecouter-hero.png" alt="Portrait" className="hero-img" width="460" height="660" />
           </div>
           <div className="hero-content">
             <div className="kicker">— À LA UNE</div>
@@ -84,22 +93,22 @@ export default function Page() {
         </div>
         <div className="chroniques-grid">
           <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'La Revue de Mode', '/assets/core/media/podcast-01.wav')} style={{ cursor: 'pointer' }}>
-            <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-1.png" alt="Revue" className="card-img" /></div>
+            <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-1.png" alt="Revue" className="card-img" width="280" height="280" /></div>
             <h3 className="card-title">La Revue de Mode</h3>
             <div className="card-meta">15 FÉVRIER — 24 MIN</div>
           </article>
           <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'Architecture Invisible', '/assets/core/media/podcast-02.wav')} style={{ cursor: 'pointer' }}>
-            <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-2.png" alt="Architecture" className="card-img" /></div>
+            <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-2.png" alt="Architecture" className="card-img" width="280" height="280" /></div>
             <h3 className="card-title">Architecture Invisible</h3>
             <div className="card-meta">12 FÉVRIER — 31 MIN</div>
           </article>
           <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'Le Son de Demain', '/assets/core/media/podcast-03.wav')} style={{ cursor: 'pointer' }}>
-            <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-3.png" alt="Son" className="card-img" /></div>
+            <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-3.png" alt="Son" className="card-img" width="280" height="280" /></div>
             <h3 className="card-title">Le Son de Demain</h3>
             <div className="card-meta">08 FÉVRIER — 19 MIN</div>
           </article>
           <article className="podcast-card" onClick={(e) => handleAudioClick(e, 'L\'Art de Conversation', '/assets/core/media/podcast-04.wav')} style={{ cursor: 'pointer' }}>
-            <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-4.png" alt="Conversation" className="card-img" /></div>
+            <div className="card-img-wrapper"><img src="/assets/core/img/ecouter-4.png" alt="Conversation" className="card-img" width="280" height="280" /></div>
             <h3 className="card-title">L'Art de Conversation</h3>
             <div className="card-meta">05 FÉVRIER — 45 MIN</div>
           </article>
@@ -161,7 +170,7 @@ export default function Page() {
         <div className="exclusif-grid">
           <article className="locked-card" onClick={(e) => handleAudioClick(e, 'Clara Rossi : Le Temps Suspendu')} style={{ cursor: 'pointer' }}>
             <div className="locked-img-wrapper">
-              <img src="/assets/core/img/ecouter-lock-1.png" alt="Clara Rossi" className="locked-img" />
+              <img src="/assets/core/img/ecouter-lock-1.png" alt="Clara Rossi" className="locked-img" width="384" height="500" />
               <div className="locked-overlay">
                 <span className="material-symbols-outlined lock-icon">lock</span>
                 <div className="locked-label">ABONNÉS UNIQUEMENT</div>
@@ -173,7 +182,7 @@ export default function Page() {
           </article>
           <article className="locked-card" onClick={(e) => handleAudioClick(e, 'Jean-Marc Vallet : L\'Épure')} style={{ cursor: 'pointer' }}>
             <div className="locked-img-wrapper">
-              <img src="/assets/core/img/ecouter-lock-2.png" alt="Jean-Marc Vallet" className="locked-img" />
+              <img src="/assets/core/img/ecouter-lock-2.png" alt="Jean-Marc Vallet" className="locked-img" width="384" height="500" />
               <div className="locked-overlay">
                 <span className="material-symbols-outlined lock-icon">lock</span>
                 <div className="locked-label">ABONNÉS UNIQUEMENT</div>

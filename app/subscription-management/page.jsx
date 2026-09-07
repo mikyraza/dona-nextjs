@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { generateInvoicePDF } from '@/lib/generateInvoicePDF';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
 
 export default function Page() {
   const router = useRouter();
+  const userSub = useUserSubscription();
 
   // Modals state
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -366,33 +368,82 @@ export default function Page() {
           <div className="sub-layout">
               {/* Left Column */}
               <div>
-                  {/* Premium Card */}
-                  <div style={{background: "var(--color-text)", color: "var(--color-bg)", padding: "40px", borderRadius: "2px", marginBottom: "50px"}}>
-                      <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px"}}>
-                          <div style={{background: "rgba(255,255,255,0.15)", color: "#FFFFFF", fontSize: "10px", fontWeight: "700", padding: "6px 12px", borderRadius: "2px", letterSpacing: "1px"}}>PREMIUM</div>
-                          <div style={{fontSize: "32px", fontWeight: "600", color: "#FFFFFF"}}>29€<span style={{fontSize: "14px", fontWeight: "400", color: "var(--color-border)"}}>/mois</span></div>
+                  {/* Dynamic Subscription Plan Card */}
+                  {(() => {
+                    const currentPlan = (userSub.plan || 'Premium').toUpperCase();
+                    const isElite = currentPlan.includes('ÉLITE') || currentPlan.includes('ELITE');
+                    const isEssentiel = currentPlan.includes('ESSENTIEL') || userSub.isGuest;
+
+                    const card = isElite
+                      ? {
+                          badge: 'ÉLITE',
+                          price: '79€',
+                          period: '/mois',
+                          title: 'DONA Élite (Cercle Privilège)',
+                          features: [
+                            'Accès intégral aux 16 Magazines & Archives',
+                            'Invitations Galas & Événements Privés',
+                            'Conciergerie Éditoriale & Accès Anticipé',
+                            'Workbooks Stratégiques & Audits Décisionnels'
+                          ],
+                          ctaText: 'GÉRER MES PRIVILÈGES ÉLITE'
+                        }
+                      : isEssentiel
+                      ? {
+                          badge: 'ESSENTIEL',
+                          price: '0€',
+                          period: '/mois',
+                          title: 'DONA Essentiel (Visiteur / Gratuit)',
+                          features: [
+                            'Accès aux extraits publics & aperçus éditoriaux',
+                            'Télévision et Radio en direct (flux standard)',
+                            'Articles d\'actualité quotidienne générale'
+                          ],
+                          ctaText: 'PASSER À L\'OFFRE PREMIUM (29€/MOIS)'
+                        }
+                      : {
+                          badge: 'PREMIUM',
+                          price: '29€',
+                          period: '/mois',
+                          title: 'DONA Premium',
+                          features: [
+                            'Accès illimité à tous les articles premium',
+                            'Magazines numériques (N°01 à N°08)',
+                            'Accès aux Masterclasses exclusives',
+                            'Workbooks & Fichiers PDF téléchargeables'
+                          ],
+                          ctaText: 'SURPASSER EN OFFRE ÉLITE (79€/MOIS)'
+                        };
+
+                    return (
+                      <div style={{background: "var(--color-text)", color: "var(--color-bg)", padding: "40px", borderRadius: "2px", marginBottom: "50px"}}>
+                          <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px"}}>
+                              <div style={{background: isElite ? "#B08D57" : isEssentiel ? "#555" : "rgba(255,255,255,0.15)", color: "#FFFFFF", fontSize: "10px", fontWeight: "700", padding: "6px 12px", borderRadius: "2px", letterSpacing: "1px"}}>
+                                {card.badge}
+                              </div>
+                              <div style={{fontSize: "32px", fontWeight: "600", color: "#FFFFFF"}}>
+                                {card.price}<span style={{fontSize: "14px", fontWeight: "400", color: "var(--color-border)"}}>{card.period}</span>
+                              </div>
+                          </div>
+                          <h3 style={{fontFamily: "var(--font-secondary)", fontSize: "26px", fontWeight: "400", margin: "0 0 30px 0", color: "#FFFFFF"}}>
+                            {card.title}
+                          </h3>
+                          
+                          <div style={{display: "flex", flexDirection: "column", gap: "15px", marginBottom: "30px"}}>
+                            {card.features.map((feat, idx) => (
+                              <div key={idx} style={{display: "flex", alignItems: "center", gap: "10px", color: "var(--color-border)", fontSize: "14px"}}>
+                                  <span className="material-symbols-outlined" style={{fontSize: "18px", color: isElite ? "#B08D57" : "var(--color-accent)"}}>check_circle</span>
+                                  {feat}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <button className="btn-crimson" style={{width: "100%", background: isElite ? "#B08D57" : undefined}} onClick={() => router.push('/abonnement')}>
+                            {card.ctaText}
+                          </button>
                       </div>
-                      <h3 style={{fontFamily: "var(--font-secondary)", fontSize: "26px", fontWeight: "400", margin: "0 0 30px 0", color: "#FFFFFF"}}>DONA Premium</h3>
-                      
-                      <div style={{display: "flex", flexDirection: "column", gap: "15px", marginBottom: "30px"}}>
-                          <div style={{display: "flex", alignItems: "center", gap: "10px", color: "var(--color-border)", fontSize: "14px"}}>
-                              <span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-accent)"}}>check_circle</span>
-                              Accès illimité à tous les articles premium
-                          </div>
-                          <div style={{display: "flex", alignItems: "center", gap: "10px", color: "var(--color-border)", fontSize: "14px"}}>
-                              <span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-accent)"}}>check_circle</span>
-                              Accès aux Masterclasses exclusives
-                          </div>
-                          <div style={{display: "flex", alignItems: "center", gap: "10px", color: "var(--color-border)", fontSize: "14px"}}>
-                              <span className="material-symbols-outlined" style={{fontSize: "18px", color: "var(--color-accent)"}}>check_circle</span>
-                              Workbooks téléchargeables
-                          </div>
-                      </div>
-                      
-                      <button className="btn-crimson" style={{width: "100%"}} onClick={() => router.push('/abonnement')}>
-                        CHANGER OU SURPASSER MON OFFRE
-                      </button>
-                  </div>
+                    );
+                  })()}
                   
                   {/* Billing History */}
                   <h3 style={{fontSize: "16px", fontWeight: "600", margin: "0 0 20px 0", color: "var(--color-text)"}}>Historique de Facturation</h3>

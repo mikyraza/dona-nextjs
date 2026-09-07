@@ -1,19 +1,13 @@
 import { NextResponse } from 'next/server';
 import { dbGetMembers, dbUpsertMember, dbDeleteMember, dbUpsertUser } from '@/lib/db';
-import { getToken } from 'next-auth/jwt';
-
-async function checkAuth(req) {
-  if (process.env.NODE_ENV === 'development') return true;
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || "dona-magazine-super-secret-key-987654321" });
-  return Boolean(token);
-}
+import { validateAdminSession } from '@/lib/adminAuth';
 
 // GET /api/admin/members — list all circle members from SQLite DB
 export async function GET(req) {
   try {
-    const isAuth = await checkAuth(req);
-    if (!isAuth) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -32,9 +26,9 @@ export async function GET(req) {
 // POST /api/admin/members — add or update member in SQLite DB
 export async function POST(req) {
   try {
-    const isAuth = await checkAuth(req);
-    if (!isAuth) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
     }
 
     const body = await req.json();
@@ -67,9 +61,9 @@ export async function POST(req) {
 // DELETE /api/admin/members?id=... — remove member from SQLite DB
 export async function DELETE(req) {
   try {
-    const isAuth = await checkAuth(req);
-    if (!isAuth) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
     }
 
     const { searchParams } = new URL(req.url);

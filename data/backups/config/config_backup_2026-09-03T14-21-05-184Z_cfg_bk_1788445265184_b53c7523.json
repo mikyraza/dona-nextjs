@@ -1,0 +1,18 @@
+{
+  "backupId": "cfg_bk_1788445265184_b53c7523",
+  "timestamp": "2026-09-03T14:21:05.184Z",
+  "reason": "initial_test",
+  "settingsCount": 10,
+  "settings": {
+    "logoPath": "/assets/core/img/logo.png",
+    "ctaText": "S'ABONNER",
+    "ctaLink": "/abonnement",
+    "crimsonThemeHex": "#A30626",
+    "heroTitle": "DONA MAGAZINE",
+    "heroSubtitle": "Plateforme éditoriale exclusive",
+    "heroDescription": "Un espace dédié à l'excellence éditoriale, à la curation architecturale et aux privilèges exclusifs des femmes de pouvoir.",
+    "footerLegalText": "© 2026 DONA Magazine. Tous droits réservés.",
+    "footerAddressText": "Paris, France",
+    "footerBackgroundWatermark": "DONA."
+  }
+}

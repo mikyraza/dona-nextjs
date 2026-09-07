@@ -72,7 +72,7 @@ function ResetPasswordForm() {
   return (
     <div className="login-card" style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)", maxWidth: "500px", width: "100%", borderRadius: "2px", boxShadow: "0 20px 40px rgba(0,0,0,0.02)", padding: "48px", display: "flex", flexDirection: "column", alignItems: "center" }}>
       <Link href="/" style={{ marginBottom: "32px", display: "flex", justifyContent: "center", cursor: "pointer" }}>
-        <img src="/assets/core/img/logo.png" alt="DONA Logo" style={{ height: "100px", width: "auto", objectFit: "contain" }} />
+        <img src="/assets/core/img/logo.png" alt="DONA Logo" width="125" height="100" style={{ height: "100px", width: "auto", objectFit: "contain" }} />
       </Link>
 
       <h1 style={{ fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "700", color: "var(--color-text)", marginBottom: "12px", textAlign: "center" }}>

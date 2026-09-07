@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { getMediaFormatInfo } from '@/lib/mediaFormatHelper';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const ReactPlayer = dynamic(() => import('react-player').catch(() => () => null), { ssr: false });
 
@@ -60,6 +63,8 @@ function VideoCard({ video, featured = false, onPlay, onLockedClick }) {
             src={video.thumbnailUrl} 
             alt={video.title} 
             className="vh-card__art" 
+            width="400"
+            height="225"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
@@ -151,6 +156,7 @@ function EpgRow({ item, index }) {
 
 // ─── VIP Paywall Gate ────────────────────────────────────────────────────────
 function VipGate({ isLive }) {
+  const { t } = useLanguage();
   return (
     <div className="vh-vip-gate">
       <div className="vh-vip-gate__inner">
@@ -162,19 +168,19 @@ function VipGate({ isLive }) {
             <circle cx="20" cy="11" r="1.5" fill="currentColor" />
           </svg>
         </div>
-        <h3 className="vh-vip-gate__title">Contenu Réservé aux Membres VIP</h3>
+        <h3 className="vh-vip-gate__title">{t('Contenu Réservé aux Membres VIP')}</h3>
         <p className="vh-vip-gate__text">
           {isLive
-            ? 'La diffusion en direct de DONA TV est exclusivement accessible aux abonnés Club & Élite.'
-            : 'Ce contenu est réservé à nos membres VIP. Rejoignez le Club DONA pour un accès illimité.'}
+            ? t('La diffusion en direct de DONA TV est exclusivement accessible aux abonnés Club & Élite.')
+            : t('Ce contenu est réservé à nos membres VIP. Rejoignez le Club DONA pour un accès illimité.')}
         </p>
         <Link href="/abonnement" className="vh-vip-gate__cta" id="studio-vip-upgrade-btn">
-          Rejoindre le Club DONA
+          {t('Rejoindre le Club DONA')}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
           </svg>
         </Link>
-        <p className="vh-vip-gate__note">Déjà membre ? <Link href="/login" style={{ color: '#B08D57', textDecoration: 'underline' }}>Connectez-vous</Link></p>
+        <p className="vh-vip-gate__note">{t('Déjà membre ?')} <Link href="/login" style={{ color: '#B08D57', textDecoration: 'underline' }}>{t('Connectez-vous')}</Link></p>
       </div>
     </div>
   );
@@ -182,23 +188,18 @@ function VipGate({ isLive }) {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function StudioPage() {
+  const { t } = useLanguage();
+  const router = useRouter();
+  const userSub = useUserSubscription();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [hubData, setHubData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('Tout');
   const [playerVideo, setPlayerVideo] = useState(null);
-  const [clientVip, setClientVip] = useState(false);
   const playerRef = useRef(null);
 
-  useEffect(() => {
-    const sub = getActiveUserSubscription();
-    if (!sub.isGuest && (sub.plan === 'Premium' || sub.plan === 'Élite')) {
-      setClientVip(true);
-    }
-  }, []);
-
-  const userIsVip = clientVip || hubData?.userIsVip || false;
+  const userIsVip = userSub.isVip || hubData?.userIsVip || false;
 
   const fetchHub = useCallback(async () => {
     setLoading(true);
@@ -235,7 +236,15 @@ export default function StudioPage() {
 
   const handleClosePlayer = () => setPlayerVideo(null);
 
-  const videos = hubData?.videos || [];
+  const rawVideos = hubData?.videos || [];
+  const videos = rawVideos.map(v => {
+    const isLocked = v.isVipOnly ? !userIsVip : false;
+    return {
+      ...v,
+      isLocked,
+      videoUrl: (!isLocked && !v.videoUrl) ? '/assets/core/media/studio-sample.mp4' : v.videoUrl
+    };
+  });
   const liveTv = hubData?.liveTv || {};
 
   const featuredVideo = videos.find(v => v.isFeatured) || videos[0];
@@ -453,7 +462,7 @@ export default function StudioPage() {
                 onClick={() => setActiveCategory(cat)}
                 id={`studio-cat-${cat.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                {cat}
+                {t(cat)}
               </button>
             ))}
           </div>

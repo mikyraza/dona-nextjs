@@ -4,8 +4,10 @@ import React, { useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function SignupForm() {
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan') || 'essentiel';
@@ -158,7 +160,7 @@ function SignupForm() {
       
       {/* Logo */}
       <Link href="/" style={{marginBottom: "32px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
-          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" style={{height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease"}} />
+          <img src="/assets/core/img/logo.png" alt="DONA Logo" className="logo-image" width="150" height="120" style={{height: "120px", width: "auto", objectFit: "contain", transition: "height 0.3s ease"}} />
       </Link>
 
       {/* Heading */}
@@ -223,7 +225,7 @@ function SignupForm() {
               title="Ajouter une photo de profil"
             >
               {avatar ? (
-                <img src={avatar} alt="Aperçu" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <img src={avatar} alt="Aperçu" width="96" height="96" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
                 <>
                   <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "var(--color-text-muted)" }}>photo_camera</span>

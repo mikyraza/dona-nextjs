@@ -18,7 +18,7 @@ function ImageUploader({ value, onChange, label = "Image", placeholderText = "Ch
         <div className="media-compact-row">
           <div className="media-compact-thumb">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={value} alt="Preview" />
+            <img src={value} alt="Preview" width="80" height="80" />
           </div>
           <div className="media-compact-info">
             <div className="media-compact-filename">{value.split('/').pop()}</div>
@@ -1024,6 +1024,8 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
                   <img 
                     src={formData.heroImage} 
                     alt="Hero" 
+                    width="400"
+                    height="150"
                     style={{
                       position: 'absolute',
                       inset: 0,
@@ -1139,7 +1141,7 @@ export default function MagazineEditDrawer({ isOpen, magazine, nextSuggestedId =
                 {formData.essenceImage && (
                   <div style={{ width: '100%', height: '100px', borderRadius: '4px', overflow: 'hidden' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={formData.essenceImage} alt="Essence" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={formData.essenceImage} alt="Essence" width="300" height="100" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )}
               </div>

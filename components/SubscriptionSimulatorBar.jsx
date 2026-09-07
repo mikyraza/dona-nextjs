@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { getActiveUserSubscription } from '@/lib/subscriptionPermissions';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function SubscriptionSimulatorBar() {
+  const { t } = useLanguage();
   const [currentPlan, setCurrentPlan] = useState('Essentiel');
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState(null);
@@ -18,7 +20,13 @@ export default function SubscriptionSimulatorBar() {
     };
 
     window.addEventListener('dona_subscription_changed', handleSubChange);
-    return () => window.removeEventListener('dona_subscription_changed', handleSubChange);
+    document.addEventListener('dona_subscription_changed', handleSubChange);
+    window.addEventListener('storage', handleSubChange);
+    return () => {
+      window.removeEventListener('dona_subscription_changed', handleSubChange);
+      document.removeEventListener('dona_subscription_changed', handleSubChange);
+      window.removeEventListener('storage', handleSubChange);
+    };
   }, []);
 
   const setPlanMode = (newPlan) => {
@@ -28,17 +36,32 @@ export default function SubscriptionSimulatorBar() {
       if (stored) existing = JSON.parse(stored);
     } catch (e) {}
 
+    const isVisitor = newPlan === 'Essentiel';
+
     const profile = {
       ...existing,
       plan: newPlan,
       status: 'Active',
-      email: existing.email || 'membre.test@dona-magazine.com',
-      name: existing.name || 'Membre',
-      isGuest: false
+      email: isVisitor ? (existing.email || '') : (existing.email || 'membre.test@dona-magazine.com'),
+      name: isVisitor ? (existing.name || 'Visiteur') : (existing.name || (newPlan === 'Élite' ? 'Membre Élite' : 'Membre Premium')),
+      isGuest: isVisitor && !existing.email
     };
+
     try {
       localStorage.setItem('dona_member_profile', JSON.stringify(profile));
-      window.dispatchEvent(new Event('dona_subscription_changed'));
+      localStorage.setItem('dona_user_plan', newPlan);
+
+      const eventPayload = { detail: { plan: newPlan, profile } };
+      window.dispatchEvent(new CustomEvent('dona_subscription_changed', eventPayload));
+      document.dispatchEvent(new CustomEvent('dona_subscription_changed', eventPayload));
+
+      try {
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'dona_member_profile',
+          newValue: JSON.stringify(profile)
+        }));
+      } catch (err) {}
+
       setCurrentPlan(newPlan);
       setToast(`Formule active basculée sur : ${newPlan}`);
       setTimeout(() => setToast(null), 2500);

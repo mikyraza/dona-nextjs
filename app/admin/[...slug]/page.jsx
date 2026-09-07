@@ -10,6 +10,7 @@ import DossierDrawer from '../components/DossierDrawer';
 import ReplayDrawer from '../components/ReplayDrawer';
 import PlanDrawer from '../components/PlanDrawer';
 import MemberDrawer from '../components/MemberDrawer';
+import AdminUsersPage from '../utilisateurs/page';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
 import { ALL_SUBSCRIBER_SERVICES, getServicesMatrixConfig, saveServicesMatrixConfig, getFeaturesForPlanFromMatrix } from '@/lib/subscriptionPermissions';
 // The 16 official magazine universes for category matching
@@ -1614,7 +1615,7 @@ export default function AdminCatchAllPage({ params }) {
                               color: 'var(--admin-accent-color, #A30626)'
                             }}>
                               {mem.avatar ? (
-                                <img src={mem.avatar} alt={mem.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={mem.avatar} alt={mem.name} width="32" height="32" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               ) : (
                                 <span>{initials}</span>
                               )}
@@ -2947,6 +2948,8 @@ export default function AdminCatchAllPage({ params }) {
                               <img 
                                 src={exp.photoUrl || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"} 
                                 alt={exp.name} 
+                                width="90"
+                                height="90"
                                 style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--admin-border-color)' }} 
                               />
                               <label style={{ fontSize: '10px', color: '#888', cursor: 'pointer', textAlign: 'center', background: '#fff', border: '1px solid #ccc', padding: '3px 6px', borderRadius: '3px' }}>
@@ -3121,6 +3124,8 @@ export default function AdminCatchAllPage({ params }) {
                               <img 
                                 src={con.photoUrl || "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=120&auto=format&fit=crop"} 
                                 alt={con.name} 
+                                width="40"
+                                height="40"
                                 style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} 
                               />
                               <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--admin-text-color)' }}>{con.name}</span>
@@ -4382,6 +4387,11 @@ export default function AdminCatchAllPage({ params }) {
             </div>
           </>
         );
+
+      case 'users':
+      case 'utilisateurs':
+      case 'user':
+        return <AdminUsersPage />;
 
       default:
         return (

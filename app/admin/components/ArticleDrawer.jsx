@@ -714,7 +714,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                     <div className="media-compact-row">
                       <div className="media-compact-thumb">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={coverImage} alt="Couverture" />
+                        <img src={coverImage} alt="Couverture" width="80" height="45" />
                       </div>
                       <div className="media-compact-info">
                         <div className="media-compact-filename">{coverImageFileName || 'image-couverture.jpg'}</div>
@@ -756,7 +756,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                     {articleGallery.map((item, idx) => (
                       <div key={idx} className="gallery-compact-item">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.url} alt={`Photo ${idx + 1}`} />
+                        <img src={item.url} alt={`Photo ${idx + 1}`} width="48" height="48" />
                         <button
                           type="button"
                           className="gallery-compact-item-delete"
@@ -859,7 +859,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                         style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 600, padding: '3px 7px', border: '1px solid #EAEAEA', borderRadius: '3px', background: '#FAF9F6', cursor: 'pointer', color: '#374151' }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={coverImage} alt="" style={{ width: '16px', height: '16px', objectFit: 'cover', borderRadius: '2px' }} />
+                        <img src={coverImage} alt="" width="16" height="16" style={{ width: '16px', height: '16px', objectFit: 'cover', borderRadius: '2px' }} />
                         Couverture
                       </button>
                     )}
@@ -876,7 +876,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                         style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 600, padding: '3px 7px', border: '1px solid #EAEAEA', borderRadius: '3px', background: '#FAF9F6', cursor: 'pointer', color: '#374151' }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.url} alt="" style={{ width: '16px', height: '16px', objectFit: 'cover', borderRadius: '2px' }} />
+                        <img src={item.url} alt="" width="16" height="16" style={{ width: '16px', height: '16px', objectFit: 'cover', borderRadius: '2px' }} />
                         Photo {idx + 1}
                       </button>
                     ))}
@@ -1039,7 +1039,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                 {coverImage ? (
                   <div className="preview-hero-image">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={coverImage} alt={title} />
+                    <img src={coverImage} alt={title} width="600" height="257" />
                   </div>
                 ) : (
                   <div className="preview-hero-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1086,7 +1086,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
                       <div key={idx} className="preview-gallery-item">
                         <div className="preview-gallery-item-img">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={item.url} alt={item.caption || `Photo ${idx + 1}`} />
+                          <img src={item.url} alt={item.caption || `Photo ${idx + 1}`} width="180" height="120" />
                         </div>
                         {item.caption && (
                           <span className="preview-gallery-item-caption">{item.caption}</span>

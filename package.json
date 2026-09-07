@@ -16,6 +16,7 @@
     "@tiptap/pm": "^3.30.2",
     "@tiptap/react": "^3.30.2",
     "@tiptap/starter-kit": "^3.30.2",
+    "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",
     "idb-keyval": "^6.3.0",
     "mysql2": "^3.24.2",

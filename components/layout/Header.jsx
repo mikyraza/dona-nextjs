@@ -43,9 +43,11 @@ export default function Header() {
   useEffect(() => {
     syncHeaderUser();
     window.addEventListener('dona_subscription_changed', syncHeaderUser);
+    document.addEventListener('dona_subscription_changed', syncHeaderUser);
     window.addEventListener('storage', syncHeaderUser);
     return () => {
       window.removeEventListener('dona_subscription_changed', syncHeaderUser);
+      document.removeEventListener('dona_subscription_changed', syncHeaderUser);
       window.removeEventListener('storage', syncHeaderUser);
     };
   }, [session, authStatus]);
@@ -53,7 +55,10 @@ export default function Header() {
   const handleSignOut = async () => {
     try {
       localStorage.removeItem('dona_member_profile');
-      window.dispatchEvent(new Event('dona_subscription_changed'));
+      localStorage.removeItem('dona_user_plan');
+      const eventPayload = { detail: { plan: 'Essentiel', profile: { isGuest: true, plan: 'Essentiel' } } };
+      window.dispatchEvent(new CustomEvent('dona_subscription_changed', eventPayload));
+      document.dispatchEvent(new CustomEvent('dona_subscription_changed', eventPayload));
     } catch (e) {}
     signOut({ callbackUrl: '/' });
   };
@@ -159,14 +164,14 @@ export default function Header() {
       <div className="container header-inner">
         {/* Logo */}
         <Link href="/" className="header-logo" aria-label="Page d'accueil" onClick={closeAllMenus}>
-          <img src="/assets/core/img/logo.png?v=3" alt="DONA Magazine" className="logo-image" />
+          <img src="/assets/core/img/logo.png?v=3" alt="DONA Magazine" className="logo-image" width="80" height="64" />
         </Link>
 
         {/* Main Navigation */}
         <nav className="main-nav">
           <ul className="nav-list">
             <li className={`nav-item ${isItemActive(null, pathname === '/today' || pathname?.startsWith('/today')) ? 'active' : ''}`}>
-              <Link href="/today" className="nav-link" onClick={closeAllMenus} onMouseEnter={closeAllMenus}>TODAY</Link>
+              <Link href="/today" className="nav-link" onClick={closeAllMenus} onMouseEnter={closeAllMenus}>{t('nav_today')}</Link>
             </li>
             <li className={`nav-item has-submenu ${activeMenu === 'magazines' ? 'submenu-active' : ''} ${isItemActive('magazines', pathname?.startsWith('/magazines') || pathname?.startsWith('/magazine-')) ? 'active' : ''}`}>
               <Link 
@@ -175,7 +180,7 @@ export default function Header() {
                 onClick={closeAllMenus}
                 onMouseEnter={() => setActiveMenu('magazines')}
               >
-                NOS MAGAZINES
+                {t('nav_magazines')}
               </Link>
             </li>
             <li className={`nav-item has-submenu ${activeMenu === 'studio' ? 'submenu-active' : ''} ${isItemActive('studio', pathname === '/studio' || pathname?.startsWith('/studio')) ? 'active' : ''}`}>
@@ -185,7 +190,7 @@ export default function Header() {
                 onClick={closeAllMenus}
                 onMouseEnter={() => setActiveMenu('studio')}
               >
-                STUDIO
+                {t('nav_studio')}
               </Link>
             </li>
             <li className={`nav-item has-submenu ${activeMenu === 'club' ? 'submenu-active' : ''} ${isItemActive('club', pathname === '/club' || pathname?.startsWith('/club')) ? 'active' : ''}`}>
@@ -195,7 +200,7 @@ export default function Header() {
                 onClick={closeAllMenus}
                 onMouseEnter={() => setActiveMenu('club')}
               >
-                CLUB
+                {t('nav_club')}
               </Link>
             </li>
             <li className={`nav-item has-submenu ${activeMenu === 'ecouter' ? 'submenu-active' : ''} ${isItemActive('ecouter', pathname?.startsWith('/ecouter')) ? 'active' : ''}`}>
@@ -204,7 +209,7 @@ export default function Header() {
                 className="nav-link"
                 onClick={closeAllMenus}
               >
-                ÉCOUTER
+                {t('nav_ecouter')}
               </Link>
             </li>
           </ul>
@@ -364,7 +369,7 @@ export default function Header() {
                     }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person</span>
-                    Mon Espace Membre
+                    {t('my_space')}
                   </Link>
 
                   <Link
@@ -382,7 +387,7 @@ export default function Header() {
                     }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>auto_stories</span>
-                    Mon Espace Lecture
+                    {t('reading_hub')}
                   </Link>
 
                   <Link
@@ -400,7 +405,7 @@ export default function Header() {
                     }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>stars</span>
-                    Offre : {userProfile.plan}
+                    {t('offer_label')} : {userProfile.plan}
                   </Link>
 
                   {userProfile.isAdmin && (
@@ -420,7 +425,7 @@ export default function Header() {
                       }}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>admin_panel_settings</span>
-                      Portail Administration
+                      {t('admin_portal')}
                     </Link>
                   )}
 
@@ -444,15 +449,15 @@ export default function Header() {
                     }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-                    Se Déconnecter
+                    {t('logout')}
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <>
-              <Link href="/login" className="account-link" onClick={closeAllMenus}>SE CONNECTER</Link>
-              <Link href="/abonnement" className="btn-subscribe" onClick={closeAllMenus}>S'INSCRIRE / S'ABONNER</Link>
+              <Link href="/login" className="account-link" onClick={closeAllMenus}>{t('login').toUpperCase()}</Link>
+              <Link href="/abonnement" className="btn-subscribe" onClick={closeAllMenus}>{t('subscribe')}</Link>
             </>
           )}
 
@@ -477,9 +482,9 @@ export default function Header() {
       >
         <div className="container mega-menu-inner">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
-            <span style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '0.08em', color: 'var(--color-text)' }}>LES 16 UNIVERS DONA</span>
+            <span style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '0.08em', color: 'var(--color-text)' }}>{t('all_magazines_banner')}</span>
             <Link href="/magazines" onClick={closeAllMenus} style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--color-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              VOIR TOUS LES MAGAZINES <span style={{ fontSize: '14px' }}>→</span>
+              {t('view_all_magazines')} <span style={{ fontSize: '14px' }}>→</span>
             </Link>
           </div>
           <div className="megamenu-grid">
@@ -650,7 +655,7 @@ export default function Header() {
           {/* Featured Banner */}
           <div className="megamenu-featured">
             <div className="featured-img-container">
-              <img src="/assets/core/img/mega-menu-featured.png" alt="Featured Article Gallery" className="featured-img" />
+              <img src="/assets/core/img/mega-menu-featured.png" alt="Featured Article Gallery" className="featured-img" width="360" height="202" />
             </div>
             <div className="featured-content">
               <blockquote className="featured-quote">
@@ -710,7 +715,7 @@ export default function Header() {
                 <span className="studio-section-title">À LA UNE</span>
                 <Link href="/studio" className="studio-video-card" onClick={closeAllMenus}>
                   <div className="studio-video-img-container">
-                    <img src={hubData.featuredVideo?.thumbnailUrl || "/assets/core/img/ecouter-1.png"} alt="Featured Video" className="studio-video-img" />
+                    <img src={hubData.featuredVideo?.thumbnailUrl || "/assets/core/img/ecouter-1.png"} alt="Featured Video" className="studio-video-img" width="320" height="180" />
                     <div className="studio-video-overlay">
                       <div className="play-btn-circle">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -733,7 +738,7 @@ export default function Header() {
                 
                 {/* The Brief Card */}
                 <div className="studio-podcast-card main-podcast">
-                  <img src="/assets/core/img/studio-podcast-brief.png" alt="The Brief" className="podcast-cover" />
+                  <img src="/assets/core/img/studio-podcast-brief.png" alt="The Brief" className="podcast-cover" width="60" height="60" />
                   <div className="podcast-info">
                     <h4 className="podcast-title">The Brief : L'Analyse Hebdomadaire</h4>
                     <Link href="/studio" className="btn-listen-podcast" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center' }} onClick={closeAllMenus}>Écouter le dernier épisode</Link>
@@ -742,7 +747,7 @@ export default function Header() {
 
                 <div className="studio-podcast-grid">
                   <Link href="/studio" className="studio-podcast-card secondary-podcast" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
-                    <img src="/assets/core/img/studio-podcast-chronique.png" alt="Chronique" className="podcast-cover" />
+                    <img src="/assets/core/img/studio-podcast-chronique.png" alt="Chronique" className="podcast-cover" width="60" height="60" />
                     <div className="podcast-info">
                       <h4 className="podcast-title">Chroniques d'Avenir</h4>
                       <span className="podcast-meta">12 ÉPISODES</span>
@@ -833,10 +838,10 @@ export default function Header() {
               <div className="club-section space-section">
                 <h4 className="club-section-title">ESPACE MEMBRE</h4>
                 <ul className="club-member-grid">
-                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>Mon Tableau de bord</Link></li>
-                  <li><Link href="/espace-lecture" className="member-grid-link" onClick={closeAllMenus}>Mes Favoris & Lectures</Link></li>
-                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>Historique des commandes</Link></li>
-                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>Gérer mon profil</Link></li>
+                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>{t('my_dashboard')}</Link></li>
+                  <li><Link href="/espace-lecture" className="member-grid-link" onClick={closeAllMenus}>{t('my_favorites')}</Link></li>
+                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>{t('order_history')}</Link></li>
+                  <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>{t('manage_profile')}</Link></li>
                 </ul>
               </div>
             </div>
@@ -845,12 +850,12 @@ export default function Header() {
             <div className="club-col-right">
               <div className="club-promo-banner">
                 <div className="promo-bg-container">
-                  <img src="/assets/core/img/club-promo.png" alt="Rejoindre la communauté" className="promo-bg-img" />
+                  <img src="/assets/core/img/club-promo.png" alt="Rejoindre la communauté" className="promo-bg-img" width="320" height="180" />
                 </div>
                 <div className="promo-content">
-                  <span className="promo-subtitle">Rejoindre la communauté</span>
+                  <span className="promo-subtitle">{t('join_community')}</span>
                   <div className="promo-background-text">SAFE WORK</div>
-                  <Link href="/abonnement" className="btn-club-subscribe" onClick={closeAllMenus}>INSCRIPTION AU CLUB</Link>
+                  <Link href="/abonnement" className="btn-club-subscribe" onClick={closeAllMenus}>{t('club_registration')}</Link>
                 </div>
               </div>
             </div>
@@ -881,7 +886,7 @@ export default function Header() {
               <Link href="/ecouter" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }} onClick={closeAllMenus}>
                 <div className="ecouter-featured-card">
                   <div className="ecouter-featured-img-container">
-                    <img src="/assets/core/img/featured-audio.png" alt="Featured Audio" className="ecouter-featured-img" />
+                    <img src="/assets/core/img/featured-audio.png" alt="Featured Audio" className="ecouter-featured-img" width="320" height="180" />
                     <div className="audio-play-overlay">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -903,7 +908,7 @@ export default function Header() {
               <div className="ecouter-playlist">
                 {/* Item 1 */}
                 <Link href="/ecouter" className="playlist-item" style={{ textDecoration: 'none', color: 'inherit' }} onClick={closeAllMenus}>
-                  <img src="/assets/core/img/audio-thumb-1.png" alt="Le Manifeste du Monochrome" className="playlist-thumb" />
+                  <img src="/assets/core/img/audio-thumb-1.png" alt="Le Manifeste du Monochrome" className="playlist-thumb" width="48" height="48" />
                   <div className="playlist-details">
                     <h5 className="playlist-title">Le Manifeste du Monochrome</h5>
                     <span className="playlist-meta">12 MIN • NARRÉ PAR JULIANNE V.</span>
@@ -1002,33 +1007,53 @@ export default function Header() {
 
         {/* Logo */}
         <Link href="/" className="mobile-drawer-logo" onClick={closeMobileMenu}>
-          <img src="/assets/core/img/logo.png?v=3" alt="DONA Magazine" />
+          <img src="/assets/core/img/logo.png?v=3" alt="DONA Magazine" width="150" height="48" />
         </Link>
 
         {/* Nav links */}
         <nav className="mobile-drawer-nav" aria-label="Navigation principale">
-          <Link href="/today"        className="mobile-nav-link" onClick={closeMobileMenu}>TODAY</Link>
-          <Link href="/magazines"    className="mobile-nav-link" onClick={closeMobileMenu}>NOS MAGAZINES</Link>
-          <Link href="/studio"       className="mobile-nav-link" onClick={closeMobileMenu}>STUDIO</Link>
-          <Link href="/club"         className="mobile-nav-link" onClick={closeMobileMenu}>CLUB</Link>
-          <Link href="/ecouter"      className="mobile-nav-link" onClick={closeMobileMenu}>ÉCOUTER</Link>
+          <Link href="/today"        className="mobile-nav-link" onClick={closeMobileMenu}>{t('nav_today')}</Link>
+          <Link href="/magazines"    className="mobile-nav-link" onClick={closeMobileMenu}>{t('nav_magazines')}</Link>
+          <Link href="/studio"       className="mobile-nav-link" onClick={closeMobileMenu}>{t('nav_studio')}</Link>
+          <Link href="/club"         className="mobile-nav-link" onClick={closeMobileMenu}>{t('nav_club')}</Link>
+          <Link href="/ecouter"      className="mobile-nav-link" onClick={closeMobileMenu}>{t('nav_ecouter')}</Link>
         </nav>
 
         {/* Auxiliary Controls (Moved from header bar to prevent clutter) */}
         <div className="mobile-drawer-controls">
           <Link href="/search" className="mobile-control-item" onClick={closeMobileMenu}>
             <span className="material-symbols-outlined">search</span>
-            <span>Rechercher</span>
+            <span>{t('search')}</span>
           </Link>
           <button className="mobile-control-item" onClick={() => { toggleTheme(); closeMobileMenu(); }}>
             <span className="material-symbols-outlined">{isThemeDark ? 'light_mode' : 'dark_mode'}</span>
-            <span>{isThemeDark ? 'Mode Clair' : 'Mode Sombre'}</span>
+            <span>{isThemeDark ? t('light_mode') : t('dark_mode')}</span>
           </button>
-          <div className="mobile-lang-selector">
-            <span className="lang-label">LANGUE</span>
-            <button className="mobile-lang-btn active">FR</button>
-            <span className="lang-sep">|</span>
-            <button className="mobile-lang-btn">EN</button>
+          <div className="mobile-lang-selector" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+            <span className="lang-label">{t('language')} :</span>
+            {LANGUAGES.map(l => (
+              <button
+                key={l.code}
+                type="button"
+                className={`mobile-lang-btn ${lang === l.code ? 'active' : ''}`}
+                onClick={() => {
+                  changeLanguage(l.code);
+                  closeMobileMenu();
+                }}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '2px',
+                  fontSize: '11px',
+                  fontWeight: lang === l.code ? '700' : '500',
+                  background: lang === l.code ? 'var(--color-accent)' : 'none',
+                  color: lang === l.code ? '#fff' : 'inherit',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {l.flag} {l.code}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -1039,10 +1064,10 @@ export default function Header() {
         <div className="mobile-drawer-actions">
           <Link href="/member-profile" className="mobile-compte-link" onClick={closeMobileMenu}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person</span>
-            MON COMPTE
+            {t('my_account')}
           </Link>
           <Link href="/abonnement" className="mobile-subscribe-btn" onClick={closeMobileMenu}>
-            S'INSCRIRE / S'ABONNER
+            {t('subscribe')}
           </Link>
         </div>
       </div>

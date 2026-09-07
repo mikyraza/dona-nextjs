@@ -1,6 +1,7 @@
 'use client';
 
 import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useRef } from 'react';
 
 function formatTime(seconds) {
@@ -11,6 +12,7 @@ function formatTime(seconds) {
 }
 
 export default function PersistentPlayer() {
+  const { t } = useLanguage();
   const {
     track,
     isPlaying,

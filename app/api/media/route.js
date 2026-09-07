@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { writeAtomicSync } from "@/lib/atomicFile";
+import { validateMediaFile } from "@/lib/mimeValidator";
 import fs from "fs";
 import path from "path";
 
@@ -25,13 +27,26 @@ export async function POST(req) {
       return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 });
     }
 
-    // Size limit verification
+    // 1. Size limit verification
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json({ error: "Fichier trop volumineux. La limite est de 200 Mo." }, { status: 413 });
     }
 
     const fileName = file.name || "media_file";
     const mimeType = file.type || "application/octet-stream";
+
+    // Read bytes into buffer for magic byte inspection and saving
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // 2. Strict MIME, extension, and magic bytes validation
+    const validation = validateMediaFile(fileName, mimeType, buffer);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.error || "Type de fichier non autorisé." },
+        { status: 415 }
+      );
+    }
 
     // Attempt to upload to real WordPress API if credentials are provided
     if (WP_AUTH_TOKEN) {
@@ -69,7 +84,9 @@ export async function POST(req) {
     }
 
     // Local simulation fallback (for local workspace testing)
-    const cleanFileName = `${Date.now()}_${fileName.replace(/\s+/g, "_")}`;
+    const baseName = path.basename(fileName, path.extname(fileName)).replace(/[^a-zA-Z0-9_-]/g, "_");
+    const sanitizedExt = validation.sanitizedExt || path.extname(fileName) || '.jpg';
+    const cleanFileName = `${Date.now()}_${baseName}${sanitizedExt}`;
     const mockUrl = `/assets/core/uploads/${cleanFileName}`;
 
     try {
@@ -80,11 +97,8 @@ export async function POST(req) {
         fs.mkdirSync(publicUploadsDir, { recursive: true });
       }
 
-      // Convert File object to buffer and write to disk
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
       const filePath = path.join(publicUploadsDir, cleanFileName);
-      await fs.promises.writeFile(filePath, buffer);
+      writeAtomicSync(filePath, buffer);
       console.log(`[Dev Simulation] Media saved to disk at: ${filePath}`);
     } catch (fsError) {
       console.error("Local file writing error:", fsError);

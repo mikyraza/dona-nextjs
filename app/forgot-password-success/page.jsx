@@ -24,7 +24,7 @@ export default function Page() {
         
         {/* Logo */}
         <Link href="/" style={{marginBottom: "32px", display: "flex", justifyContent: "center", cursor: "pointer"}}>
-            <img src="/assets/core/img/logo.png" alt="DONA Logo" style={{height: "120px", width: "auto", objectFit: "contain"}} />
+            <img src="/assets/core/img/logo.png" alt="DONA Logo" width="150" height="120" style={{height: "120px", width: "auto", objectFit: "contain"}} />
         </Link>
 
         {/* Success Icon */}

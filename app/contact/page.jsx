@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
-export default function Page() {
+export default function ContactPage() {
+  const { t, currentLangObj } = useLanguage();
+  const isRTL = currentLangObj?.dir === 'rtl';
+
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -11,7 +16,7 @@ export default function Page() {
     message: ''
   });
   const [loading, setLoading] = useState(false);
-  const [statusAlert, setStatusAlert] = useState(null); // { type: 'success' | 'error', text: string, refId?: string }
+  const [statusAlert, setStatusAlert] = useState(null); // { type: 'success' | 'error', title: string, text: string, refId?: string }
 
   const handleChange = (e) => {
     setForm(prev => ({
@@ -25,7 +30,11 @@ export default function Page() {
     setStatusAlert(null);
 
     if (!form.firstName || !form.email || !form.message) {
-      setStatusAlert({ type: 'error', text: 'Veuillez remplir votre prénom, adresse email et votre message.' });
+      setStatusAlert({ 
+        type: 'error', 
+        title: t('contact_error_title'),
+        text: t('contact_error_required')
+      });
       return;
     }
 
@@ -41,28 +50,37 @@ export default function Page() {
       const data = await res.json();
 
       if (!res.ok) {
-        setStatusAlert({ type: 'error', text: data.error || 'Erreur lors de l\'envoi du message.' });
+        setStatusAlert({ 
+          type: 'error', 
+          title: t('contact_error_title'),
+          text: data.error || t('contact_error_server')
+        });
         setLoading(false);
         return;
       }
 
       setStatusAlert({
         type: 'success',
-        text: 'Votre message a été transmis et enregistré avec succès auprès de la rédaction DONA.',
+        title: t('contact_success_title'),
+        text: t('contact_success_desc'),
         refId: data.contact?.id
       });
       setForm({ firstName: '', lastName: '', email: '', subject: 'redaction', message: '' });
 
     } catch (err) {
       console.error('[contact] Erreur réseau:', err);
-      setStatusAlert({ type: 'error', text: 'Erreur de connexion au serveur. Veuillez réessayer.' });
+      setStatusAlert({ 
+        type: 'error', 
+        title: t('contact_error_title'),
+        text: t('contact_error_server')
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main>
+    <main style={{ direction: currentLangObj?.dir || 'ltr' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         :root, [data-theme="light"] {
             --page-bg: #fff;
@@ -88,18 +106,33 @@ export default function Page() {
         }
     ` }} />
 
+    {/* Breadcrumbs */}
+    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px 60px 0" }}>
+      <Breadcrumbs 
+        items={[
+          { label: t('footer_contact') || "Contact", isCurrent: true }
+        ]}
+      />
+    </div>
+
     {/* Page Header */}
-    <section style={{padding: "100px 60px 32px", maxWidth: "1200px", margin: "0 auto"}}>
-        <p style={{fontFamily: "'Inter',sans-serif", fontSize: "11px", fontWeight: "500", letterSpacing: "0.12em", textTransform: "uppercase", color: "#8B002A", marginBottom: "12px"}}>Entrer en contact avec <strong>DONA</strong></p>
-        <p style={{fontFamily: "'Inter',sans-serif", fontSize: "14px", color: "var(--page-text-muted)", maxWidth: "520px", lineHeight: "1.7"}}>Nous sommes à votre disposition pour toute demande de renseignement, de partenariat ou d'assistance. Notre équipe dédiée vous répondra dans les plus brefs délais.</p>
+    <section style={{padding: "40px 60px 32px", maxWidth: "1200px", margin: "0 auto"}}>
+        <p style={{fontFamily: "'Inter',sans-serif", fontSize: "11px", fontWeight: "500", letterSpacing: "0.12em", textTransform: "uppercase", color: "#8B002A", marginBottom: "12px"}}>
+          {t('contact_overline_pre')} <strong>DONA</strong>
+        </p>
+        <p style={{fontFamily: "'Inter',sans-serif", fontSize: "14px", color: "var(--page-text-muted)", maxWidth: "520px", lineHeight: "1.7"}}>
+          {t('contact_intro')}
+        </p>
     </section>
 
     {/* Two-Column Layout */}
     <section style={{padding: "0 60px 60px", maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 380px", gap: "32px", alignItems: "start"}}>
 
         {/* LEFT: Form Card */}
-        <div style={{background: "var(--page-bg)", border: "1px solid #e8e4e4", borderRadius: "4px", padding: "48px"}}>
-            <h2 style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", fontWeight: "600", letterSpacing: "0.05em", color: "var(--page-text)", margin: "0 0 36px 0"}}>Envoyez-nous un message</h2>
+        <div style={{background: "var(--page-bg)", border: "1px solid var(--page-card-border)", borderRadius: "4px", padding: "48px"}}>
+            <h2 style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", fontWeight: "600", letterSpacing: "0.05em", color: "var(--page-text)", margin: "0 0 36px 0"}}>
+              {t('contact_form_title')}
+            </h2>
 
             {statusAlert && (
               <div style={{
@@ -112,11 +145,11 @@ export default function Page() {
                 fontSize: "14px",
                 lineHeight: "1.6"
               }}>
-                <strong>{statusAlert.type === 'success' ? '✓ Message transmis' : '⚠ Erreur d\'envoi'}</strong><br />
+                <strong>{statusAlert.title}</strong><br />
                 {statusAlert.text}
                 {statusAlert.refId && (
                   <div style={{ marginTop: "6px", fontSize: "12px", fontFamily: "monospace" }}>
-                    Référence dossier : <strong>{statusAlert.refId}</strong>
+                    {t('contact_ref_label')} <strong>{statusAlert.refId}</strong>
                   </div>
                 )}
               </div>
@@ -127,7 +160,9 @@ export default function Page() {
                 {/* Row 1: Prénom & Nom */}
                 <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px"}}>
                     <div>
-                        <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>PRÉNOM *</label>
+                        <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>
+                          {t('contact_first_name')}
+                        </label>
                         <input 
                           type="text" 
                           name="firstName"
@@ -135,25 +170,29 @@ export default function Page() {
                           onChange={handleChange}
                           required
                           style={{width: "100%", background: "var(--page-input-bg)", border: "none", borderRadius: "2px", padding: "14px 16px", fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)", outline: "none", boxSizing: "border-box"}} 
-                          placeholder="Ex. Alessandra" 
+                          placeholder={t('contact_placeholder_fn')} 
                         />
                     </div>
                     <div>
-                        <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>NOM</label>
+                        <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>
+                          {t('contact_last_name')}
+                        </label>
                         <input 
                           type="text" 
                           name="lastName"
                           value={form.lastName}
                           onChange={handleChange}
                           style={{width: "100%", background: "var(--page-input-bg)", border: "none", borderRadius: "2px", padding: "14px 16px", fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)", outline: "none", boxSizing: "border-box"}} 
-                          placeholder="Ex. Rossi" 
+                          placeholder={t('contact_placeholder_ln')} 
                         />
                     </div>
                 </div>
 
                 {/* Row 2: Email */}
                 <div>
-                    <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>ADRESSE EMAIL *</label>
+                    <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>
+                      {t('contact_email')}
+                    </label>
                     <input 
                       type="email" 
                       name="email"
@@ -161,30 +200,34 @@ export default function Page() {
                       onChange={handleChange}
                       required
                       style={{width: "100%", background: "var(--page-input-bg)", border: "none", borderRadius: "2px", padding: "14px 16px", fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)", outline: "none", boxSizing: "border-box"}} 
-                      placeholder="votre@email.com" 
+                      placeholder={t('contact_placeholder_email')} 
                     />
                 </div>
 
                 {/* Row 3: Sujet dropdown */}
                 <div style={{position: "relative"}}>
-                    <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>SUJET</label>
+                    <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>
+                      {t('contact_subject')}
+                    </label>
                     <select 
                       name="subject"
                       value={form.subject}
                       onChange={handleChange}
                       style={{width: "100%", background: "var(--page-input-bg)", border: "none", borderRadius: "2px", padding: "14px 16px", fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)", outline: "none", boxSizing: "border-box", appearance: "none", cursor: "pointer"}}
                     >
-                        <option value="redaction">Contacter la rédaction</option>
-                        <option value="partenariat">Demande de partenariat</option>
-                        <option value="support">Support technique</option>
-                        <option value="autre">Autre demande</option>
+                        <option value="redaction">{t('contact_subj_redaction')}</option>
+                        <option value="partenariat">{t('contact_subj_partnership')}</option>
+                        <option value="support">{t('contact_subj_support')}</option>
+                        <option value="autre">{t('contact_subj_other')}</option>
                     </select>
-                    <span style={{position: "absolute", right: "16px", bottom: "14px", fontSize: "18px", color: "var(--page-info-label)", pointerEvents: "none"}}>&#8964;</span>
+                    <span style={{position: "absolute", right: isRTL ? 'auto' : '16px', left: isRTL ? '16px' : 'auto', bottom: "14px", fontSize: "18px", color: "var(--page-info-label)", pointerEvents: "none"}}>&#8964;</span>
                 </div>
 
                 {/* Row 4: Message */}
                 <div>
-                    <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>MESSAGE *</label>
+                    <label style={{display: "block", fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "600", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "8px"}}>
+                      {t('contact_message')}
+                    </label>
                     <textarea 
                       rows="6" 
                       name="message"
@@ -192,7 +235,7 @@ export default function Page() {
                       onChange={handleChange}
                       required
                       style={{width: "100%", background: "var(--page-input-bg)", border: "none", borderRadius: "2px", padding: "14px 16px", fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)", outline: "none", boxSizing: "border-box", resize: "none"}} 
-                      placeholder="Saisissez votre message..."
+                      placeholder={t('contact_placeholder_msg')}
                     ></textarea>
                 </div>
 
@@ -203,7 +246,7 @@ export default function Page() {
                       disabled={loading}
                       style={{background: "var(--color-accent)", color: "#fff", border: "none", borderRadius: "2px", padding: "16px 32px", fontFamily: "'Inter',sans-serif", fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s"}}
                     >
-                      {loading ? "TRANSMISSION..." : "ENVOYER LE MESSAGE"}
+                      {loading ? t('contact_btn_sending') : t('contact_btn_send')}
                     </button>
                 </div>
 
@@ -214,54 +257,72 @@ export default function Page() {
         <div style={{display: "flex", flexDirection: "column", gap: "16px"}}>
 
             {/* Coordonnées Card */}
-            <div style={{background: "var(--page-bg)", border: "1px solid #e8e4e4", borderRadius: "4px", padding: "36px"}}>
-                <h3 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "18px", fontStyle: "italic", color: "var(--page-text)", margin: "0 0 28px 0"}}>Nos Coordonnées</h3>
+            <div style={{background: "var(--page-bg)", border: "1px solid var(--page-card-border)", borderRadius: "4px", padding: "36px"}}>
+                <h3 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "18px", fontStyle: "italic", color: "var(--page-text)", margin: "0 0 28px 0"}}>
+                  {t('contact_info_title')}
+                </h3>
 
                 <ul style={{listStyle: "none", margin: "0", padding: "0", display: "flex", flexDirection: "column", gap: "20px"}}>
                     <li style={{display: "flex", alignItems: "flex-start", gap: "14px"}}>
                         <span style={{color: "#8B002A", fontSize: "18px", marginTop: "2px", flexShrink: "0"}}>&#9679;</span>
                         <div>
-                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "4px"}}>ADRESSE</div>
+                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "4px"}}>
+                              {t('contact_address_label')}
+                            </div>
                             <div style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)", lineHeight: "1.6"}}>15 Rue de la Paix<br />75002 Paris, France</div>
                         </div>
                     </li>
                     <li style={{display: "flex", alignItems: "flex-start", gap: "14px"}}>
                         <span style={{color: "#8B002A", fontSize: "18px", marginTop: "2px", flexShrink: "0"}}>&#9993;</span>
                         <div>
-                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "4px"}}>EMAIL</div>
+                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "4px"}}>
+                              {t('contact_email_label')}
+                            </div>
                             <div style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)"}}><a href="mailto:contact@dona-editorial.com" style={{color: "inherit", textDecoration: "none"}}>contact@dona-editorial.com</a></div>
                         </div>
                     </li>
                     <li style={{display: "flex", alignItems: "flex-start", gap: "14px"}}>
                         <span style={{color: "#8B002A", fontSize: "18px", marginTop: "2px", flexShrink: "0"}}>&#9990;</span>
                         <div>
-                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "4px"}}>TÉLÉPHONE</div>
+                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "4px"}}>
+                              {t('contact_phone_label')}
+                            </div>
                             <div style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)"}}><a href="tel:+33123456789" style={{color: "inherit", textDecoration: "none"}}>+33 (0)1 23 45 67 89</a></div>
                         </div>
                     </li>
                     <li style={{display: "flex", alignItems: "flex-start", gap: "14px"}}>
                         <span style={{color: "#8B002A", fontSize: "18px", marginTop: "2px", flexShrink: "0"}}>&#9202;</span>
                         <div>
-                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "4px"}}>HEURES D'OUVERTURE</div>
-                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)", lineHeight: "1.6"}}>Du Lundi au Vendredi<br />9h00 - 18h00 CET</div>
+                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--page-info-label)", marginBottom: "4px"}}>
+                              {t('contact_hours_label')}
+                            </div>
+                            <div style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--page-text)", lineHeight: "1.6"}}>
+                              {t('contact_hours_value')}
+                            </div>
                         </div>
                     </li>
                 </ul>
             </div>
 
             {/* Reassurance Mini Card */}
-            <div style={{background: "var(--page-bg)", border: "1px solid #e8e4e4", borderRadius: "4px", padding: "24px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", textAlign: "center"}}>
-                <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", borderRight: "1px solid #e8e4e4", paddingRight: "16px"}}>
+            <div style={{background: "var(--page-bg)", border: "1px solid var(--page-card-border)", borderRadius: "4px", padding: "24px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", textAlign: "center"}}>
+                <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", borderRight: isRTL ? 'none' : '1px solid var(--page-card-border)', borderLeft: isRTL ? '1px solid var(--page-card-border)' : 'none', paddingRight: isRTL ? '0' : '16px', paddingLeft: isRTL ? '16px' : '0'}}>
                     <span className="material-symbols-outlined" style={{color: "#8B002A", fontSize: "26px"}}>schedule_send</span>
-                    <span style={{fontFamily: "'Inter',sans-serif", fontSize: "8px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--page-info-label)", lineHeight: "1.4"}}>RÉPONSE<br />SOUS 48H</span>
+                    <span style={{fontFamily: "'Inter',sans-serif", fontSize: "8px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--page-info-label)", lineHeight: "1.4"}}>
+                      {t('contact_badge_reply')}
+                    </span>
                 </div>
-                <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", borderRight: "1px solid #e8e4e4", paddingRight: "16px"}}>
+                <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", borderRight: isRTL ? 'none' : '1px solid var(--page-card-border)', borderLeft: isRTL ? '1px solid var(--page-card-border)' : 'none', paddingRight: isRTL ? '0' : '16px', paddingLeft: isRTL ? '16px' : '0'}}>
                     <span className="material-symbols-outlined" style={{color: "#8B002A", fontSize: "26px"}}>verified_user</span>
-                    <span style={{fontFamily: "'Inter',sans-serif", fontSize: "8px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--page-info-label)", lineHeight: "1.4"}}>DONNÉES<br />PROTÉGÉES RGPD</span>
+                    <span style={{fontFamily: "'Inter',sans-serif", fontSize: "8px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--page-info-label)", lineHeight: "1.4"}}>
+                      {t('contact_badge_gdpr')}
+                    </span>
                 </div>
                 <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: "8px"}}>
                     <span className="material-symbols-outlined" style={{color: "#8B002A", fontSize: "26px"}}>support_agent</span>
-                    <span style={{fontFamily: "'Inter',sans-serif", fontSize: "8px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--page-info-label)", lineHeight: "1.4"}}>ÉQUIPE<br />DÉDIÉE</span>
+                    <span style={{fontFamily: "'Inter',sans-serif", fontSize: "8px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--page-info-label)", lineHeight: "1.4"}}>
+                      {t('contact_badge_team')}
+                    </span>
                 </div>
             </div>
 

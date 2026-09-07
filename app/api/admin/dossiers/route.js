@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { dbGetDossiers, dbUpsertDossier, dbDeleteDossier, exportDatabaseToSqlFile } from '@/lib/db';
+import { validateAdminSession } from '@/lib/adminAuth';
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const dossiers = dbGetDossiers();
     return NextResponse.json(dossiers);
   } catch (error) {
@@ -13,6 +19,11 @@ export async function GET() {
 
 export async function POST(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const body = await req.json();
     const result = dbUpsertDossier(body);
     try { exportDatabaseToSqlFile(); } catch (e) {}
@@ -25,6 +36,11 @@ export async function POST(req) {
 
 export async function DELETE(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });

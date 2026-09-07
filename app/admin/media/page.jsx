@@ -415,7 +415,7 @@ export default function MediaLibraryPage() {
                     overflow: "hidden"
                   }}>
                     {f.type === "image" ? (
-                      <img src={f.url} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={f.url} alt={f.name} width="200" height="200" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : f.type === "video" ? (
                       <span className="material-symbols-outlined" style={{ fontSize: "48px", color: "#aaa" }}>movie</span>
                     ) : f.type === "audio" ? (

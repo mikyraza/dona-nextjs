@@ -4,9 +4,69 @@ import { notFound } from 'next/navigation';
 import { magazines as staticMagazines } from '../data.js';
 import { fetchArticles, fetchMagazineConfig } from '@/lib/wordpress.js';
 import MagazineArticlesSection from '@/components/magazine/MagazineArticlesSection';
+import { getArticleSlug } from '@/lib/slugHelper.js';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+export async function generateMetadata({ params }) {
+  const resolvedParams = await params;
+  const { magazineSlug } = resolvedParams;
+
+  const baseMag = staticMagazines.find(m => m.slug === magazineSlug || m.slug.replace(/^magazine-\d{2}-/, '') === magazineSlug);
+  const dynamicConfig = await fetchMagazineConfig(magazineSlug);
+
+  if (!baseMag && !dynamicConfig) {
+    return {
+      title: 'Magazine introuvable | DONA Magazine',
+      description: "L'édition demandée n'a pas été trouvée."
+    };
+  }
+
+  const magazine = {
+    ...baseMag,
+    ...dynamicConfig
+  };
+
+  const numberStr = magazine.id ? `N° ${String(magazine.id).padStart(2, '0')}` : '';
+  const pageTitle = `${magazine.title} ${numberStr ? `(${numberStr})` : ''} | DONA Magazine`;
+  const description = magazine.description || magazine.subtitle || `Découvrez l'univers éditorial, les analyses et privilèges de ${magazine.title}.`;
+  let imageUrl = magazine.heroImage || magazine.coverImage || '/assets/core/img/mag_hero_01.png';
+  if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+    imageUrl = '/' + imageUrl;
+  }
+
+  return {
+    title: pageTitle,
+    description,
+    alternates: {
+      canonical: `/magazines/${magazineSlug}`
+    },
+    openGraph: {
+      title: pageTitle,
+      description,
+      url: `/magazines/${magazineSlug}`,
+      siteName: 'DONA Magazine',
+      locale: 'fr_FR',
+      type: 'website',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: magazine.title
+        }
+      ]
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description,
+      images: [imageUrl]
+    }
+  };
+}
 
 export default async function Page({ params }) {
   const resolvedParams = await params;
@@ -37,6 +97,9 @@ export default async function Page({ params }) {
         "--mag-theme-primary": primaryColor, 
         "--mag-theme-secondary": secondaryColor 
       }}>
+        <div style={{ padding: "16px 24px 0", maxWidth: "1400px", margin: "0 auto" }}>
+          <Breadcrumbs items={[{ label: 'Nos Magazines', href: '/magazines' }, { label: magazine.title }]} />
+        </div>
         
         {/* A. Hero Section */}
         <section className="mag-cover-hero" style={{
@@ -61,6 +124,8 @@ export default async function Page({ params }) {
                 src={magazine.heroImage} 
                 alt={`${magazine.title} Hero`} 
                 className="mag-hero-img" 
+                width="1440"
+                height="600"
                 style={{
                   width: "100%",
                   height: "100%",
@@ -216,6 +281,8 @@ export default async function Page({ params }) {
                     src={magazine.essenceImage} 
                     alt={magazine.essenceTitle || "L'Essence du Magazine"} 
                     className="mag-essence-img" 
+                    width="480"
+                    height="640"
                     style={{
                       width: "100%",
                       height: "100%",
@@ -252,7 +319,7 @@ export default async function Page({ params }) {
               let featUrl = feat.url || feat.link || feat.href;
               if (!featUrl) {
                 if (matchingArticle) {
-                  featUrl = `/magazines/${magazineSlug}/articles/${matchingArticle.id}`;
+                  featUrl = `/magazines/${magazineSlug}/articles/${getArticleSlug(matchingArticle)}`;
                 } else {
                   const fLower = `${feat.title || ''} ${feat.subtitle || ''}`.toLowerCase();
                   if (fLower.includes("radar") || fLower.includes("net map") || fLower.includes("beta test") || fLower.includes("metrics") || fLower.includes("vip")) {

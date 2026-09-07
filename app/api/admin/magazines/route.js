@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { fetchMagazinesConfig, fetchMagazineConfig, saveMagazineConfig, deleteMagazineConfig } from '@/lib/wordpress';
 import { magazines as staticMagazines } from '@/app/magazines/data';
+import { validateAdminSession } from '@/lib/adminAuth';
 
 export async function GET(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const slug = searchParams.get('slug');
 
@@ -57,6 +63,11 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const body = await req.json();
     let { slug, ...configData } = body;
     
@@ -111,6 +122,11 @@ export async function POST(req) {
 
 export async function DELETE(req) {
   try {
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const slug = searchParams.get('slug');
     if (!slug) {

@@ -1,17 +1,33 @@
 import { NextResponse } from 'next/server';
 import { dbGetTvLive, dbUpdateTvLive } from '@/lib/db';
+import { validateAdminSession } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/admin/tv-live — get live state + EPG from relational SQL DB
-export async function GET() {
-  const state = dbGetTvLive();
-  return NextResponse.json({ success: true, ...state });
+export async function GET(request) {
+  try {
+    const auth = await validateAdminSession(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
+    const state = dbGetTvLive();
+    return NextResponse.json({ success: true, ...state });
+  } catch (error) {
+    console.error('GET /api/admin/tv-live error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
 }
 
 // POST /api/admin/tv-live — update live state in relational SQL DB
 export async function POST(request) {
   try {
+    const auth = await validateAdminSession(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const body = await request.json();
     const updated = dbUpdateTvLive(body);
     return NextResponse.json({ success: true, ...updated });
@@ -24,6 +40,11 @@ export async function POST(request) {
 // PUT /api/admin/tv-live — manage EPG in relational SQL DB
 export async function PUT(request) {
   try {
+    const auth = await validateAdminSession(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const body = await request.json();
     const current = dbGetTvLive();
 

@@ -1,99 +1,85 @@
 'use client';
 
-import { useEffect, useRef, useTransition } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function BackgroundSync() {
   const router = useRouter();
-  const pathname = usePathname();
-  const [isPending, startTransition] = useTransition();
+  const lastCheckTimeRef = useRef(0);
   const lastKnownModifiedRef = useRef(0);
   const isRefreshingRef = useRef(false);
 
-  // Trigger seamless background refresh
-  const triggerBackgroundRefresh = () => {
-    if (isRefreshingRef.current) return;
-    isRefreshingRef.current = true;
-
-    startTransition(() => {
-      router.refresh();
-      setTimeout(() => {
-        isRefreshingRef.current = false;
-      }, 1000);
-    });
-  };
-
   useEffect(() => {
-    // 1. Listen to BroadcastChannel for instant cross-tab / admin notifications
+    // 1. Trigger background refresh safely without cascading renders
+    const triggerRefresh = () => {
+      if (isRefreshingRef.current) return;
+      isRefreshingRef.current = true;
+      try {
+        router.refresh();
+      } finally {
+        setTimeout(() => {
+          isRefreshingRef.current = false;
+        }, 1500);
+      }
+    };
+
+    // 2. Instant Cross-Tab Sync via BroadcastChannel (0 network overhead, 0ms latency)
     let channel = null;
     try {
       channel = new BroadcastChannel('dona_live_sync');
       channel.onmessage = (event) => {
         if (event.data?.type === 'CONTENT_UPDATED') {
-          triggerBackgroundRefresh();
+          triggerRefresh();
         }
       };
-    } catch (e) {
-      // BroadcastChannel fallback
-    }
+    } catch (e) {}
 
-    // 2. Listen to localStorage storage events
+    // 3. Instant Cross-Window Sync via localStorage storage events (0 network overhead)
     const handleStorage = (e) => {
       if (e.key === 'dona_content_updated') {
-        triggerBackgroundRefresh();
+        triggerRefresh();
       }
     };
     window.addEventListener('storage', handleStorage);
 
-    // 3. Listen to window focus & visibility changes (e.g. user switching from Admin tab back to User section)
-    const handleVisibilityOrFocus = () => {
-      if (document.visibilityState === 'visible') {
-        fetch('/api/sync-check', { cache: 'no-store' })
-          .then(res => res.json())
-          .then(data => {
-            if (data?.lastModified) {
-              if (lastKnownModifiedRef.current && data.lastModified > lastKnownModifiedRef.current) {
-                lastKnownModifiedRef.current = data.lastModified;
-                triggerBackgroundRefresh();
-              } else {
-                lastKnownModifiedRef.current = data.lastModified;
-              }
-            }
-          })
-          .catch(() => {});
-      }
-    };
-
-    window.addEventListener('focus', handleVisibilityOrFocus);
-    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
-
-    // 4. Lightweight background polling (every 4 seconds)
-    const intervalId = setInterval(() => {
+    // 4. On-demand revalidation ONLY when user refocuses tab after being away (> 60s)
+    // No periodic intervals, eliminating repetitive network requests while reading
+    const handleFocusOrVisibility = () => {
       if (document.visibilityState === 'hidden') return;
 
-      fetch('/api/sync-check', { cache: 'no-store' })
-        .then(res => res.json())
+      const now = Date.now();
+      // Throttle: at most once every 60 seconds on tab refocus
+      if (now - lastCheckTimeRef.current < 60000) return;
+      lastCheckTimeRef.current = now;
+
+      fetch('/api/sync-check', { cache: 'no-cache' })
+        .then(res => {
+          if (res.status === 304) return null;
+          return res.json();
+        })
         .then(data => {
           if (data?.lastModified) {
-            if (lastKnownModifiedRef.current === 0) {
+            if (lastKnownModifiedRef.current && data.lastModified > lastKnownModifiedRef.current) {
               lastKnownModifiedRef.current = data.lastModified;
-            } else if (data.lastModified > lastKnownModifiedRef.current) {
+              triggerRefresh();
+            } else {
               lastKnownModifiedRef.current = data.lastModified;
-              triggerBackgroundRefresh();
             }
           }
         })
         .catch(() => {});
-    }, 4000);
+    };
+
+    window.addEventListener('focus', handleFocusOrVisibility);
+    document.addEventListener('visibilitychange', handleFocusOrVisibility);
 
     return () => {
       if (channel) channel.close();
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('focus', handleVisibilityOrFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
-      clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocusOrVisibility);
+      document.removeEventListener('visibilitychange', handleFocusOrVisibility);
     };
-  }, [router, pathname]);
+  }, [router]);
 
   return null;
 }

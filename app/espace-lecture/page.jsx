@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { getActiveUserSubscription, canAccessMagazine, canAccessAudioAndReplay, isServiceAllowedForPlan } from '@/lib/subscriptionPermissions';
 
 const TABS = ['Tous les contenus', 'Articles', 'Magazines', 'Workbooks'];
@@ -120,6 +121,17 @@ const INITIAL_FALLBACK_CARDS = [
 ];
 
 export default function Page() {
+  const { t } = useLanguage();
+
+  const getTabLabel = (tab) => {
+    switch (tab) {
+      case 'Tous les contenus': return t('hub_tab_all');
+      case 'Articles': return t('hub_tab_articles');
+      case 'Magazines': return t('hub_tab_magazines');
+      case 'Workbooks': return t('hub_tab_workbooks');
+      default: return tab;
+    }
+  };
   const [activeTab, setActiveTab] = useState('Tous les contenus');
   const [searchQuery, setSearchQuery] = useState('');
   const [cards, setCards] = useState(INITIAL_FALLBACK_CARDS);
@@ -142,6 +154,7 @@ export default function Page() {
     syncUserSub();
 
     window.addEventListener('dona_subscription_changed', syncUserSub);
+    document.addEventListener('dona_subscription_changed', syncUserSub);
     window.addEventListener('storage', syncUserSub);
 
     try {
@@ -167,6 +180,7 @@ export default function Page() {
 
     return () => {
       window.removeEventListener('dona_subscription_changed', syncUserSub);
+      document.removeEventListener('dona_subscription_changed', syncUserSub);
       window.removeEventListener('storage', syncUserSub);
     };
   }, []);
@@ -707,7 +721,7 @@ export default function Page() {
       {/* Sidebar navigation */}
       <aside className="vip-sidebar">
         <div style={{ flex: "1" }}>
-          <div style={{ padding: "0 20px 20px 20px", fontSize: "11px", fontWeight: "700", color: "var(--color-text-muted)", letterSpacing: "1px", textTransform: "uppercase" }}>Portail des membres</div>
+          <div style={{ padding: "0 20px 20px 20px", fontSize: "11px", fontWeight: "700", color: "var(--color-text-muted)", letterSpacing: "1px", textTransform: "uppercase" }}>{t('hub_portal_members')}</div>
           
           <Link href="/member-profile" className="vip-sidebar-item">
             <span className="material-symbols-outlined">person</span>
@@ -731,7 +745,7 @@ export default function Page() {
 
       {/* ─── Main Content ─── */}
       <div className="vip-content" ref={gridTopRef}>
-        <h1 className="vip-title">Mon Espace Lecture</h1>
+        <h1 className="vip-title">{t('reading_hub')}</h1>
 
         {/* Tab Bar + Search */}
         <div className="lecture-tab-bar">
@@ -760,7 +774,7 @@ export default function Page() {
               <span className="material-symbols-outlined search-icon">search</span>
               <input
                 type="text"
-                placeholder="Rechercher..."
+                placeholder={t('hub_search_ph')}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="lecture-search-input"
@@ -783,7 +797,7 @@ export default function Page() {
                   {/* Thumbnail */}
                   <div className="lecture-card-thumb">
                     {cardImage ? (
-                      <img src={cardImage} alt={card.title} />
+                      <img src={cardImage} alt={card.title} width="300" height="400" />
                     ) : (
                       <div className="lecture-card-thumb-placeholder">
                         <span className="material-symbols-outlined" style={{ fontSize: "48px", color: card.typeColor || "#998357" }}>
@@ -817,14 +831,14 @@ export default function Page() {
                           className="lecture-card-cta"
                           style={{ color: '#998357' }}
                         >
-                          {card.cta || card.ctaText || 'Télécharger PDF'}
+                          {card.cta || card.ctaText || t('hub_cta_download_pdf')}
                           <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
                             download
                           </span>
                         </a>
                       ) : (
                         <Link href={card.ctaHref || '#'} onClick={(e) => handleCardClick(e, card)} className="lecture-card-cta">
-                          {card.cta || card.ctaText || 'Consulter'}
+                          {card.cta || card.ctaText || t('hub_cta_read_article')}
                           <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
                             {card.ctaIcon || 'arrow_forward'}
                           </span>
@@ -858,7 +872,7 @@ export default function Page() {
         ) : (
           <div className="no-results">
             <span className="material-symbols-outlined no-results-icon">search_off</span>
-            <p className="no-results-text">Aucun document ne correspond à vos critères de recherche.</p>
+            <p className="no-results-text">{t('search_no_results_desc')}</p>
           </div>
         )}
 
@@ -866,7 +880,7 @@ export default function Page() {
         {filteredCards.length > 0 && (
           <div className="pagination-container">
             <div className="pagination-info">
-              Affichage de {startIndex + 1} à {endIndex} sur {filteredCards.length} contenus — Page {currentPage} sur {totalPages}
+              {t('hub_page_info')} {currentPage} {t('hub_page_of')} {totalPages} — {filteredCards.length} {t('hub_tab_all').toLowerCase()}
             </div>
 
             {totalPages > 1 && (
@@ -879,7 +893,7 @@ export default function Page() {
                   disabled={currentPage === 1}
                   aria-label="Page précédente"
                 >
-                  ‹ Précédent
+                  ‹ {t('hub_btn_prev')}
                 </button>
 
                 {/* Numbered Page Buttons */}
@@ -902,7 +916,7 @@ export default function Page() {
                   disabled={currentPage === totalPages}
                   aria-label="Page suivante"
                 >
-                  Suivant ›
+                  {t('hub_btn_next')} ›
                 </button>
               </div>
             )}
@@ -971,7 +985,7 @@ export default function Page() {
                   textDecoration: "none"
                 }}
               >
-                Passer à l'offre {paywallModal.targetPlan}
+                {t('subscribe')} - {paywallModal.targetPlan}
               </Link>
               <button
                 type="button"

@@ -1,21 +1,12 @@
 import { NextResponse } from 'next/server';
 import { fetchArticles, createOrUpdateArticle, deleteArticle } from '@/lib/wordpress';
-import { getToken } from 'next-auth/jwt';
-
-async function checkAuth(req) {
-  if (process.env.NODE_ENV === 'development') {
-    return true; // Bypass auth check during local development & testing
-  }
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || "un_secret_tres_sur_pour_dona_123" });
-  const allowedAdminRoles = ["Super-Admin", "Éditeur", "Journaliste", "Traducteur", "admin"];
-  return token && (allowedAdminRoles.includes(token.role) || token.role === "admin");
-}
+import { validateAdminSession } from '@/lib/adminAuth';
 
 export async function GET(req) {
   try {
-    const isAuth = await checkAuth(req);
-    if (!isAuth) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -32,9 +23,9 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const isAuth = await checkAuth(req);
-    if (!isAuth) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
     }
 
     const body = await req.json();
@@ -48,9 +39,9 @@ export async function POST(req) {
 
 export async function DELETE(req) {
   try {
-    const isAuth = await checkAuth(req);
-    if (!isAuth) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const auth = await validateAdminSession(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
     }
 
     const { searchParams } = new URL(req.url);

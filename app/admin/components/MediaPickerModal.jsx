@@ -164,7 +164,7 @@ export default function MediaPickerModal({ isOpen, onClose, onSelect }) {
                     <div key={file.id || file.name} className="media-picker-item" onClick={() => { onSelect(file.url); onClose(); }} title={file.name}>
                       <div className="media-thumbnail">
                         {file.type === "image" ? (
-                          <img src={file.url} alt={file.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <img src={file.url} alt={file.name} width="120" height="120" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
                           <div className="media-icon">
                             <span className="material-symbols-outlined">

@@ -50,7 +50,7 @@ function ImageUploader({ value, onChange, label = "Image" }) {
         <div className="media-compact-row">
           <div className="media-compact-thumb">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={value} alt="Preview" />
+            <img src={value} alt="Preview" width="80" height="80" />
           </div>
           <div className="media-compact-info">
             <div className="media-compact-filename">{value.split('/').pop()}</div>
@@ -585,7 +585,7 @@ export default function AdminTodayPage() {
                   <td>
                     {item.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.image} alt="cover" style={{ width: '56px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                      <img src={item.image} alt="cover" width="56" height="40" style={{ width: '56px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
                     ) : (
                       <div style={{ width: '56px', height: '40px', background: '#F3F4F6', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#CCC' }}>image</span>
@@ -730,7 +730,7 @@ export default function AdminTodayPage() {
             <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', background: '#111', minHeight: '200px' }}>
               {heroDraft.image && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={heroDraft.image} alt="hero preview" style={{ width: '100%', height: '200px', objectFit: 'cover', opacity: 0.6 }} />
+                <img src={heroDraft.image} alt="hero preview" width="400" height="200" style={{ width: '100%', height: '200px', objectFit: 'cover', opacity: 0.6 }} />
               )}
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px', color: 'white' }}>
                 <p style={{ fontSize: '11px', letterSpacing: '0.15em', color: '#CE0028', fontWeight: 700, marginBottom: '6px' }}>DONA TODAY</p>
@@ -870,7 +870,7 @@ export default function AdminTodayPage() {
                 <div style={{ border: '1px solid #EAEAEA', borderRadius: '8px', overflow: 'hidden' }}>
                   {articleDraft.image && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={articleDraft.image} alt="cover" style={{ width: '100%', height: '130px', objectFit: 'cover' }} />
+                    <img src={articleDraft.image} alt="cover" width="260" height="130" style={{ width: '100%', height: '130px', objectFit: 'cover' }} />
                   )}
                   <div style={{ padding: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -887,7 +887,7 @@ export default function AdminTodayPage() {
                   {articleDraft.image && (
                     <div style={{ position: 'relative' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={articleDraft.image} alt="cover" style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
+                      <img src={articleDraft.image} alt="cover" width="320" height="160" style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
                       <span style={{ position: 'absolute', top: '10px', left: '10px', background: '#CE0028', color: 'white', fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠ URGENT</span>
                     </div>
                   )}
@@ -975,7 +975,7 @@ export default function AdminTodayPage() {
               <p style={{ fontSize: '11px', color: '#666', marginTop: '10px', fontStyle: 'italic', borderLeft: '3px solid #CE0028', paddingLeft: '10px' }}>{editorialDraft.quote}</p>
               {editorialDraft.image && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={editorialDraft.image} alt="portrait" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '50%', marginTop: '12px' }} />
+                <img src={editorialDraft.image} alt="portrait" width="60" height="60" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '50%', marginTop: '12px' }} />
               )}
               
               <div style={{ marginTop: '20px', borderTop: '1px dashed #EAEAEA', paddingTop: '20px' }}>

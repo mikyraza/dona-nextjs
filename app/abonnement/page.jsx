@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { getFeaturesForPlanFromMatrix, getServicesMatrixConfig, ALL_SUBSCRIBER_SERVICES } from '@/lib/subscriptionPermissions';
 
 export default function Page() {
+  const { t } = useLanguage();
   const [billingPeriod, setBillingPeriod] = useState('annual'); // 'monthly' or 'annual'
   const [openFaq, setOpenFaq] = useState(null);
   const [matrix, setMatrix] = useState({});
@@ -23,24 +25,24 @@ export default function Page() {
 
   const faqs = [
     {
-      q: "Puis-je changer de forfait en cours de route ?",
-      a: "Oui, vous pouvez upgrader ou modifier votre abonnement à tout moment depuis votre espace membre. La différence sera calculée au prorata temporis."
+      q: t('sub_faq_q1'),
+      a: t('sub_faq_a1')
     },
     {
-      q: "Comment fonctionne l'engagement annuel ?",
-      a: "L'abonnement annuel est facturé en un paiement unique et vous fait bénéficier d'une remise immédiate de 20% par rapport au tarif mensuel."
+      q: t('sub_faq_q2'),
+      a: t('sub_faq_a2')
     },
     {
-      q: "Quels sont les modes de paiement acceptés ?",
-      a: "Nous acceptons toutes les principales cartes bancaires (Visa, Mastercard, American Express) ainsi que le paiement sécurisé par Apple Pay et Google Pay."
+      q: t('sub_faq_q3'),
+      a: t('sub_faq_a3')
     },
     {
-      q: "Les événements physiques sont-ils inclus ?",
-      a: "Les événements physiques et masterclasses privées sont inclus en accès prioritaire pour les membres de l'offre Élite, et accessibles avec un tarif préférentiel pour les membres Premium."
+      q: t('sub_faq_q4'),
+      a: t('sub_faq_a4')
     },
     {
-      q: "Comment puis-je annuler mon abonnement ?",
-      a: "Vous pouvez résilier votre abonnement en un clic depuis votre espace membre. L'accès reste actif jusqu'à la fin de la période de facturation en cours."
+      q: t('sub_faq_q5'),
+      a: t('sub_faq_a5')
     }
   ];
 
@@ -121,20 +123,20 @@ export default function Page() {
 
       {/* Header */}
       <section style={{textAlign: "center", maxWidth: "800px", margin: "0 auto 60px auto"}}>
-        <span style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", display: "block", marginBottom: "16px"}}>TARIFICATION CLAIRE & TRANSPARENTE</span>
-        <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "clamp(36px, 5vw, 56px)", fontWeight: "700", color: "var(--color-text)", letterSpacing: "-0.02em", marginBottom: "24px"}}>Rejoignez le Cercle DONA</h1>
-        <p style={{fontFamily: "var(--font-primary)", fontSize: "18px", color: "var(--color-text-muted)", lineHeight: "1.6"}}>Choisissez la formule adaptée à vos ambitions et accédez immédiatement à nos publications, analyses et événements VIP.</p>
+        <span style={{fontFamily: "var(--font-primary)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)", display: "block", marginBottom: "16px"}}>{t('sub_overline')}</span>
+        <h1 style={{fontFamily: "var(--font-secondary)", fontSize: "clamp(36px, 5vw, 56px)", fontWeight: "700", color: "var(--color-text)", letterSpacing: "-0.02em", marginBottom: "24px"}}>{t('sub_title')}</h1>
+        <p style={{fontFamily: "var(--font-primary)", fontSize: "18px", color: "var(--color-text-muted)", lineHeight: "1.6"}}>{t('sub_subtitle')}</p>
         
         {/* Billing Switcher */}
         <div style={{display: "inline-flex", alignItems: "center", gap: "16px", marginTop: "32px", background: "var(--color-bg)", padding: "8px 16px", borderRadius: "30px", border: "1px solid var(--color-border)"}}>
-            <span style={{color: billingPeriod === 'monthly' ? 'var(--color-text)' : 'var(--color-text-muted)', fontWeight: billingPeriod === 'monthly' ? '600' : '400'}}>Mensuel</span>
+            <span style={{color: billingPeriod === 'monthly' ? 'var(--color-text)' : 'var(--color-text-muted)', fontWeight: billingPeriod === 'monthly' ? '600' : '400'}}>{t('sub_monthly')}</span>
             
             <div onClick={toggleBilling} style={{width: "48px", height: "24px", background: "var(--color-bg-alt)", border: "1px solid var(--color-border)", borderRadius: "12px", position: "relative", cursor: "pointer"}}>
                 <div style={{width: "16px", height: "16px", background: "var(--color-accent)", borderRadius: "50%", position: "absolute", top: "3px", left: billingPeriod === 'monthly' ? "4px" : "26px", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"}}></div>
             </div>
             
-            <span style={{color: billingPeriod === 'annual' ? 'var(--color-text)' : 'var(--color-text-muted)', fontWeight: billingPeriod === 'annual' ? '600' : '400'}}>Annuel</span>
-            <span style={{color: "var(--color-accent)", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", background: "rgba(163, 6, 38, 0.08)", padding: "4px 8px", borderRadius: "2px"}}>ÉCONOMISEZ 20%</span>
+            <span style={{color: billingPeriod === 'annual' ? 'var(--color-text)' : 'var(--color-text-muted)', fontWeight: billingPeriod === 'annual' ? '600' : '400'}}>{t('sub_annual')}</span>
+            <span style={{color: "var(--color-accent)", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", background: "rgba(163, 6, 38, 0.08)", padding: "4px 8px", borderRadius: "2px"}}>{t('sub_save20')}</span>
         </div>
       </section>
 
@@ -145,7 +147,7 @@ export default function Page() {
         <div style={{background: "var(--color-bg)", padding: "40px 32px", border: "1px solid var(--color-border)", display: "flex", flexDirection: "column", borderRadius: "2px"}}>
             <h3 style={{fontFamily: "var(--font-secondary)", fontSize: "24px", fontWeight: "600", marginBottom: "12px", color: "var(--color-text)"}}>Essentiel</h3>
             <div style={{fontFamily: "var(--font-secondary)", fontSize: "48px", fontWeight: "700", marginBottom: "16px", color: "var(--color-text)"}}>0€</div>
-            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Formule de découverte pour accéder aux médias en direct.</p>
+            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>{t('sub_plan_essentiel_desc')}</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
               {essentielFeatures.map((feat, idx) => (
@@ -155,20 +157,20 @@ export default function Page() {
               ))}
             </ul>
             
-            <Link href="/signup?plan=essentiel" className="pricing-btn-outline">S'inscrire gratuitement</Link>
+            <Link href="/signup?plan=essentiel" className="pricing-btn-outline">{t('sub_btn_free')}</Link>
         </div>
 
         {/* Plan 2: Premium */}
         <div style={{background: "var(--color-bg)", padding: "40px 32px", border: "2px solid var(--color-accent)", position: "relative", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.03)", borderRadius: "2px"}}>
-            <div style={{position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "var(--color-accent)", color: "#fff", fontFamily: "var(--font-primary)", fontSize: "10px", fontWeight: "700", padding: "6px 16px", borderRadius: "2px", letterSpacing: "0.1em", whiteSpace: "nowrap"}}>LE PLUS CHOISI</div>
+            <div style={{position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "var(--color-accent)", color: "#fff", fontFamily: "var(--font-primary)", fontSize: "10px", fontWeight: "700", padding: "6px 16px", borderRadius: "2px", letterSpacing: "0.1em", whiteSpace: "nowrap"}}>{t('sub_badge_most_chosen')}</div>
             
             <h3 style={{fontFamily: "var(--font-secondary)", fontSize: "24px", fontWeight: "600", marginBottom: "12px", color: "var(--color-text)"}}>Premium</h3>
             <div style={{fontFamily: "var(--font-secondary)", fontSize: "48px", fontWeight: "700", marginBottom: "16px", color: "var(--color-text)"}}>
                 {billingPeriod === 'monthly' ? '29€' : '23€'}
-                <span style={{fontFamily: "var(--font-primary)", fontSize: "14px", fontWeight: "400", color: "var(--color-text-muted)"}}>/mois</span>
+                <span style={{fontFamily: "var(--font-primary)", fontSize: "14px", fontWeight: "400", color: "var(--color-text-muted)"}}>{t('home_plan_per_month')}</span>
             </div>
-            {billingPeriod === 'annual' && <div style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-accent)", marginTop: "-12px", marginBottom: "16px", fontWeight: "600"}}>Facturé 278€/an</div>}
-            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Accès aux magazines autorisés, audios, replays et archives.</p>
+            {billingPeriod === 'annual' && <div style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-accent)", marginTop: "-12px", marginBottom: "16px", fontWeight: "600"}}>{t('sub_billed_annually')}</div>}
+            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>{t('sub_plan_premium_desc')}</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
               {premiumFeatures.map((feat, idx) => (
@@ -178,7 +180,9 @@ export default function Page() {
               ))}
             </ul>
             
-            <Link href={`/signup?plan=premium&billing=${billingPeriod}`} className="pricing-btn-accent">Devenir Premium → Payer {billingPeriod === 'monthly' ? '29€/mois' : '278€/an'}</Link>
+            <Link href={`/signup?plan=premium&billing=${billingPeriod}`} className="pricing-btn-accent">
+              {t('sub_btn_premium')} {billingPeriod === 'monthly' ? '29€' + t('home_plan_per_month') : '278€' + t('home_plan_per_year')}
+            </Link>
         </div>
 
         {/* Plan 3: Élite */}
@@ -186,10 +190,10 @@ export default function Page() {
             <h3 style={{fontFamily: "var(--font-secondary)", fontSize: "24px", fontWeight: "600", marginBottom: "12px", color: "var(--color-text)"}}>Élite</h3>
             <div style={{fontFamily: "var(--font-secondary)", fontSize: "48px", fontWeight: "700", marginBottom: "16px", color: "var(--color-text)"}}>
                 {billingPeriod === 'monthly' ? '79€' : '63€'}
-                <span style={{fontFamily: "var(--font-primary)", fontSize: "14px", fontWeight: "400", color: "var(--color-text-muted)"}}>/mois</span>
+                <span style={{fontFamily: "var(--font-primary)", fontSize: "14px", fontWeight: "400", color: "var(--color-text-muted)"}}>{t('home_plan_per_month')}</span>
             </div>
-            {billingPeriod === 'annual' && <div style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-accent)", marginTop: "-12px", marginBottom: "16px", fontWeight: "600"}}>Facturé 758€/an</div>}
-            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>Accès intégral à l'ensemble du contenu et privilèges VIP.</p>
+            {billingPeriod === 'annual' && <div style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-accent)", marginTop: "-12px", marginBottom: "16px", fontWeight: "600"}}>Facturé 758€{t('home_plan_per_year')}</div>}
+            <p style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5", marginBottom: "32px", minHeight: "42px"}}>{t('sub_plan_elite_desc')}</p>
             
             <ul style={{listStyle: "none", padding: "0", margin: "0 0 40px 0", fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)", display: "flex", flexDirection: "column", gap: "16px", flexGrow: "1"}}>
               {eliteFeatures.map((feat, idx) => (
@@ -199,19 +203,21 @@ export default function Page() {
               ))}
             </ul>
             
-            <Link href={`/signup?plan=elite&billing=${billingPeriod}`} className="pricing-btn-dark">Rejoindre l'Élite → Payer {billingPeriod === 'monthly' ? '79€/mois' : '758€/an'}</Link>
+            <Link href={`/signup?plan=elite&billing=${billingPeriod}`} className="pricing-btn-dark">
+              {t('sub_btn_elite')} {billingPeriod === 'monthly' ? '79€' + t('home_plan_per_month') : '758€' + t('home_plan_per_year')}
+            </Link>
         </div>
       </section>
 
       {/* Comparison Table */}
       <section style={{maxWidth: "900px", margin: "0 auto", marginBottom: "80px"}}>
-        <h2 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "600", textAlign: "center", marginBottom: "40px", color: "var(--color-text)", letterSpacing: "-0.02em"}}>Comparaison détaillée</h2>
+        <h2 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "600", textAlign: "center", marginBottom: "40px", color: "var(--color-text)", letterSpacing: "-0.02em"}}>{t('sub_comparison_title')}</h2>
         
         <div className="table-scroll-container">
           <div className="table-min-width" style={{fontFamily: "var(--font-primary)", fontSize: "14px", color: "var(--color-text)"}}>
             {/* Table Header */}
             <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "16px", background: "var(--color-bg-alt)", border: "1px solid var(--color-border)", borderBottom: "none", fontWeight: "600", fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase"}}>
-                <div>FONCTIONNALITÉS</div>
+                <div>{t('sub_features_title')}</div>
                 <div style={{textAlign: "center"}}>Essentiel</div>
                 <div style={{textAlign: "center", color: "var(--color-accent)"}}>Premium</div>
                 <div style={{textAlign: "center"}}>Élite</div>
@@ -220,63 +226,63 @@ export default function Page() {
             {/* Table Body */}
             <div style={{border: "1px solid var(--color-border)"}}>
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Extraits, aperçus & magazines publics</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_previews')}</div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Télé en direct</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_livetv')}</div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Radio en streaming</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_streaming')}</div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Magazines numériques (N°01 à N°04)</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_mags_1_4')}</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Magazines numériques (N°05 à N°08)</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_mags_5_8')}</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Magazines numériques (N°09 à N°12)</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_mags_9_12')}</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
-                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Magazines numériques (N°13 à N°16)</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_mags_13_16')}</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
-                    <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
+                    <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
                 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", background: "var(--color-bg-alt)", borderBottom: "1px solid var(--color-border)", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Invitations événements & galas privés</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_galas')}</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
                 </div>
 
                 <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "20px 16px", alignItems: "center"}}>
-                    <div style={{fontWeight: "500"}}>Conciergerie éditoriale & accès anticipé</div>
+                    <div style={{fontWeight: "500"}}>{t('sub_row_concierge')}</div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-border)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>close</span></div>
                     <div style={{textAlign: "center", color: "var(--color-accent)"}}><span className="material-symbols-outlined" style={{fontSize: "20px"}}>check</span></div>
@@ -288,7 +294,7 @@ export default function Page() {
 
       {/* FAQ Section */}
       <section style={{maxWidth: "600px", margin: "0 auto", marginBottom: "80px"}}>
-        <h2 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "600", textAlign: "center", marginBottom: "40px", color: "var(--color-text)", letterSpacing: "-0.02em"}}>Questions fréquentes</h2>
+        <h2 style={{fontFamily: "var(--font-secondary)", fontSize: "28px", fontWeight: "600", textAlign: "center", marginBottom: "40px", color: "var(--color-text)", letterSpacing: "-0.02em"}}>{t('sub_faq_title')}</h2>
         
         <div style={{display: "flex", flexDirection: "column", gap: "16px"}}>
             {/* Interactive FAQ Items */}
@@ -350,13 +356,13 @@ export default function Page() {
       {/* Trust Badges */}
       <section className="trust-badges" style={{fontFamily: "var(--font-primary)", fontSize: "12px", color: "var(--color-text-muted)", textAlign: "center"}}>
         <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
-            <span className="material-symbols-outlined" style={{fontSize: "18px"}}>lock</span> Paiement sécurisé
+            <span className="material-symbols-outlined" style={{fontSize: "18px"}}>lock</span> {t('sub_trust_payment')}
         </div>
         <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
-            <span className="material-symbols-outlined" style={{fontSize: "18px"}}>support_agent</span> Support 24/7
+            <span className="material-symbols-outlined" style={{fontSize: "18px"}}>support_agent</span> {t('sub_trust_support')}
         </div>
         <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
-            <span className="material-symbols-outlined" style={{fontSize: "18px"}}>event_busy</span> Annulable à tout moment
+            <span className="material-symbols-outlined" style={{fontSize: "18px"}}>event_busy</span> {t('sub_trust_cancel')}
         </div>
       </section>
 

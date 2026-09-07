@@ -7,17 +7,28 @@ export default function SaveArticleButton({ articleId, title, meta, image, ctaHr
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('dona_saved_items');
-      if (stored) {
-        const ids = new Set(JSON.parse(stored));
-        if (ids.has(articleId)) {
-          setIsSaved(true);
+    const checkSaved = () => {
+      try {
+        const stored = localStorage.getItem('dona_saved_items');
+        if (stored) {
+          const ids = new Set(JSON.parse(stored));
+          setIsSaved(ids.has(articleId));
+        } else {
+          setIsSaved(false);
         }
+      } catch (e) {
+        console.error("Error reading dona_saved_items:", e);
       }
-    } catch (e) {
-      console.error("Error reading dona_saved_items:", e);
-    }
+    };
+
+    checkSaved();
+    window.addEventListener('dona_bookmarks_updated', checkSaved);
+    window.addEventListener('storage', checkSaved);
+
+    return () => {
+      window.removeEventListener('dona_bookmarks_updated', checkSaved);
+      window.removeEventListener('storage', checkSaved);
+    };
   }, [articleId]);
 
   const showToastMsg = (msg) => {
@@ -29,20 +40,40 @@ export default function SaveArticleButton({ articleId, title, meta, image, ctaHr
     try {
       const stored = localStorage.getItem('dona_saved_items');
       const ids = stored ? new Set(JSON.parse(stored)) : new Set();
+
+      const storedDetails = localStorage.getItem('dona_saved_articles_data');
+      let detailsMap = storedDetails ? JSON.parse(storedDetails) : {};
+      
       let nextState = false;
 
       if (ids.has(articleId)) {
         ids.delete(articleId);
+        delete detailsMap[articleId];
         nextState = false;
-        showToastMsg("Article retiré de votre Espace Lecture");
+        showToastMsg("Article retiré de vos favoris");
       } else {
         ids.add(articleId);
+        detailsMap[articleId] = {
+          id: articleId,
+          title: title || "Article DONA Magazine",
+          meta: meta || "Article",
+          image: image || null,
+          ctaHref: ctaHref || `/espace-lecture`,
+          type: type || "ARTICLE",
+          savedAt: new Date().toISOString()
+        };
         nextState = true;
-        showToastMsg("Article sauvegardé dans votre Espace Lecture !");
+        showToastMsg("Article sauvegardé dans vos favoris !");
       }
 
       setIsSaved(nextState);
       localStorage.setItem('dona_saved_items', JSON.stringify(Array.from(ids)));
+      localStorage.setItem('dona_saved_articles_data', JSON.stringify(detailsMap));
+
+      // Broadcast bookmark update event for cross-component and profile sync
+      window.dispatchEvent(new CustomEvent('dona_bookmarks_updated', {
+        detail: { articleId, isSaved: nextState, items: Array.from(ids), itemData: detailsMap[articleId] }
+      }));
     } catch (e) {
       console.error("Error saving article:", e);
     }

@@ -1,5 +1,36 @@
 import React from 'react';
 import Link from 'next/link';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
+
+export const metadata = {
+  title: "La Trajectoire de l’Effet Dunning-Kruger dans le Management Moderne | DONA Magazine",
+  description: "Comment la surestimation des compétences techniques redéfinit la hiérarchie en entreprise et impacte les processus décisionnels complexes.",
+  alternates: {
+    canonical: '/article-trends-intelligence'
+  },
+  openGraph: {
+    title: "La Trajectoire de l’Effet Dunning-Kruger dans le Management Moderne | DONA Magazine",
+    description: "Comment la surestimation des compétences techniques redéfinit la hiérarchie en entreprise et impacte les processus décisionnels complexes.",
+    url: '/article-trends-intelligence',
+    siteName: 'DONA Magazine',
+    locale: 'fr_FR',
+    type: 'article',
+    images: [
+      {
+        url: '/assets/core/img/mag_hero_01.png',
+        width: 1200,
+        height: 630,
+        alt: "Management Moderne et Effet Dunning-Kruger"
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "La Trajectoire de l’Effet Dunning-Kruger dans le Management Moderne | DONA Magazine",
+    description: "Comment la surestimation des compétences techniques redéfinit la hiérarchie en entreprise et impacte les processus décisionnels complexes.",
+    images: ['/assets/core/img/mag_hero_01.png']
+  }
+};
 
 export default function Page() {
   return (
@@ -41,20 +72,22 @@ export default function Page() {
     <div id="swup" className="transition-fade">
         <article className="mag-article-layout" style={{MagThemePrimary: "#a31835", MagThemeSecondary: "#3d0c1b", MagAccent: "#a31835"}}>
             
-            {/* Breadcrumbs */}
+            {/* Dynamic Breadcrumbs */}
             <div className="container" style={{paddingTop: "20px", paddingBottom: "10px"}}>
-                <nav className="breadcrumbs" style={{fontSize: "0.75rem", fontWeight: "600", letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--color-text-muted)"}}>
-                    <a href="/" style={{textDecoration: "none", color: "inherit", transition: "color 0.3s"}}>ACCUEIL</a> &nbsp;/&nbsp; 
-                    <Link  href="/magazines" style={{textDecoration: "none", color: "inherit", transition: "color 0.3s"}}>NOS MAGAZINES</Link> &nbsp;/&nbsp; 
-                    <Link  href="/magazines/magazine-01-intelligence" style={{textDecoration: "none", color: "inherit", transition: "color 0.3s"}}>01. INTELLIGENCE</Link> &nbsp;/&nbsp; 
-                    <span style={{color: "var(--mag-theme-primary)"}}>L'EFFET DUNNING-KRUGER</span>
-                </nav>
+                <Breadcrumbs 
+                  items={[
+                    { label: 'NOS MAGAZINES', href: '/magazines' },
+                    { label: '01. INTELLIGENCE', href: '/magazines/magazine-01-intelligence' },
+                    { label: "L'EFFET DUNNING-KRUGER", isCurrent: true }
+                  ]}
+                  accentColor="var(--mag-theme-primary, #a31835)"
+                />
             </div>
 
             {/* Article Hero Banner Header */}
             <section className="article-hero">
                 <div className="article-hero-bg">
-                    <img src="/assets/core/img/mag_hero_01.png" alt="Management et Intelligence" />
+                    <img src="/assets/core/img/mag_hero_01.png" alt="Management et Intelligence" width="1440" height="600" />
                 </div>
                 <div className="article-hero-overlay"></div>
                 <div className="article-hero-content">
@@ -156,7 +189,7 @@ export default function Page() {
                     <p>Il en résulte une asymétrie informationnelle toxique : les ingénieurs et spécialistes, conscients de la complexité des systèmes et donc plus modérés dans leurs déclarations, sont jugés hésitants. À l'inverse, l'assurance infondée de décideurs moins initiés est interprétée comme une preuve de leadership naturel.</p>
 
                     <div className="article-inline-image-box">
-                        <img src="/assets/core/img/vision_portrait.png" alt="Illustration de la Complexité Cognitive" />
+                        <img src="/assets/core/img/vision_portrait.png" alt="Illustration de la Complexité Cognitive" width="800" height="500" />
                         <div className="article-image-caption">Figure 1. Modélisation de l'évaluation subjective des compétences individuelles au sein des comités décisionnels.</div>
                     </div>
 
@@ -277,7 +310,7 @@ export default function Page() {
                     {/* Author Profile Card */}
                     <div className="sidebar-author-card">
                         <div className="author-img-wrapper">
-                            <img src="/assets/core/img/vision_portrait.png" alt="Nora Patrius" />
+                            <img src="/assets/core/img/vision_portrait.png" alt="Nora Patrius" width="120" height="120" />
                         </div>
                         <h3 className="author-name">Pr Nora Patrius</h3>
                         <span className="author-title">Directrice de la Prospective</span>
@@ -316,19 +349,19 @@ export default function Page() {
                         <div className="related-articles-list">
                             <Link href="/magazines/magazine-01-intelligence" className="related-article-card">
                                 <div className="related-card-img-box">
-                                    <img src="/assets/core/img/home_alaune_side1_1782125709654.png" alt="Intelligence Collective" />
+                                    <img src="/assets/core/img/home_alaune_side1_1782125709654.png" alt="Intelligence Collective" width="100" height="100" />
                                 </div>
                                 <h4 className="related-card-title">Curation et Intelligence Artificielle collective</h4>
                             </Link>
                             <Link href="/magazines/magazine-01-intelligence" className="related-article-card">
                                 <div className="related-card-img-box">
-                                    <img src="/assets/core/img/home_alaune_side2_1782125722981.png" alt="Biais cognitifs" />
+                                    <img src="/assets/core/img/home_alaune_side2_1782125722981.png" alt="Biais cognitifs" width="100" height="100" />
                                 </div>
                                 <h4 className="related-card-title">Les Biais invisibles de la modération algorithmique</h4>
                             </Link>
                             <Link href="/magazines/magazine-01-intelligence" className="related-article-card">
                                 <div className="related-card-img-box">
-                                    <img src="/assets/core/img/home_alaune_main_1782125698619.png" alt="Prise de décision" />
+                                    <img src="/assets/core/img/home_alaune_main_1782125698619.png" alt="Prise de décision" width="100" height="100" />
                                 </div>
                                 <h4 className="related-card-title">Gouvernance décentralisée et décision algorithmique</h4>
                             </Link>

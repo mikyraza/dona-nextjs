@@ -104,7 +104,7 @@ export default function MemberDrawer({ isOpen, onClose, onSave, member = null })
               title="Changer la photo de profil"
             >
               {avatar ? (
-                <img src={avatar} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={avatar} alt={name} width="64" height="64" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <span style={{ fontFamily: 'var(--font-secondary, serif)', fontSize: '20px', fontWeight: '700', color: 'var(--admin-accent-color, #A30626)' }}>
                   {getInitials(name)}

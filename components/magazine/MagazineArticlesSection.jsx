@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { getArticleSlug } from '@/lib/slugHelper';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function MagazineArticlesSection({
   articles = [],
@@ -9,6 +11,7 @@ export default function MagazineArticlesSection({
   magazineSlug,
   primaryColor = "#a31835"
 }) {
+  const { t, lang } = useLanguage();
   const customTabs = (tabs && tabs.length > 0) ? tabs.filter(t => !t.hidden) : [];
   
   let availableTabs = [];
@@ -67,7 +70,7 @@ export default function MagazineArticlesSection({
         marginBottom: "24px",
         letterSpacing: "-0.01em"
       }}>
-        Dernières parutions
+        {t('Dernières parutions')}
       </h2>
 
       {/* Interactive Tabs (Categories) Bar */}
@@ -104,7 +107,7 @@ export default function MagazineArticlesSection({
                   outline: "none"
                 }}
               >
-                {tabName}
+                {t(tabName)}
               </button>
             );
           })}
@@ -121,7 +124,7 @@ export default function MagazineArticlesSection({
           {filteredArticles.map((art, idx) => (
             <Link
               key={art.id || idx}
-              href={`/magazines/${magazineSlug}/articles/${art.id}`}
+              href={`/magazines/${magazineSlug}/articles/${getArticleSlug(art)}`}
               className="mag-article"
               style={{
                 display: "flex",
@@ -163,6 +166,8 @@ export default function MagazineArticlesSection({
                   <img 
                     src={art.image} 
                     alt={art.title} 
+                    width="400"
+                    height="260"
                     style={{
                       width: "100%",
                       height: "100%",
@@ -230,10 +235,10 @@ export default function MagazineArticlesSection({
             library_books
           </span>
           <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "20px", fontWeight: "600", marginBottom: "8px" }}>
-            Aucun article pour « {activeTab} »
+            {t('Aucun article pour')} « {t(activeTab)} »
           </h3>
           <p style={{ fontSize: "14px", color: "var(--color-text-muted)", maxWidth: "450px", margin: "0 auto 20px" }}>
-            Les publications pour cette rubrique sont en cours de finalisation par la rédaction.
+            {t('Les publications pour cette rubrique sont en cours de finalisation par la rédaction.')}
           </p>
           <button
             type="button"
@@ -251,7 +256,7 @@ export default function MagazineArticlesSection({
               cursor: "pointer"
             }}
           >
-            Afficher tous les articles
+            {t('Afficher tous les articles')}
           </button>
         </div>
       )}

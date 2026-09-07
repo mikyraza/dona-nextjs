@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { dbGetUserByEmail, dbGetUserById, dbUpsertUser, dbUpdateUserLastLogin } from "@/lib/db";
+import { dbGetUserByEmail, dbGetUserById, dbUpsertUser, dbUpdateUserLastLogin, dbUpdateUserPassword } from "@/lib/db";
+import { verifyPassword } from "@/lib/passwordHelper";
 
 const authOptions = {
   providers: [
@@ -118,10 +119,19 @@ const authOptions = {
             return null;
           }
 
-          // If a password is set, verify match (supports plain text dev and custom passwords)
-          if (user.password && password && user.password !== password) {
-            console.warn(`[NextAuth] Invalid password for: ${normalizedEmail}`);
-            return null;
+          // Secure password verification with Bcrypt support and transparent upgrade
+          if (user.password && password) {
+            const { match, needsRehash } = verifyPassword(password, user.password);
+            if (!match) {
+              console.warn(`[NextAuth] Invalid password for: ${normalizedEmail}`);
+              return null;
+            }
+            if (needsRehash) {
+              try {
+                dbUpdateUserPassword(user.id, password);
+                console.log(`[NextAuth] Transparently upgraded user password to Bcrypt hash: ${normalizedEmail}`);
+              } catch (e) {}
+            }
           }
 
           // Update last login timestamp in SQLite DB

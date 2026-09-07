@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -103,6 +104,7 @@ const CAS_PRATIQUES = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function JeuxPage() {
+  const { t } = useLanguage();
   const [activeGame, setActiveGame] = useState(null);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showCasModal, setShowCasModal] = useState(false);

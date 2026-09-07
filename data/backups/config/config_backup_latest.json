@@ -1,0 +1,27 @@
+{
+  "backupId": "cfg_bk_1788449078585_e6b7d481",
+  "filename": "config_backup_2026-09-03T15-24-38-585Z_cfg_bk_1788449078585_e6b7d481.json",
+  "filePath": "data/backups/config/config_backup_2026-09-03T15-24-38-585Z_cfg_bk_1788449078585_e6b7d481.json",
+  "checksum": "56fed0f82aa11749ee195b5482cff59d8b68c291a15d44505ef1b2f7d054df0d",
+  "sizeBytes": 935,
+  "settingsCount": 15,
+  "timestamp": "2026-09-03T15:24:38.816Z",
+  "reason": "restored",
+  "settings": {
+    "logoPath": "/assets/core/img/logo.png",
+    "ctaText": "REJOINDRE LE CLUB DONA",
+    "ctaLink": "/abonnement",
+    "crimsonThemeHex": "#A30626",
+    "heroTitle": "DONA MAGAZINE",
+    "heroSubtitle": "Curation d'Excellence & Haute Pensée 2026",
+    "heroDescription": "Un espace dédié à l'excellence éditoriale, à la curation architecturale et aux privilèges exclusifs des femmes de pouvoir.",
+    "footerLegalText": "© 2026 DONA Magazine. Tous droits réservés.",
+    "footerAddressText": "Place Vendôme, 75001 Paris, France",
+    "footerBackgroundWatermark": "DONA.",
+    "backupId": "cfg_bk_1788447945495_6261477a",
+    "timestamp": "2026-09-03T15:05:45.495Z",
+    "reason": "config_update",
+    "settingsCount": "15",
+    "settings": "[object Object]"
+  }
+}

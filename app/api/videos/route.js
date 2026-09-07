@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { dbGetVideos, dbGetTvLive } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -20,9 +21,14 @@ export async function GET(request) {
   const replay = searchParams.get('replay');
   const limit = parseInt(searchParams.get('limit') || '50');
 
-  // Check session to determine VIP access
-  const session = await getServerSession();
-  const userIsVip = isVipUser(session);
+  // Check session to determine VIP access safely
+  let userIsVip = false;
+  try {
+    const session = await getServerSession(authOptions);
+    userIsVip = isVipUser(session);
+  } catch (e) {
+    userIsVip = false;
+  }
 
   let videos = dbGetVideos({
     status: 'Published',

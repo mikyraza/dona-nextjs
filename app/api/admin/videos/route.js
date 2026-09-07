@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { dbGetVideos, dbUpsertVideo, dbDeleteVideo } from '@/lib/db';
+import { validateAdminSession } from '@/lib/adminAuth';
 
 // GET /api/admin/videos — list all videos from relational SQL DB
 export async function GET(request) {
   try {
+    const auth = await validateAdminSession(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const magazine = searchParams.get('magazine');
@@ -25,6 +31,11 @@ export async function GET(request) {
 // POST /api/admin/videos — create a new video in relational SQL DB
 export async function POST(request) {
   try {
+    const auth = await validateAdminSession(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const body = await request.json();
 
     const newVideo = {
@@ -58,6 +69,11 @@ export async function POST(request) {
 // PUT /api/admin/videos — update an existing video in relational SQL DB
 export async function PUT(request) {
   try {
+    const auth = await validateAdminSession(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const body = await request.json();
     if (!body.id) {
       return NextResponse.json({ success: false, error: 'Missing video id' }, { status: 400 });
@@ -75,6 +91,11 @@ export async function PUT(request) {
 // DELETE /api/admin/videos — delete a video by id from relational SQL DB
 export async function DELETE(request) {
   try {
+    const auth = await validateAdminSession(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: auth.error || "Non autorisé" }, { status: auth.status || 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

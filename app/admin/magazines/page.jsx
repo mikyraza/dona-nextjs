@@ -246,6 +246,8 @@ export default function MagazinesAdminPage() {
                     <img 
                       src={mag.heroImage} 
                       alt="" 
+                      width="400"
+                      height="180"
                       style={{
                         position: 'absolute',
                         inset: 0,

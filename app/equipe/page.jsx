@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
 const DEFAULT_SETTINGS = {
   heroTitle: "Les voix de DONA",
@@ -13,7 +15,7 @@ const DEFAULT_SETTINGS = {
       id: "exp-1",
       name: "Pr Nora Patrius",
       role: "Géopolitologue & Stratège",
-      tags: "GEOPOLITIQUE   INTELLIGENCE ECONOMIQUE   PROSPECTIVE",
+      tags: "GEOPOLITIQUE • INTELLIGENCE ECONOMIQUE • PROSPECTIVE",
       websiteUrl: "/article-trends-intelligence",
       emailUrl: "mailto:nora.patrius@dona-magazine.com",
       photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"
@@ -22,7 +24,7 @@ const DEFAULT_SETTINGS = {
       id: "exp-2",
       name: "Dr Clarisse Bama",
       role: "Sociologue & Leadership",
-      tags: "SOCIOLOGIE   PSYCHOLOGIE DU LEADERSHIP   DIVERSITE",
+      tags: "SOCIOLOGIE • PSYCHOLOGIE DU LEADERSHIP • DIVERSITE",
       websiteUrl: "/article-trends-intelligence",
       emailUrl: "",
       photoUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=300&auto=format&fit=crop"
@@ -44,15 +46,22 @@ const DEFAULT_SETTINGS = {
   ctaSpontaneeUrl: "/recrutement"
 };
 
-export default function Page() {
+export default function EquipePage() {
+  const { t, currentLangObj } = useLanguage();
+  const isRTL = currentLangObj?.dir === 'rtl';
+
   const [data, setData] = useState(DEFAULT_SETTINGS);
   const [activeCategory, setActiveCategory] = useState("Tous");
+  const [hasCustomSettings, setHasCustomSettings] = useState(false);
 
   useEffect(() => {
     fetch('/api/admin/settings/equipe')
       .then(res => res.json())
       .then(result => {
-        if (result && result.equipeSettings) setData(result.equipeSettings);
+        if (result && result.equipeSettings) {
+          setData(result.equipeSettings);
+          setHasCustomSettings(true);
+        }
       })
       .catch(err => console.error("API load error:", err));
 
@@ -61,6 +70,7 @@ export default function Page() {
         const stored = localStorage.getItem('dona_settings_equipe');
         if (stored) {
           setData(JSON.parse(stored));
+          setHasCustomSettings(true);
         }
       } catch (e) {
         console.error('Error loading equipe settings:', e);
@@ -68,37 +78,78 @@ export default function Page() {
     }
   }, []);
 
-  const categories = data.categories && data.categories.length > 0 
-    ? data.categories 
-    : ["Tous", "Intelligence", "Lifestyle", "Impact", "Culture"];
+  const categories = ["Tous", "Intelligence", "Lifestyle", "Impact", "Culture"];
+
+  const getCategoryLabel = (cat) => {
+    switch (cat.toLowerCase()) {
+      case 'tous':
+      case 'all':
+        return t('equipe_cat_all');
+      case 'intelligence':
+        return t('equipe_cat_intelligence');
+      case 'lifestyle':
+        return t('equipe_cat_lifestyle');
+      case 'impact':
+        return t('equipe_cat_impact');
+      case 'culture':
+        return t('equipe_cat_culture');
+      default:
+        return cat;
+    }
+  };
 
   const filteredContributrices = activeCategory === "Tous" 
     ? data.contributrices 
     : data.contributrices.filter(con => con.category === activeCategory);
 
+  // If user has not customized strings in admin, use the dynamic translation dictionary
+  const displayHeroTitle = hasCustomSettings && data.heroTitle !== DEFAULT_SETTINGS.heroTitle ? data.heroTitle : t('equipe_hero_title');
+  const displayHeroSubtitle = hasCustomSettings && data.heroSubtitle !== DEFAULT_SETTINGS.heroSubtitle ? data.heroSubtitle : t('equipe_hero_sub');
+  const displayIntroText = hasCustomSettings && data.introText !== DEFAULT_SETTINGS.introText ? data.introText : t('equipe_intro');
+  const displayCtaTitle = hasCustomSettings && data.ctaTitle !== DEFAULT_SETTINGS.ctaTitle ? data.ctaTitle : t('equipe_cta_title');
+  const displayCtaDesc = hasCustomSettings && data.ctaDescription !== DEFAULT_SETTINGS.ctaDescription ? data.ctaDescription : t('equipe_cta_desc');
+  const displayCtaOffers = hasCustomSettings && data.ctaOffresLabel !== DEFAULT_SETTINGS.ctaOffresLabel ? data.ctaOffresLabel : t('equipe_cta_offers');
+  const displayCtaSpontaneous = hasCustomSettings && data.ctaSpontaneeLabel !== DEFAULT_SETTINGS.ctaSpontaneeLabel ? data.ctaSpontaneeLabel : t('equipe_cta_spontaneous');
+
   return (
-    <main>
-      {/* HERO : fond blanc, centré */}
-      <section style={{background: "var(--color-bg)", padding: "110px 60px 0", textAlign: "center"}}>
-        <h1 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "56px", fontWeight: "700", color: "var(--color-text)", margin: "0 0 16px 0"}}>{data.heroTitle}</h1>
-        <p style={{fontFamily: "'Inter',sans-serif", fontSize: "14px", color: "var(--color-text-muted)", margin: "0 0 56px 0"}}>{data.heroSubtitle}</p>
-        {/* Bloc intro texte : fond gris très léger, full-width */}
+    <main style={{ direction: currentLangObj?.dir || 'ltr' }}>
+      {/* Breadcrumbs */}
+      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px 60px 0" }}>
+        <Breadcrumbs 
+          items={[
+            { label: t('footer_editorial_team') || "Équipe de rédaction", isCurrent: true }
+          ]}
+        />
+      </div>
+
+      {/* HERO */}
+      <section style={{background: "var(--color-bg)", padding: "50px 60px 0", textAlign: "center"}}>
+        <h1 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "clamp(36px, 5vw, 56px)", fontWeight: "700", color: "var(--color-text)", margin: "0 0 16px 0"}}>
+          {displayHeroTitle}
+        </h1>
+        <p style={{fontFamily: "'Inter',sans-serif", fontSize: "14px", color: "var(--color-text-muted)", margin: "0 0 56px 0"}}>
+          {displayHeroSubtitle}
+        </p>
+
+        {/* Intro Banner */}
         <div style={{background: "var(--color-bg-alt)", padding: "52px 80px", margin: "0 -60px"}}>
           <p style={{fontFamily: "'Inter',sans-serif", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.95", margin: "0 auto", maxWidth: "620px", textAlign: "center"}}>
-            {data.introText}
+            {displayIntroText}
           </p>
         </div>
       </section>
 
       {/* NOS EXPERTES RÉFÉRENTES */}
       <section style={{padding: "72px 60px 56px", maxWidth: "1100px", margin: "0 auto"}}>
-        <h2 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "30px", fontWeight: "400", color: "var(--color-text)", margin: "0 0 32px 0"}}>Nos Expertes Référentes</h2>
-        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px"}}>
+        <h2 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "30px", fontWeight: "400", color: "var(--color-text)", margin: "0 0 32px 0", textAlign: isRTL ? 'right' : 'left'}}>
+          {t('equipe_referent_experts')}
+        </h2>
+        <div style={{display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px"}}>
 
           {data.expertes.map((exp) => (
             <div key={exp.id} style={{background: "var(--color-bg-alt)", borderRadius: "3px", padding: "48px 32px 40px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center"}}>
               <div style={{width: "100px", height: "100px", borderRadius: "6px", overflow: "hidden", marginBottom: "20px"}}>
-                <img src={exp.photoUrl || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"} alt={exp.name} style={{width: "100%", height: "100%", objectFit: "cover"}} />
+                <img src={exp.photoUrl || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"} alt={exp.name} width="100" height="100" style={{width: "100%", height: "100%", objectFit: "cover"}} />
               </div>
               <h3 style={{fontFamily: "'Inter',sans-serif", fontSize: "17px", fontWeight: "700", color: "var(--color-text)", margin: "0 0 6px 0"}}>{exp.name}</h3>
               <p style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", fontWeight: "600", color: "#8B002A", margin: "0 0 20px 0"}}>{exp.role}</p>
@@ -123,9 +174,10 @@ export default function Page() {
 
       {/* LE CERCLE DES CONTRIBUTRICES */}
       <section style={{padding: "0 60px 56px", maxWidth: "1100px", margin: "0 auto"}}>
-        {/* Titre + filtres thématiques dynamiques */}
         <div style={{display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginBottom: "28px"}}>
-          <h2 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "30px", fontWeight: "400", color: "var(--color-text)", margin: "0"}}>Le Cercle des Contributrices</h2>
+          <h2 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "30px", fontWeight: "400", color: "var(--color-text)", margin: "0"}}>
+            {t('equipe_contributors_circle')}
+          </h2>
           <div style={{display: "flex", gap: "8px", flexWrap: "wrap"}}>
             {categories.map((cat) => {
               const isActive = activeCategory === cat;
@@ -148,46 +200,58 @@ export default function Page() {
                     transition: "all 0.2s ease"
                   }}
                 >
-                  {cat}
+                  {getCategoryLabel(cat)}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Grille 3 colonnes filtrée dynamiquement */}
-        <div style={{display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "14px", marginBottom: "28px"}}>
+        {/* Grille 3 colonnes */}
+        <div style={{display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px", marginBottom: "28px"}}>
           {filteredContributrices.map((con) => (
             <div key={con.id} style={{background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "3px", padding: "18px 16px", display: "flex", alignItems: "center", gap: "14px"}}>
-              <img src={con.photoUrl || "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=120&auto=format&fit=crop"} alt={con.name} style={{width: "52px", height: "52px", borderRadius: "3px", objectFit: "cover", flexShrink: "0"}} />
+              <img src={con.photoUrl || "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=120&auto=format&fit=crop"} alt={con.name} width="52" height="52" style={{width: "52px", height: "52px", borderRadius: "3px", objectFit: "cover", flexShrink: "0"}} />
               <div>
                 <p style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", fontWeight: "700", color: "var(--color-text)", margin: "0 0 2px 0"}}>{con.name}</p>
                 <p style={{fontFamily: "'Inter',sans-serif", fontSize: "11px", color: "var(--color-text-muted)", margin: "0 0 5px 0"}}>{con.role}</p>
-                <Link href={con.contributionsUrl || "/today"} style={{fontFamily: "'Inter',sans-serif", fontSize: "11px", color: "#8B002A", textDecoration: "none"}}>Voir ses contributions</Link>
+                <Link href={con.contributionsUrl || "/today"} style={{fontFamily: "'Inter',sans-serif", fontSize: "11px", color: "#8B002A", textDecoration: "none"}}>
+                  {t('equipe_view_contributions')}
+                </Link>
               </div>
             </div>
           ))}
 
           {filteredContributrices.length === 0 && (
             <div style={{ gridColumn: '1 / -1', padding: '30px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '13px' }}>
-              Aucune contributrice trouvée pour la catégorie « {activeCategory} ».
+              {t('equipe_no_contributors')}
             </div>
           )}
         </div>
 
         <div style={{textAlign: "center"}}>
-          <Link href="/equipe" style={{fontFamily: "'Inter',sans-serif", fontSize: "12px", color: "#8B002A", textDecoration: "underline"}}>Voir tout le cercle</Link>
+          <Link href="/equipe" style={{fontFamily: "'Inter',sans-serif", fontSize: "12px", color: "#8B002A", textDecoration: "underline"}}>
+            {t('equipe_view_all_circle')}
+          </Link>
         </div>
       </section>
 
       {/* CTA REJOIGNEZ L'AVENTURE */}
       <section style={{padding: "16px 60px 80px", maxWidth: "1100px", margin: "0 auto"}}>
         <div style={{background: "var(--color-bg-alt)", borderRadius: "3px", padding: "72px 48px", textAlign: "center"}}>
-          <h2 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "40px", fontWeight: "600", color: "var(--color-text)", margin: "0 0 16px 0"}}>{data.ctaTitle}</h2>
-          <p style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--color-text-muted)", lineHeight: "1.85", margin: "0 0 40px 0"}}>{data.ctaDescription}</p>
+          <h2 style={{fontFamily: "'Cormorant Garamond','Playfair Display',serif", fontSize: "40px", fontWeight: "600", color: "var(--color-text)", margin: "0 0 16px 0"}}>
+            {displayCtaTitle}
+          </h2>
+          <p style={{fontFamily: "'Inter',sans-serif", fontSize: "13px", color: "var(--color-text-muted)", lineHeight: "1.85", margin: "0 0 40px 0"}}>
+            {displayCtaDesc}
+          </p>
           <div style={{display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap"}}>
-            <Link href={data.ctaOffresUrl || "/emploi"} style={{display: "inline-block", background: "#8B002A", color: "#fff", border: "none", borderRadius: "2px", padding: "14px 36px", fontFamily: "'Inter',sans-serif", fontSize: "11px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", textDecoration: "none"}}>{data.ctaOffresLabel}</Link>
-            <Link href={data.ctaSpontaneeUrl || "/recrutement"} style={{display: "inline-block", background: "var(--color-bg)", color: "var(--color-text)", border: "1px solid var(--color-border)", borderRadius: "2px", padding: "14px 36px", fontFamily: "'Inter',sans-serif", fontSize: "11px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", textDecoration: "none"}}>{data.ctaSpontaneeLabel}</Link>
+            <Link href={data.ctaOffresUrl || "/emploi"} style={{display: "inline-block", background: "#8B002A", color: "#fff", border: "none", borderRadius: "2px", padding: "14px 36px", fontFamily: "'Inter',sans-serif", fontSize: "11px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", textDecoration: "none"}}>
+              {displayCtaOffers}
+            </Link>
+            <Link href={data.ctaSpontaneeUrl || "/recrutement"} style={{display: "inline-block", background: "var(--color-bg)", color: "var(--color-text)", border: "1px solid var(--color-border)", borderRadius: "2px", padding: "14px 36px", fontFamily: "'Inter',sans-serif", fontSize: "11px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", textDecoration: "none"}}>
+              {displayCtaSpontaneous}
+            </Link>
           </div>
         </div>
       </section>

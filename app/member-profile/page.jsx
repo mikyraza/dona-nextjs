@@ -18,21 +18,169 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Load from localStorage on mount
+  // Bookmarks Management State
+  const [activeTab, setActiveTab] = useState("profile"); // "profile" | "bookmarks"
+  const [savedArticles, setSavedArticles] = useState([]);
+  const [filterTerm, setFilterTerm] = useState("");
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
+
+  // Load profile and check tab from URL
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('dona_member_profile');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setProfile(prev => ({
-          ...prev,
-          ...parsed
-        }));
+    const syncProfileFromStorage = () => {
+      try {
+        const saved = localStorage.getItem('dona_member_profile');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setProfile(prev => ({
+            ...prev,
+            ...parsed
+          }));
+        }
+      } catch (e) {
+        console.error("Error loading profile from localStorage:", e);
       }
-    } catch (e) {
-      console.error("Error loading profile from localStorage:", e);
-    }
+    };
+
+    syncProfileFromStorage();
+    window.addEventListener('dona_subscription_changed', syncProfileFromStorage);
+    document.addEventListener('dona_subscription_changed', syncProfileFromStorage);
+    window.addEventListener('storage', syncProfileFromStorage);
+
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'bookmarks' || window.location.hash === '#bookmarks') {
+          setActiveTab('bookmarks');
+        }
+      }
+    } catch (e) {}
+
+    return () => {
+      window.removeEventListener('dona_subscription_changed', syncProfileFromStorage);
+      document.removeEventListener('dona_subscription_changed', syncProfileFromStorage);
+      window.removeEventListener('storage', syncProfileFromStorage);
+    };
   }, []);
+
+  // Load and synchronize bookmarks from localStorage and API
+  const loadBookmarks = async () => {
+    try {
+      setLoadingBookmarks(true);
+      const storedIdsStr = localStorage.getItem('dona_saved_items');
+      const savedIds = storedIdsStr ? JSON.parse(storedIdsStr) : [];
+
+      const storedDataStr = localStorage.getItem('dona_saved_articles_data');
+      const savedDataMap = storedDataStr ? JSON.parse(storedDataStr) : {};
+
+      // If we have saved IDs that don't have rich data yet, fetch from /api/espace-lecture
+      const missingIds = savedIds.filter(id => !savedDataMap[id]);
+      let apiItemsMap = {};
+
+      if (missingIds.length > 0 || savedIds.length > 0) {
+        try {
+          const res = await fetch('/api/espace-lecture');
+          if (res.ok) {
+            const apiItems = await res.json();
+            if (Array.isArray(apiItems)) {
+              apiItems.forEach(item => {
+                apiItemsMap[item.id] = item;
+              });
+            }
+          }
+        } catch (fetchErr) {
+          console.warn("Could not fetch /api/espace-lecture for bookmark enrichment:", fetchErr);
+        }
+      }
+
+      const list = savedIds.map(id => {
+        if (savedDataMap[id]) {
+          return savedDataMap[id];
+        }
+        if (apiItemsMap[id]) {
+          const item = apiItemsMap[id];
+          return {
+            id: item.id,
+            title: item.title,
+            meta: item.metaText || item.meta || "Article",
+            image: item.imagePath || item.image || "/assets/core/img/home_alaune_side2_1782125722981.png",
+            ctaHref: item.ctaHref || `/espace-lecture`,
+            type: item.type || "ARTICLE",
+            savedAt: new Date().toISOString()
+          };
+        }
+        return {
+          id,
+          title: `Article ${id}`,
+          meta: "Article sauvegardé",
+          image: "/assets/core/img/home_alaune_side2_1782125722981.png",
+          ctaHref: `/espace-lecture`,
+          type: "ARTICLE",
+          savedAt: new Date().toISOString()
+        };
+      });
+
+      setSavedArticles(list);
+    } catch (e) {
+      console.error("Error loading bookmarks:", e);
+    } finally {
+      setLoadingBookmarks(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBookmarks();
+
+    const handleBookmarksUpdated = () => {
+      loadBookmarks();
+    };
+
+    window.addEventListener('dona_bookmarks_updated', handleBookmarksUpdated);
+    window.addEventListener('storage', handleBookmarksUpdated);
+
+    return () => {
+      window.removeEventListener('dona_bookmarks_updated', handleBookmarksUpdated);
+      window.removeEventListener('storage', handleBookmarksUpdated);
+    };
+  }, []);
+
+  const handleRemoveBookmark = (articleId) => {
+    try {
+      const storedIdsStr = localStorage.getItem('dona_saved_items');
+      const ids = storedIdsStr ? new Set(JSON.parse(storedIdsStr)) : new Set();
+      ids.delete(articleId);
+
+      const storedDataStr = localStorage.getItem('dona_saved_articles_data');
+      let detailsMap = storedDataStr ? JSON.parse(storedDataStr) : {};
+      delete detailsMap[articleId];
+
+      localStorage.setItem('dona_saved_items', JSON.stringify(Array.from(ids)));
+      localStorage.setItem('dona_saved_articles_data', JSON.stringify(detailsMap));
+
+      setSavedArticles(prev => prev.filter(item => item.id !== articleId));
+
+      window.dispatchEvent(new CustomEvent('dona_bookmarks_updated', {
+        detail: { articleId, isSaved: false, items: Array.from(ids) }
+      }));
+    } catch (e) {
+      console.error("Error removing bookmark:", e);
+    }
+  };
+
+  const handleClearAllBookmarks = () => {
+    if (!window.confirm("Êtes-vous sûr de vouloir vider tous vos articles sauvegardés ?")) {
+      return;
+    }
+    try {
+      localStorage.removeItem('dona_saved_items');
+      localStorage.removeItem('dona_saved_articles_data');
+      setSavedArticles([]);
+      window.dispatchEvent(new CustomEvent('dona_bookmarks_updated', {
+        detail: { articleId: null, isSaved: false, items: [] }
+      }));
+    } catch (e) {
+      console.error("Error clearing bookmarks:", e);
+    }
+  };
 
   // Handle avatar photo selection
   const handlePhotoClick = () => {
@@ -401,16 +549,39 @@ export default function Page() {
         <div style={{ flex: "1" }}>
           <div style={{ padding: "0 20px 20px 20px", fontSize: "11px", fontWeight: "700", color: "var(--color-text-muted)", letterSpacing: "1px", textTransform: "uppercase" }}>Portail des membres</div>
           
-          <Link href="/member-profile" className="vip-sidebar-item active">
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className={`vip-sidebar-item ${activeTab === 'profile' ? 'active' : ''}`}
+            style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+          >
             <span className="material-symbols-outlined">person</span>
             MON PROFIL
-          </Link>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('bookmarks')}
+            className={`vip-sidebar-item ${activeTab === 'bookmarks' ? 'active' : ''}`}
+            style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span className="material-symbols-outlined">bookmark</span>
+              <span>ARTICLES SAUVEGARDÉS</span>
+            </div>
+            {savedArticles.length > 0 && (
+              <span style={{ background: "var(--color-accent)", color: "#FFFFFF", fontSize: "10px", fontWeight: "700", padding: "2px 8px", borderRadius: "10px" }}>
+                {savedArticles.length}
+              </span>
+            )}
+          </button>
+
           <Link href="/subscription-management" className="vip-sidebar-item">
             <span className="material-symbols-outlined">star</span>
             MON ABONNEMENT
           </Link>
           <Link href="/espace-lecture" className="vip-sidebar-item">
-            <span className="material-symbols-outlined">bookmark</span>
+            <span className="material-symbols-outlined">menu_book</span>
             ESPACE LECTURE
           </Link>
         </div>
@@ -422,142 +593,388 @@ export default function Page() {
         </div>
       </aside>
   
-      {/* Main Form Area */}
+      {/* Main Content Area */}
       <div className="vip-content">
-        <h1 className="vip-title">Mon Profil</h1>
-        
-        {saveStatus && (
-          <div className={`status-alert ${saveStatus.type}`}>
-            <span className="material-symbols-outlined">
-              {saveStatus.type === 'success' ? 'check_circle' : 'error'}
-            </span>
-            <span>{saveStatus.message}</span>
-          </div>
-        )}
+        {activeTab === 'profile' ? (
+          <>
+            <h1 className="vip-title">Mon Profil</h1>
+            
+            {saveStatus && (
+              <div className={`status-alert ${saveStatus.type}`}>
+                <span className="material-symbols-outlined">
+                  {saveStatus.type === 'success' ? 'check_circle' : 'error'}
+                </span>
+                <span>{saveStatus.message}</span>
+              </div>
+            )}
 
-        <form onSubmit={handleSubmit} className="profile-layout">
-          {/* Left: Avatar */}
-          <div className="profile-avatar-sec" style={{ width: "200px" }}>
-            <div className="avatar-box" onClick={handlePhotoClick}>
-              {profile.avatar ? (
-                <>
-                  <img
-                    src={profile.avatar}
-                    alt="Avatar"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                  <div className="avatar-overlay">
-                    <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>photo_camera</span>
-                    <span style={{ fontSize: "10px", marginTop: "4px" }}>Modifier</span>
+            <form onSubmit={handleSubmit} className="profile-layout">
+              {/* Left: Avatar */}
+              <div className="profile-avatar-sec" style={{ width: "200px" }}>
+                <div className="avatar-box" onClick={handlePhotoClick}>
+                  {profile.avatar ? (
+                    <>
+                      <img
+                        src={profile.avatar}
+                        alt="Avatar"
+                        width="160"
+                        height="160"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <div className="avatar-overlay">
+                        <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>photo_camera</span>
+                        <span style={{ fontSize: "10px", marginTop: "4px" }}>Modifier</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-text-muted)", marginBottom: "10px" }}>photo_camera</span>
+                      <span style={{ fontSize: "12px", color: "var(--color-text-muted)", fontWeight: "500" }}>Changer la photo</span>
+                    </>
+                  )}
+                </div>
+                <h2 style={{ fontFamily: "var(--font-secondary)", fontSize: "24px", fontWeight: "700", color: "var(--color-text)", margin: "0 0 5px 0" }}>
+                  {profile.firstName} {profile.lastName}
+                </h2>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "14px", margin: "0 0 20px 0" }}>
+                  {profile.email}
+                </p>
+                {(() => {
+                  const currentPlan = (profile.plan || 'Essentiel').toUpperCase();
+                  const isElite = currentPlan.includes('ÉLITE') || currentPlan.includes('ELITE');
+                  const isPremium = currentPlan.includes('PREMIUM');
+                  const badgeBg = isElite ? "#B08D57" : isPremium ? "var(--color-accent)" : "#555555";
+                  const badgeIcon = isElite ? "crown" : isPremium ? "stars" : "person";
+                  return (
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: badgeBg, color: "#FFFFFF", padding: "6px 12px", borderRadius: "2px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.05em" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>{badgeIcon}</span>
+                      MEMBRE {currentPlan}
+                    </div>
+                  );
+                })()}
+              </div>
+              
+              {/* Right: Forms */}
+              <div className="profile-form-sec" style={{ flex: "1", maxWidth: "600px" }}>
+                <div style={{ padding: "0", marginBottom: "30px" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", margin: "0 0 30px 0", color: "var(--color-text)" }}>Informations Personnelles</h3>
+                  
+                  <div className="profile-grid-2">
+                    <div>
+                      <label className="vip-label">PRÉNOM</label>
+                      <input
+                        type="text"
+                        className="vip-input"
+                        value={profile.firstName}
+                        onChange={e => setProfile({ ...profile, firstName: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="vip-label">NOM</label>
+                      <input
+                        type="text"
+                        className="vip-input"
+                        value={profile.lastName}
+                        onChange={e => setProfile({ ...profile, lastName: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-text-muted)", marginBottom: "10px" }}>photo_camera</span>
-                  <span style={{ fontSize: "12px", color: "var(--color-text-muted)", fontWeight: "500" }}>Changer la photo</span>
-                </>
+                  
+                  <div style={{ marginTop: "20px" }}>
+                    <label className="vip-label">EMAIL</label>
+                    <input
+                      type="email"
+                      className="vip-input"
+                      value={profile.email}
+                      onChange={e => setProfile({ ...profile, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  
+                  <div style={{ marginTop: "20px" }}>
+                    <label className="vip-label">TÉLÉPHONE</label>
+                    <input
+                      type="tel"
+                      className="vip-input"
+                      value={profile.phone}
+                      onChange={e => setProfile({ ...profile, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+                
+                <div style={{ padding: "0", marginBottom: "40px" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", margin: "0 0 20px 0", color: "var(--color-text)" }}>Sécurité & Mot de Passe</h3>
+                  
+                  <div style={{ marginTop: "16px" }}>
+                    <label className="vip-label">MOT DE PASSE ACTUEL</label>
+                    <input
+                      type="password"
+                      className="vip-input"
+                      placeholder="••••••••"
+                      value={currentPassword}
+                      onChange={e => setCurrentPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ marginTop: "16px" }}>
+                    <label className="vip-label">NOUVEAU MOT DE PASSE</label>
+                    <input
+                      type="password"
+                      className="vip-input"
+                      placeholder="8+ caractères, 1 majuscule, 1 chiffre"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                    />
+                    {password && (
+                      <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>
+                        Exigences : 8+ caractères, 1 majuscule, 1 chiffre
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <button type="submit" className="btn-crimson" disabled={loading}>
+                    {loading ? "ENREGISTREMENT..." : "ENREGISTRER LES MODIFICATIONS"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </>
+        ) : (
+          /* Bookmarks Panel */
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
+              <div>
+                <h1 className="vip-title" style={{ margin: "0 0 8px 0" }}>Articles Sauvegardés</h1>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "14px", margin: 0 }}>
+                  Retrouvez vos signets et lectures sélectionnées dans le Cercle DONA.
+                </p>
+              </div>
+
+              {savedArticles.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAllBookmarks}
+                  style={{
+                    background: "none",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-muted)",
+                    padding: "8px 16px",
+                    borderRadius: "2px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.color = 'var(--color-accent)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete_sweep</span>
+                  Tout effacer
+                </button>
               )}
             </div>
-            <h2 style={{ fontFamily: "var(--font-secondary)", fontSize: "24px", fontWeight: "700", color: "var(--color-text)", margin: "0 0 5px 0" }}>
-              {profile.firstName} {profile.lastName}
-            </h2>
-            <p style={{ color: "var(--color-text-muted)", fontSize: "14px", margin: "0 0 20px 0" }}>
-              {profile.email}
-            </p>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--color-accent)", color: "#FFFFFF", padding: "6px 12px", borderRadius: "2px", fontSize: "10px", fontWeight: "600", letterSpacing: "0.05em" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>stars</span>
-              MEMBRE PREMIUM
-            </div>
-          </div>
-          
-          {/* Right: Forms */}
-          <div className="profile-form-sec" style={{ flex: "1", maxWidth: "600px" }}>
-            <div style={{ padding: "0", marginBottom: "30px" }}>
-              <h3 style={{ fontSize: "16px", fontWeight: "600", margin: "0 0 30px 0", color: "var(--color-text)" }}>Informations Personnelles</h3>
-              
-              <div className="profile-grid-2">
-                <div>
-                  <label className="vip-label">PRÉNOM</label>
-                  <input
-                    type="text"
-                    className="vip-input"
-                    value={profile.firstName}
-                    onChange={e => setProfile({ ...profile, firstName: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="vip-label">NOM</label>
-                  <input
-                    type="text"
-                    className="vip-input"
-                    value={profile.lastName}
-                    onChange={e => setProfile({ ...profile, lastName: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div style={{ marginTop: "20px" }}>
-                <label className="vip-label">EMAIL</label>
-                <input
-                  type="email"
-                  className="vip-input"
-                  value={profile.email}
-                  onChange={e => setProfile({ ...profile, email: e.target.value })}
-                  required
-                />
-              </div>
-              
-              <div style={{ marginTop: "20px" }}>
-                <label className="vip-label">TÉLÉPHONE</label>
-                <input
-                  type="tel"
-                  className="vip-input"
-                  value={profile.phone}
-                  onChange={e => setProfile({ ...profile, phone: e.target.value })}
-                />
-              </div>
-            </div>
-            
-            <div style={{ padding: "0", marginBottom: "40px" }}>
-              <h3 style={{ fontSize: "16px", fontWeight: "600", margin: "0 0 20px 0", color: "var(--color-text)" }}>Sécurité & Mot de Passe</h3>
-              
-              <div style={{ marginTop: "16px" }}>
-                <label className="vip-label">MOT DE PASSE ACTUEL</label>
-                <input
-                  type="password"
-                  className="vip-input"
-                  placeholder="••••••••"
-                  value={currentPassword}
-                  onChange={e => setCurrentPassword(e.target.value)}
-                />
-              </div>
 
-              <div style={{ marginTop: "16px" }}>
-                <label className="vip-label">NOUVEAU MOT DE PASSE</label>
-                <input
-                  type="password"
-                  className="vip-input"
-                  placeholder="8+ caractères, 1 majuscule, 1 chiffre"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                />
-                {password && (
-                  <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>
-                    Exigences : 8+ caractères, 1 majuscule, 1 chiffre
-                  </div>
-                )}
+            {/* Filter Search Row */}
+            {savedArticles.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px", gap: "16px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", background: "var(--color-bg-alt)", border: "1px solid var(--color-border)", borderRadius: "2px", padding: "8px 14px", maxWidth: "380px", width: "100%" }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "var(--color-text-muted)", marginRight: "8px" }}>search</span>
+                  <input
+                    type="text"
+                    placeholder="Filtrer vos signets..."
+                    value={filterTerm}
+                    onChange={e => setFilterTerm(e.target.value)}
+                    style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: "13px", color: "var(--color-text)" }}
+                  />
+                  {filterTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setFilterTerm('')}
+                      style={{ background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer", padding: 0 }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>close</span>
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)", fontWeight: "500" }}>
+                  {savedArticles.filter(item => !filterTerm || item.title.toLowerCase().includes(filterTerm.toLowerCase()) || (item.meta && item.meta.toLowerCase().includes(filterTerm.toLowerCase()))).length} article(s) sur {savedArticles.length}
+                </div>
               </div>
-            </div>
-            
-            <div>
-              <button type="submit" className="btn-crimson" disabled={loading}>
-                {loading ? "ENREGISTREMENT..." : "ENREGISTRER LES MODIFICATIONS"}
-              </button>
-            </div>
+            )}
+
+            {/* Bookmarks List */}
+            {loadingBookmarks ? (
+              <div style={{ textAlign: "center", padding: "60px 0", color: "var(--color-text-muted)" }}>
+                Chargement de vos signets...
+              </div>
+            ) : savedArticles.length === 0 ? (
+              /* Empty State */
+              <div style={{
+                textAlign: "center",
+                padding: "60px 24px",
+                background: "var(--color-bg-alt)",
+                border: "1px dashed var(--color-border)",
+                borderRadius: "4px",
+                marginTop: "16px"
+              }}>
+                <div style={{
+                  width: "64px",
+                  height: "64px",
+                  borderRadius: "50%",
+                  background: "rgba(163, 6, 38, 0.08)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 20px auto"
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-accent)" }}>bookmark_border</span>
+                </div>
+                <h3 style={{ fontFamily: "var(--font-secondary)", fontSize: "20px", fontWeight: "700", color: "var(--color-text)", margin: "0 0 8px 0" }}>
+                  Aucun article sauvegardé pour le moment
+                </h3>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "14px", maxWidth: "460px", margin: "0 auto 28px auto", lineHeight: "1.6" }}>
+                  En parcourant DONA Magazine, cliquez sur l&apos;icône « Sauver » sur les articles pour composer votre bibliothèque personnelle de lecture.
+                </p>
+                <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+                  <Link href="/magazines" className="btn-crimson" style={{ textDecoration: "none", fontSize: "12px", padding: "12px 24px" }}>
+                    Explorer les Cahiers
+                  </Link>
+                  <Link href="/espace-lecture" style={{
+                    textDecoration: "none",
+                    background: "transparent",
+                    color: "var(--color-text)",
+                    border: "1px solid var(--color-border)",
+                    padding: "12px 24px",
+                    borderRadius: "2px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase"
+                  }}>
+                    Espace Lecture
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              /* Cards Grid */
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px" }}>
+                {savedArticles
+                  .filter(item => !filterTerm || item.title.toLowerCase().includes(filterTerm.toLowerCase()) || (item.meta && item.meta.toLowerCase().includes(filterTerm.toLowerCase())))
+                  .map(article => (
+                    <article key={article.id} style={{
+                      background: "var(--color-bg-alt)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "2px",
+                      overflow: "hidden",
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "transform 0.2s ease, box-shadow 0.2s ease"
+                    }}>
+                      {/* Image Thumbnail */}
+                      <div style={{ position: "relative", width: "100%", height: "160px", background: "#1a1a1a", overflow: "hidden" }}>
+                        <img
+                          src={article.image || "/assets/core/img/home_alaune_side2_1782125722981.png"}
+                          alt={article.title}
+                          width="280"
+                          height="160"
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        <div style={{
+                          position: "absolute",
+                          top: "12px",
+                          left: "12px",
+                          background: "var(--color-accent)",
+                          color: "#FFFFFF",
+                          fontSize: "9px",
+                          fontWeight: "800",
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          padding: "3px 8px",
+                          borderRadius: "2px"
+                        }}>
+                          {article.type || "ARTICLE"}
+                        </div>
+                      </div>
+
+                      {/* Card Content */}
+                      <div style={{ padding: "20px", display: "flex", flexDirection: "column", flex: "1" }}>
+                        <div style={{ fontSize: "11px", color: "var(--color-accent)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>
+                          {article.meta || "DONA Magazine"}
+                        </div>
+
+                        <h3 style={{
+                          fontFamily: "var(--font-secondary)",
+                          fontSize: "18px",
+                          fontWeight: "700",
+                          color: "var(--color-text)",
+                          margin: "0 0 16px 0",
+                          lineHeight: "1.3",
+                          flex: "1"
+                        }}>
+                          <Link href={article.ctaHref || "/espace-lecture"} style={{ color: "inherit", textDecoration: "none" }}>
+                            {article.title}
+                          </Link>
+                        </h3>
+
+                        {/* Card Actions */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid var(--color-border)" }}>
+                          <Link
+                            href={article.ctaHref || "/espace-lecture"}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              color: "var(--color-accent)",
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                              textDecoration: "none"
+                            }}
+                          >
+                            <span>Lire l&apos;article</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>arrow_forward</span>
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveBookmark(article.id)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "var(--color-text-muted)",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "11px",
+                              padding: "4px 8px",
+                              borderRadius: "2px",
+                              transition: "color 0.2s ease"
+                            }}
+                            title="Retirer des signets"
+                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-accent)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>bookmark_remove</span>
+                            <span>Retirer</span>
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+              </div>
+            )}
           </div>
-        </form>
+        )}
       </div>
     </main>
   );

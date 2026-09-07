@@ -1,9 +1,16 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
-export default function Page() {
+export default function ManifestePage() {
+  const { t, currentLangObj } = useLanguage();
+  const isRTL = currentLangObj?.dir === 'rtl';
+
   return (
-    <main>
+    <main style={{ direction: currentLangObj?.dir || 'ltr' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         .manifesto-container {
             max-width: 800px;
@@ -14,7 +21,7 @@ export default function Page() {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            padding: 120px 0 60px;
+            padding: 40px 0 60px;
             max-width: 900px;
         }
         .manifesto-text p {
@@ -30,9 +37,9 @@ export default function Page() {
             font-size: 80px;
             line-height: 60px;
             padding-top: 4px;
-            padding-right: 14px;
-            padding-left: 2px;
-            float: left;
+            padding-right: ${isRTL ? '2px' : '14px'};
+            padding-left: ${isRTL ? '14px' : '2px'};
+            float: ${isRTL ? 'right' : 'left'};
             color: #8B002A;
             font-weight: 300;
         }
@@ -42,10 +49,11 @@ export default function Page() {
             font-style: italic;
             line-height: 1.4;
             margin: 60px 0;
-            padding: 10px 0 10px 40px;
-            border-left: 2px solid #8B002A;
+            padding: ${isRTL ? '10px 40px 10px 0' : '10px 0 10px 40px'};
+            border-left: ${isRTL ? 'none' : '2px solid #8B002A'};
+            border-right: ${isRTL ? '2px solid #8B002A' : 'none'};
             color: var(--color-text);
-            text-align: left;
+            text-align: ${isRTL ? 'right' : 'left'};
             letter-spacing: -0.01em;
         }
         .manifesto-section-title {
@@ -55,44 +63,60 @@ export default function Page() {
             margin: 60px 0 24px;
             color: #8B002A;
             font-style: italic;
+            text-align: ${isRTL ? 'right' : 'left'};
         }
     ` }} />
 
     <div className="manifesto-container">
+        {/* Dynamic Breadcrumbs */}
+        <div style={{ paddingTop: "32px" }}>
+          <Breadcrumbs 
+            items={[
+              { label: t('footer_manifesto') || "Manifeste", isCurrent: true }
+            ]}
+          />
+        </div>
+
         <header className="manifesto-header">
-            <span style={{fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: "600", letterSpacing: "0.3em", textTransform: "uppercase", color: "#8B002A", marginBottom: "24px"}}>MANIFESTE DE LA RÉDACTION</span>
-            <h1 style={{fontFamily: "'Playfair Display', serif", fontSize: "64px", fontWeight: "300", lineHeight: "1.1", margin: "0", maxWidth: "750px", textAlign: "left"}}>
-                L'Éloge du <span style={{fontStyle: "italic", fontWeight: "400"}}>Silence</span> et de la <span style={{fontStyle: "italic", fontWeight: "400"}}>Clarté</span>.
+            <span style={{fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: "600", letterSpacing: "0.3em", textTransform: "uppercase", color: "#8B002A", marginBottom: "24px"}}>
+              {t('manifesto_tag')}
+            </span>
+            <h1 style={{fontFamily: "'Playfair Display', serif", fontSize: "clamp(36px, 5vw, 64px)", fontWeight: "300", lineHeight: "1.1", margin: "0", maxWidth: "750px", textAlign: isRTL ? 'right' : 'left'}}>
+                {t('manifesto_title_prefix')} <span style={{fontStyle: "italic", fontWeight: "400"}}>{t('manifesto_title_word1')}</span> {t('manifesto_title_and')} <span style={{fontStyle: "italic", fontWeight: "400"}}>{t('manifesto_title_word2')}</span>.
             </h1>
         </header>
 
         <article className="manifesto-text">
             <p className="has-dropcap">
-                À l'ère de l'immédiateté, de la surinformation et du bruit constant, DONA MAGAZINE fait le choix audacieux du recul, de la lenteur et de la clarté. Nous pensons que le luxe ultime réside dans le temps que l'on s'accorde pour penser, contempler et comprendre les forces qui façonnent notre époque.
+                {t('manifesto_intro')}
             </p>
 
             <blockquote className="manifesto-quote">
-                "Nous ne courons pas après la seconde qui passe, nous cherchons la vérité qui demeure."
+                {t('manifesto_quote')}
             </blockquote>
 
-            <h2 className="manifesto-section-title">I. La Rigueur Intellectuelle</h2>
+            <h2 className="manifesto-section-title">{t('manifesto_sec1_title')}</h2>
             <p>
-                L'intelligence n'est pas un vain mot, c'est notre boussole. Nous refusons les raccourcis simplistes et les consensus faciles. Chaque grand dossier de notre publication explore en profondeur les mutations sociétales, les stratégies économiques d'avant-garde, et l'impact culturel de nos choix collectifs.
+                {t('manifesto_sec1_text')}
             </p>
 
-            <h2 className="manifesto-section-title">II. L'Exigence Esthétique</h2>
+            <h2 className="manifesto-section-title">{t('manifesto_sec2_title')}</h2>
             <p>
-                Pour DONA, la forme est le vêtement de l'esprit. L'épure de notre design, la sélection rigoureuse de nos visuels et la précision chirurgicale de notre mise en page répondent à une charte esthétique absolue. Le "Quiet Luxury" n'est pas un slogan marketing, c'est une discipline intellectuelle et visuelle de chaque instant.
+                {t('manifesto_sec2_text')}
             </p>
 
-            <h2 className="manifesto-section-title">III. L'Engagement Littéraire</h2>
+            <h2 className="manifesto-section-title">{t('manifesto_sec3_title')}</h2>
             <p>
-                Nos auteurs et chroniqueurs s'inscrivent dans une tradition d'écriture exigeante. Nous redonnons leurs lettres de noblesse au grand reportage, au portrait fouillé et à la chronique littéraire. Lire DONA doit être une expérience physique, un plaisir des sens autant qu'un exercice de l'esprit.
+                {t('manifesto_sec3_text')}
             </p>
             
             <div style={{borderTop: "1px solid var(--color-border)", paddingTop: "40px", marginTop: "80px", textAlign: "center"}}>
-                <p style={{fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "6px"}}>La Rédaction de DONA</p>
-                <p style={{fontFamily: "'Inter', sans-serif", fontSize: "11px", color: "var(--color-text-muted)"}}>Place Vendôme, Paris</p>
+                <p style={{fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "6px"}}>
+                  {t('manifesto_author')}
+                </p>
+                <p style={{fontFamily: "'Inter', sans-serif", fontSize: "11px", color: "var(--color-text-muted)"}}>
+                  {t('manifesto_location')}
+                </p>
             </div>
         </article>
     </div>

@@ -1,9 +1,11 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function ClubPage() {
   const [hoveredPlan, setHoveredPlan] = useState(null);
+  const { t } = useLanguage();
 
   return (
     <main className="cn-club">
@@ -16,26 +18,26 @@ export default function ClubPage() {
           {/* Eyebrow */}
           <div className="cn-hero-label">
             <span className="cn-dot" />
-            LE CERCLE DONA — ACCÈS RESTREINT
+            {t('club_eyebrow')}
           </div>
 
           {/* Titre + desc en grid 2 colonnes */}
           <div className="cn-hero-title-block">
             <h1 className="cn-h1">
-              Le Club<br />
-              <em className="cn-h1-accent">DONA</em>
+              {t('club_title')}<br />
+              <em className="cn-h1-accent">{t('club_title_accent')}</em>
             </h1>
             <div className="cn-hero-side">
               <p className="cn-hero-desc">
-                Un espace réservé à ceux qui redéfinissent les codes de l'élégance contemporaine. Analyses confidentielles, événements privés, communauté d'exception.
+                {t('club_desc')}
               </p>
               <div className="cn-hero-actions">
                 <Link href="/login?vip=1&callbackUrl=/club" className="cn-btn-primary">
                   <span className="material-symbols-outlined">key</span>
-                  S'AUTHENTIFIER
+                  {t('club_btn_auth')}
                 </Link>
                 <Link href="#avantages" className="cn-btn-ghost">
-                  DÉCOUVRIR LE CERCLE
+                  {t('club_btn_discover')}
                   <span className="material-symbols-outlined">arrow_downward</span>
                 </Link>
               </div>
@@ -46,22 +48,22 @@ export default function ClubPage() {
           <div className="cn-stats-bar">
             <div className="cn-stat">
               <span className="cn-stat-num">16</span>
-              <span className="cn-stat-label">Magazines Exclusifs</span>
+              <span className="cn-stat-label">{t('club_stat_magazines')}</span>
             </div>
             <div className="cn-stat-divider" />
             <div className="cn-stat">
               <span className="cn-stat-num">340+</span>
-              <span className="cn-stat-label">Membres Privilège</span>
+              <span className="cn-stat-label">{t('club_stat_members')}</span>
             </div>
             <div className="cn-stat-divider" />
             <div className="cn-stat">
               <span className="cn-stat-num">12</span>
-              <span className="cn-stat-label">Événements / An</span>
+              <span className="cn-stat-label">{t('club_stat_events')}</span>
             </div>
             <div className="cn-stat-divider" />
             <div className="cn-stat">
               <span className="cn-stat-num">Est. 2024</span>
-              <span className="cn-stat-label">Paris, France</span>
+              <span className="cn-stat-label">{t('club_stat_location')}</span>
             </div>
           </div>
         </div>
@@ -88,35 +90,35 @@ export default function ClubPage() {
       ═══════════════════════════════════════════════ */}
       <section className="cn-avantages" id="avantages">
         <div className="container">
-          <div className="cn-section-label">POURQUOI REJOINDRE LE CLUB</div>
-          <h2 className="cn-h2">Les Privilèges du Cercle</h2>
+          <div className="cn-section-label">{t('club_why_label')}</div>
+          <h2 className="cn-h2">{t('club_privileges_title')}</h2>
 
           <div className="cn-avantages-grid">
             <div className="cn-avantage-card">
               <div className="cn-av-icon">
                 <span className="material-symbols-outlined">auto_stories</span>
               </div>
-              <h3 className="cn-av-title">Intelligence Curée</h3>
-              <p className="cn-av-desc">Accédez aux 16 magazines DONA en intégralité, aux archives confidentielles et aux dossiers d'analyse sur-mesure publiés chaque semaine.</p>
-              <div className="cn-av-meta">16 PUBLICATIONS EXCLUSIVES</div>
+              <h3 className="cn-av-title">{t('club_priv1_title')}</h3>
+              <p className="cn-av-desc">{t('club_priv1_desc')}</p>
+              <div className="cn-av-meta">{t('club_priv1_meta')}</div>
             </div>
 
             <div className="cn-avantage-card cn-avantage-card--featured">
               <div className="cn-av-icon cn-av-icon--light">
                 <span className="material-symbols-outlined">stars</span>
               </div>
-              <h3 className="cn-av-title cn-av-title--light">Événements & Galas</h3>
-              <p className="cn-av-desc cn-av-desc--light">Invitations personnelles aux galas privés, masterclass fermées et soirées de réseau organisées dans les lieux les plus confidentiels d'Europe.</p>
-              <div className="cn-av-meta cn-av-meta--light">12 ÉVÉNEMENTS / AN</div>
+              <h3 className="cn-av-title cn-av-title--light">{t('club_priv2_title')}</h3>
+              <p className="cn-av-desc cn-av-desc--light">{t('club_priv2_desc')}</p>
+              <div className="cn-av-meta cn-av-meta--light">{t('club_priv2_meta')}</div>
             </div>
 
             <div className="cn-avantage-card">
               <div className="cn-av-icon">
                 <span className="material-symbols-outlined">groups</span>
               </div>
-              <h3 className="cn-av-title">Cercle de Pairs</h3>
-              <p className="cn-av-desc">Rejoignez 340+ bâtisseurs, décideurs et créateurs qui débattent, partagent et co-construisent les codes d'un leadership discret et influent.</p>
-              <div className="cn-av-meta">340+ MEMBRES PRIVILÈGE</div>
+              <h3 className="cn-av-title">{t('club_priv3_title')}</h3>
+              <p className="cn-av-desc">{t('club_priv3_desc')}</p>
+              <div className="cn-av-meta">{t('club_priv3_meta')}</div>
             </div>
           </div>
         </div>
@@ -129,12 +131,12 @@ export default function ClubPage() {
         <div className="container">
           <div className="cn-section-head">
             <div>
-              <div className="cn-section-label">COMMUNAUTÉ & ÉCHANGES</div>
-              <h2 className="cn-h2">Le Forum Privé</h2>
-              <p className="cn-section-desc">Débats exclusifs entre pairs sur l'architecture, la culture et le leadership.</p>
+              <div className="cn-section-label">{t('club_forum_label')}</div>
+              <h2 className="cn-h2">{t('club_forum_title')}</h2>
+              <p className="cn-section-desc">{t('club_forum_desc')}</p>
             </div>
             <Link href="/login?vip=1&callbackUrl=/club" className="cn-link-action">
-              ACCÉDER AU FORUM <span className="material-symbols-outlined">arrow_forward</span>
+              {t('club_forum_access')} <span className="material-symbols-outlined">arrow_forward</span>
             </Link>
           </div>
 
@@ -142,11 +144,11 @@ export default function ClubPage() {
             {/* Thread principal */}
             <div className="cn-forum-main">
               <div className="cn-forum-tags">
-                <span className="cn-badge cn-badge--red">EXCLUSIVITÉ DONA</span>
+                <span className="cn-badge cn-badge--red">{t('club_forum_tag_exclusive')}</span>
                 <span className="cn-badge">15 AVRIL 2026</span>
               </div>
-              <h3 className="cn-forum-title">L'Architecture du Silence : Repenser l'Espace Privé dans un Monde Saturé</h3>
-              <p className="cn-forum-excerpt">Comment le design de nos intérieurs devient un rempart contre le bruit du monde. Un luxe que seuls ceux qui maîtrisent leur environnement peuvent s'autoriser.</p>
+              <h3 className="cn-forum-title">{t('club_forum_main_title')}</h3>
+              <p className="cn-forum-excerpt">{t('club_forum_main_desc')}</p>
               <div className="cn-forum-footer">
                 <div className="cn-avatars">
                   <div className="cn-avatar">R</div>
@@ -175,7 +177,7 @@ export default function ClubPage() {
                 </Link>
               ))}
               <Link href="/login?vip=1&callbackUrl=/club" className="cn-forum-cta">
-                VOIR TOUS LES SUJETS
+                {t('view_all')}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
             </div>
@@ -189,9 +191,9 @@ export default function ClubPage() {
       <section className="cn-masterclass">
         <div className="container cn-mc-inner">
           <div className="cn-mc-header">
-            <div className="cn-section-label cn-label--light">AGENDA CONFIDENTIEL</div>
-            <h2 className="cn-h2 cn-h2--white">Masterclass & Événements Privés</h2>
-            <p className="cn-mc-desc">Sessions stratégiques en cercle restreint, pensées pour affiner vos perspectives et développer votre réseau d'influence.</p>
+            <div className="cn-section-label cn-label--light">{t('club_mc_label')}</div>
+            <h2 className="cn-h2 cn-h2--white">{t('club_mc_title')}</h2>
+            <p className="cn-mc-desc">{t('club_mc_desc')}</p>
           </div>
 
           <div className="cn-mc-list">
@@ -214,7 +216,7 @@ export default function ClubPage() {
 
           <div style={{ textAlign: "center", marginTop: "3rem" }}>
             <Link href="/login?vip=1&callbackUrl=/club" className="cn-btn-white">
-              VOIR L'AGENDA COMPLET
+              {t('club_mc_all')}
             </Link>
           </div>
         </div>
@@ -227,9 +229,9 @@ export default function ClubPage() {
         <div className="container">
           <div className="cn-section-head">
             <div>
-              <div className="cn-section-label">BIBLIOTHÈQUE CONFIDENTIELLE</div>
-              <h2 className="cn-h2">The Intelligence Vault</h2>
-              <p className="cn-section-desc">Rapports exclusifs, analyses de fond et archives de la rédaction.</p>
+              <div className="cn-section-label">{t('club_vault_label')}</div>
+              <h2 className="cn-h2">{t('club_vault_title')}</h2>
+              <p className="cn-section-desc">{t('club_vault_desc')}</p>
             </div>
           </div>
 
@@ -246,7 +248,7 @@ export default function ClubPage() {
                 </div>
                 <h4 className="cn-vault-title">{item.title}</h4>
                 <div className="cn-vault-read">
-                  <span>LIRE LE DOCUMENT</span>
+                  <span>{t('club_vault_read')}</span>
                   <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>arrow_forward</span>
                 </div>
               </Link>
@@ -257,10 +259,10 @@ export default function ClubPage() {
               <div className="cn-vault-lock-icon">
                 <span className="material-symbols-outlined">lock</span>
               </div>
-              <p className="cn-vault-lock-label">ACCÈS RÉSERVÉ</p>
-              <p className="cn-vault-lock-desc">Ce contenu est réservé aux membres Privilège. Rejoignez le Cercle pour y accéder.</p>
+              <p className="cn-vault-lock-label">{t('club_vault_locked')}</p>
+              <p className="cn-vault-lock-desc">{t('club_vault_locked_desc')}</p>
               <Link href="/signup?plan=elite&billing=annual" className="cn-vault-lock-cta">
-                DEVENIR MEMBRE
+                {t('club_vault_become_member')}
               </Link>
             </div>
           </div>
@@ -273,25 +275,25 @@ export default function ClubPage() {
       <section className="cn-offres">
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-            <div className="cn-section-label" style={{ justifyContent: "center" }}>ADHÉSION AU CERCLE</div>
-            <h2 className="cn-h2" style={{ textAlign: "center" }}>Choisissez Votre Accès</h2>
+            <div className="cn-section-label" style={{ justifyContent: "center" }}>{t('club_offres_label')}</div>
+            <h2 className="cn-h2" style={{ textAlign: "center" }}>{t('club_offres_title')}</h2>
           </div>
 
           <div className="cn-offres-grid">
-            {/* Plan Premium — seule carte sombre (mise en avant intentionnelle) */}
+            {/* Plan Premium */}
             <div
               className={`cn-plan ${hoveredPlan === 'premium' ? 'cn-plan--active' : ''}`}
               onMouseEnter={() => setHoveredPlan('premium')}
               onMouseLeave={() => setHoveredPlan(null)}
             >
               <div className="cn-plan-top">
-                <span className="cn-plan-badge">RECOMMANDÉ</span>
-                <h3 className="cn-plan-name">Cercle Privilège</h3>
+                <span className="cn-plan-badge">{t('club_plan_recommended')}</span>
+                <h3 className="cn-plan-name">{t('club_plan_privilege_name')}</h3>
                 <div className="cn-plan-price">
                   <span className="cn-plan-price-num">950</span>
-                  <span className="cn-plan-price-unit">€ / an</span>
+                  <span className="cn-plan-price-unit">€ {t('home_plan_per_year')}</span>
                 </div>
-                <p className="cn-plan-desc">L'expérience totale : éditions print collector, accès digital intégral et invitations aux galas privés.</p>
+                <p className="cn-plan-desc">{t('club_plan_privilege_desc')}</p>
               </div>
               <ul className="cn-plan-features">
                 {["Accès intégral aux 16 magazines", "Éditions Print Collector livrées", "Invitations Galas & Événements", "Intelligence Vault illimitée", "Forum Privé & Masterclass", "Badge Membre Privilège"].map((f, i) => (
@@ -302,7 +304,7 @@ export default function ClubPage() {
                 ))}
               </ul>
               <Link href="/signup?plan=elite&billing=annual" className="cn-plan-cta cn-plan-cta--primary">
-                REJOINDRE LE CERCLE
+                {t('club_plan_join')}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
             </div>
@@ -315,12 +317,12 @@ export default function ClubPage() {
             >
               <div className="cn-plan-top">
                 <span className="cn-plan-badge cn-plan-badge--gray">DIGITAL</span>
-                <h3 className="cn-plan-name cn-plan-name--dark">Accès Digital</h3>
+                <h3 className="cn-plan-name cn-plan-name--dark">{t('club_plan_digital_name')}</h3>
                 <div className="cn-plan-price">
                   <span className="cn-plan-price-num cn-plan-price-num--dark">290</span>
-                  <span className="cn-plan-price-unit cn-plan-price-unit--dark">€ / an</span>
+                  <span className="cn-plan-price-unit cn-plan-price-unit--dark">€ {t('home_plan_per_year')}</span>
                 </div>
-                <p className="cn-plan-desc cn-plan-desc--dark">Accès illimité aux 16 magazines en ligne, aux analyses de l'Intelligence Vault et aux flux Studio.</p>
+                <p className="cn-plan-desc cn-plan-desc--dark">{t('club_plan_digital_desc')}</p>
               </div>
               <ul className="cn-plan-features cn-plan-features--dark">
                 {["Accès intégral aux 16 magazines", "Intelligence Vault complète", "Forum Privé & discussions", "Flux Studio en direct"].map((f, i) => (
@@ -331,7 +333,7 @@ export default function ClubPage() {
                 ))}
               </ul>
               <Link href="/abonnement" className="cn-plan-cta cn-plan-cta--outline">
-                VOIR LES DÉTAILS
+                {t('club_plan_details')}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
             </div>
@@ -340,15 +342,15 @@ export default function ClubPage() {
             <div className="cn-plan cn-plan--member">
               <div className="cn-plan-top">
                 <span className="cn-plan-badge cn-plan-badge--gray">MEMBRES</span>
-                <h3 className="cn-plan-name cn-plan-name--dark">Espace Membre</h3>
-                <p className="cn-plan-desc cn-plan-desc--dark">Accédez directement à votre espace personnalisé.</p>
+                <h3 className="cn-plan-name cn-plan-name--dark">{t('club_plan_member_name')}</h3>
+                <p className="cn-plan-desc cn-plan-desc--dark">{t('club_plan_member_desc')}</p>
               </div>
               <ul className="cn-member-links">
                 {[
-                  { icon: "dashboard", label: "Mon Tableau de Bord", href: "/member-profile" },
-                  { icon: "bookmark", label: "Mes Favoris & Lectures VIP", href: "/espace-lecture" },
-                  { icon: "receipt_long", label: "Historique des Commandes", href: "/member-profile" },
-                  { icon: "manage_accounts", label: "Profil & Sécurité", href: "/member-profile" },
+                  { icon: "dashboard", label: t('my_dashboard'), href: "/member-profile" },
+                  { icon: "bookmark", label: t('my_favorites'), href: "/espace-lecture" },
+                  { icon: "receipt_long", label: t('order_history'), href: "/member-profile" },
+                  { icon: "manage_accounts", label: t('manage_profile'), href: "/member-profile" },
                 ].map((link, i) => (
                   <li key={i}>
                     <Link href={link.href} className="cn-member-link">
@@ -360,7 +362,7 @@ export default function ClubPage() {
                 ))}
               </ul>
               <Link href="/login?vip=1&callbackUrl=/club" className="cn-plan-cta cn-plan-cta--outline">
-                SE CONNECTER
+                {t('club_member_login')}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
             </div>
@@ -382,14 +384,14 @@ export default function ClubPage() {
             </svg>
           </div>
           <blockquote className="cn-final-quote">
-            "Cultivez votre unicité. Vivez l'expérience<br />d'un luxe qui se vit de l'intérieur."
+            "{t('club_final_quote')}"
           </blockquote>
           <Link href="/signup?plan=elite&billing=annual" className="cn-btn-primary">
-            REJOINDRE LE CERCLE — 950 € / AN
+            {t('club_final_cta')}
             <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
           <div className="cn-final-footer">
-            <Link href="/abonnement">FAQ & Conditions Générales</Link>
+            <Link href="/abonnement">{t('club_final_faq')}</Link>
             <span>·</span>
             <a href="mailto:contact.club@donamagazine.com">contact.club@donamagazine.com</a>
           </div>

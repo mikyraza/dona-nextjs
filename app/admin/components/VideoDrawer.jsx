@@ -617,7 +617,7 @@ export default function VideoDrawer({ isOpen, onClose, onSave, video }) {
                     <div className="media-compact-row">
                       <div className="media-compact-thumb">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={thumbnailUrl} alt="Miniature Vidéo" />
+                        <img src={thumbnailUrl} alt="Miniature Vidéo" width="80" height="45" />
                       </div>
                       <div className="media-compact-info">
                         <div className="media-compact-filename">{thumbnailFileName || 'miniature-video.jpg'}</div>
@@ -894,6 +894,8 @@ export default function VideoDrawer({ isOpen, onClose, onSave, video }) {
                     <img
                       src={thumbnailUrl}
                       alt="Aperçu miniature"
+                      width="320"
+                      height="180"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (

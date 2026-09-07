@@ -68,6 +68,8 @@ function AdminLoginForm() {
         <img 
           src="/assets/core/img/logo.png" 
           alt="DONA Logo" 
+          width="144"
+          height="36"
           style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
         />
         <span style={{

@@ -1,18 +1,21 @@
-'use strict';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Footer() {
+  const { t, currentLangObj } = useLanguage();
+
   return (
-    <footer className="site-footer">
+    <footer className="site-footer" style={{ direction: currentLangObj?.dir || 'ltr' }}>
       <div className="container footer-container">
         
         {/* Footer Top (Logo & Watermark) */}
         <div className="footer-top-section">
           <div className="footer-logo-col">
             <Link href="/">
-              <img src="/assets/core/img/logo.png?v=3" alt="DONA Magazine Logo" className="footer-logo" style={{ cursor: 'pointer' }} />
+              <img src="/assets/core/img/logo.png?v=3" alt="DONA Magazine Logo" className="footer-logo" width="250" height="200" style={{ cursor: 'pointer' }} />
             </Link>
           </div>
           <div className="footer-watermark-col">
@@ -27,7 +30,7 @@ export default function Footer() {
           
           {/* Colonnes NOS MAGAZINES (1 & 2) */}
           <div className="footer-col col-magazines-group">
-            <h4 className="footer-title">NOS MAGAZINES</h4>
+            <h4 className="footer-title">{t('footer_magazines')}</h4>
             <div className="footer-magazines-grid">
               <ul className="footer-links">
                 <li><Link href="/magazines/magazine-01-intelligence">Intelligence</Link></li>
@@ -54,50 +57,50 @@ export default function Footer() {
 
           {/* Colonne 3: PLATEFORME */}
           <div className="footer-col">
-            <h4 className="footer-title">PLATEFORME</h4>
+            <h4 className="footer-title">{t('footer_platform')}</h4>
             <ul className="footer-links">
-              <li><Link href="/studio">Studio</Link></li>
-              <li><Link href="/club">Club</Link></li>
-              <li><Link href="/ecouter">Écouter</Link></li>
-              <li><Link href="/jeux">Jeux</Link></li>
-              <li><Link href="/search">Recherche</Link></li>
+              <li><Link href="/studio">{t('nav_studio')}</Link></li>
+              <li><Link href="/club">{t('nav_club')}</Link></li>
+              <li><Link href="/ecouter">{t('nav_ecouter')}</Link></li>
+              <li><Link href="/jeux">{t('nav_jeux')}</Link></li>
+              <li><Link href="/search">{t('search')}</Link></li>
             </ul>
           </div>
 
           {/* Colonne 4: CONTACT */}
           <div className="footer-col">
-            <h4 className="footer-title">CONTACT</h4>
+            <h4 className="footer-title">{t('footer_contact')}</h4>
             <ul className="footer-links">
-              <li><Link href="/contact">Hub de contact</Link></li>
+              <li><Link href="/contact">{t('footer_contact_hub')}</Link></li>
             </ul>
-            <span className="footer-subtitle">CARRIÈRES</span>
+            <span className="footer-subtitle">{t('footer_careers')}</span>
             <ul className="footer-links">
-              <li><Link href="/emploi">Emploi</Link></li>
-              <li><Link href="/recrutement">Recrutement</Link></li>
+              <li><Link href="/emploi">{t('footer_jobs')}</Link></li>
+              <li><Link href="/recrutement">{t('footer_recruitment')}</Link></li>
             </ul>
           </div>
 
           {/* Colonne 5: À PROPOS */}
           <div className="footer-col">
-            <h4 className="footer-title">À PROPOS</h4>
+            <h4 className="footer-title">{t('footer_about')}</h4>
             <ul className="footer-links">
-              <li><Link href="/equipe">Équipe de rédaction</Link></li>
-              <li><Link href="/manifeste">Manifeste</Link></li>
+              <li><Link href="/equipe">{t('footer_editorial_team')}</Link></li>
+              <li><Link href="/manifeste">{t('footer_manifesto')}</Link></li>
             </ul>
           </div>
 
           {/* Colonne 6: LÉGAL */}
           <div className="footer-col">
-            <h4 className="footer-title">LÉGAL</h4>
+            <h4 className="footer-title">{t('footer_legal')}</h4>
             <ul className="footer-links">
-              <li><Link href="/mentions-legales">Mentions légales</Link></li>
+              <li><Link href="/mentions-legales">{t('footer_legal_notices')}</Link></li>
             </ul>
             <p className="footer-address">
               12 Rue de la Paix<br />
               75002 Paris, France
             </p>
             <ul className="footer-links">
-              <li><Link href="/politique-confidentialite">Politique de confidentialité</Link></li>
+              <li><Link href="/politique-confidentialite">{t('footer_privacy_policy')}</Link></li>
             </ul>
           </div>
 
@@ -129,7 +132,7 @@ export default function Footer() {
             </a>
           </div>
           <div className="footer-copyright">
-            &copy; DONA MAGAZINE. ALL RIGHTS RESERVED.
+            &copy; DONA MAGAZINE. {t('footer_rights_reserved')}
           </div>
         </div>
 

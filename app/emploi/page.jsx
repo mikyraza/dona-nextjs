@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
 export default function Page() {
+  const { t } = useLanguage();
   const DEFAULT_SETTINGS = {
     headerCategory: "CARRIÈRES & OPPORTUNITÉS",
     title: "Rejoignez la Rédaction",
@@ -124,6 +127,9 @@ export default function Page() {
       ` }} />
 
       <div className="emploi-container">
+        <div style={{ paddingTop: "60px", marginBottom: "-60px" }}>
+          <Breadcrumbs items={[{ label: t('footer_jobs') || 'Emploi' }]} />
+        </div>
         <header className="emploi-header">
           <span style={{fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: "600", letterSpacing: "0.25em", textTransform: "uppercase", color: "#8B002A", display: "block", marginBottom: "20px"}}>
             {settings.headerCategory || "CARRIÈRES & OPPORTUNITÉS"}
