@@ -172,22 +172,22 @@ export default function Page() {
             </div>
             <div className="today-hero-content">
                 <h1 className="today-hero-title">
-                  {config.hero.title.split('\n').map((line, i) => (
+                  {t(config.hero.title).split('\n').map((line, i) => (
                     <React.Fragment key={i}>
                       {line}<br />
                     </React.Fragment>
                   ))}
                 </h1>
                 <p className="today-hero-subtitle">
-                  {config.hero.subtitle.split('\n').map((line, i) => (
+                  {t(config.hero.subtitle).split('\n').map((line, i) => (
                     <React.Fragment key={i}>
                       {line}<br />
                     </React.Fragment>
                   ))}
                 </p>
                 <div className="today-hero-actions">
-                    <Link href={config.hero.button1.url} className="btn-primary">{config.hero.button1.label}</Link>
-                    <Link href={config.hero.button2.url} className="btn-secondary">{config.hero.button2.label}</Link>
+                    <Link href={config.hero.button1.url} className="btn-primary">{t(config.hero.button1.label)}</Link>
+                    <Link href={config.hero.button2.url} className="btn-secondary">{t(config.hero.button2.label)}</Link>
                 </div>
             </div>
         </section>
@@ -324,28 +324,28 @@ export default function Page() {
                 <div className="philosophy-text">
                     <h3 className="section-overline text-red">NOTRE ÉDITORIAL</h3>
                     <h2 className="philosophy-title">
-                      {config.editorial.title.split('\n').map((line, i) => (
+                      {t(config.editorial.title).split('\n').map((line, i) => (
                         <React.Fragment key={i}>
                           {line}<br />
                         </React.Fragment>
                       ))}
                     </h2>
-                    <p className="philosophy-desc">{config.editorial.desc}</p>
+                    <p className="philosophy-desc">{t(config.editorial.desc)}</p>
                     
                     <ul className="philosophy-points">
                         {config.editorial.points.map((point) => (
                           <li key={point.id}>
                               <span className="check-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></span>
                               <div className="point-text">
-                                  <strong>{point.title}</strong>
-                                  <span>{point.desc}</span>
+                                  <strong>{t(point.title)}</strong>
+                                  <span>{t(point.desc)}</span>
                               </div>
                           </li>
                         ))}
                     </ul>
 
                     <blockquote className="philosophy-quote">
-                        {config.editorial.quote}
+                        {t(config.editorial.quote)}
                     </blockquote>
                 </div>
                 <div className="philosophy-image">
