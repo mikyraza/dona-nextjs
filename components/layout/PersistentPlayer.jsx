@@ -2,7 +2,7 @@
 
 import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 function formatTime(seconds) {
   if (!seconds || isNaN(seconds)) return '0:00';
@@ -39,6 +39,21 @@ export default function PersistentPlayer() {
   } = useAudioPlayer();
 
   const progressBarRef = useRef(null);
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => setIsOffline(false);
+    if (typeof navigator !== 'undefined') {
+      setIsOffline(!navigator.onLine);
+    }
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
 
   if (!isVisible || !track) return null;
 
@@ -277,7 +292,7 @@ export default function PersistentPlayer() {
         </div>
 
         {/* Error banner (N°24) */}
-        {audioError && (
+        {audioError && !isOffline && (
           <div className="dona-player__error" role="alert">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
@@ -286,6 +301,17 @@ export default function PersistentPlayer() {
             </svg>
             <span>{audioError}</span>
             <button onClick={clearError} aria-label="Fermer le message d'erreur" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 6px', fontSize: '14px' }}>✕</button>
+          </div>
+        )}
+
+        {/* Offline banner */}
+        {isOffline && (
+          <div className="dona-player__error" role="alert" style={{ backgroundColor: '#f59e0b', color: '#fff', borderTop: 'none' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 9.86a10.94 10.94 0 0 0-3 2.69M14.21 14.21A3.94 3.94 0 0 1 12 15a4 4 0 0 1-3.69-2.28M8.5 8.5a7 7 0 0 0-2.3 1.13M21.2 14.2a15 15 0 0 0-3.3-3.1" />
+              <line x1="12" y1="20" x2="12.01" y2="20" />
+            </svg>
+            <span>{t('offline_warning') || 'Connexion Internet perdue. Le lecteur est hors ligne.'}</span>
           </div>
         )}
       </div>
