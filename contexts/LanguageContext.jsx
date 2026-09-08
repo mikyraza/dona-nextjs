@@ -56,7 +56,7 @@ export function LanguageProvider({ children }) {
 
     function walkAndTranslate(root) {
       if (!root || isTranslating) return;
-      isTranslating = true;
+      
 
       try {
         // 1. Translate all text nodes

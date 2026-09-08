@@ -123,7 +123,7 @@ export default function SubscriptionSimulatorBar() {
             }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#B09159' }}>tune</span>
-            <span>SIMULER MON ABONNEMENT ({currentPlan})</span>
+            <span>{t('simuler_abonnement')} ({currentPlan})</span>
           </button>
         ) : (
           <div style={{

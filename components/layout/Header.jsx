@@ -238,7 +238,7 @@ export default function Header() {
               onClick={() => setIsLangOpen(!isLangOpen)}
               style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '0 8px' }}
             >
-              <span style={{ fontSize: '11px', fontWeight: '700', fontFamily: 'var(--font-primary)' }}>{currentLangObj.code}</span>
+              <span style={{ fontSize: '11px', fontWeight: '700', fontFamily: 'var(--font-primary)' }} data-no-translate="true">{currentLangObj.code}</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -665,9 +665,12 @@ export default function Header() {
             </div>
             <div className="featured-content">
               <blockquote className="featured-quote">
-                "L'architecture doit parler de son temps<br />
-                et de son lieu, mais aspirer à<br />
-                l'intemporalité."
+                {t('mega_menu_featured_quote').split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      <br />
+                    </React.Fragment>
+                  ))}
               </blockquote>
               <div className="featured-meta">
                 <div className="meta-author-info">
@@ -1041,6 +1044,7 @@ export default function Header() {
               <button
                 key={l.code}
                 type="button"
+                data-no-translate="true"
                 className={`mobile-lang-btn ${lang === l.code ? 'active' : ''}`}
                 onClick={() => {
                   changeLanguage(l.code);
