@@ -1293,13 +1293,207 @@ export default function Header() {
           /* Hide other desktop icons from header bar */
           .header-actions > .btn-icon { display: none !important; }
         }
+          cursor: pointer;
+          padding: 6px;
+          flex-shrink: 0;
+        }
+        .ham-bar {
+          display: block;
+          width: 22px;
+          height: 1.5px;
+          background: var(--color-text);
+          border-radius: 2px;
+          transition: transform 0.35s cubic-bezier(0.77,0,0.18,1),
+                      opacity   0.25s ease,
+                      width     0.3s ease;
+          transform-origin: center;
+        }
+        .ham-bar--top.open  { transform: translateY(6.5px) rotate(45deg); }
+        .ham-bar--mid.open  { opacity: 0; width: 0; }
+        .ham-bar--bot.open  { transform: translateY(-6.5px) rotate(-45deg); }
+
+        /* ── Mobile drawer ── */
+        .mobile-drawer {
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          background: var(--color-bg);
+          display: flex;
+          flex-direction: column;
+          padding: 28px 32px 48px;
+          transform: translateX(100%);
+          transition: transform 0.45s cubic-bezier(0.77,0,0.18,1);
+          overflow-y: auto;
+        }
+        .mobile-drawer--open {
+          transform: translateX(0);
+        }
+        .mobile-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 9998;
+          background: rgba(0,0,0,0.35);
+          backdrop-filter: blur(2px);
+        }
+        .mobile-drawer-close {
+          align-self: flex-end;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--color-text);
+          padding: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.2s ease;
+        }
+        .mobile-drawer-close:hover { color: #A30626; }
+        .mobile-drawer-logo {
+          display: block;
+          width: 120px;
+          margin: 20px 0 32px;
+        }
+        .mobile-drawer-logo img {
+          width: 100%;
+          height: auto;
+        }
+        .mobile-drawer-nav {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+        .mobile-nav-link {
+          font-family: var(--font-secondary, 'Playfair Display', serif);
+          font-size: 26px;
+          font-weight: 700;
+          letter-spacing: -0.01em;
+          color: var(--color-text);
+          text-decoration: none;
+          padding: 14px 0;
+          border-bottom: 1px solid var(--color-border, #E5E7EB);
+          transition: color 0.25s ease, padding-left 0.25s ease;
+          display: block;
+        }
+        .mobile-nav-link:hover {
+          color: #A30626;
+          padding-left: 8px;
+        }
+
+        /* ── Auxiliary Controls inside Drawer ── */
+        .mobile-drawer-controls {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          margin-top: 32px;
+        }
+        .mobile-control-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-family: var(--font-primary, 'Inter', sans-serif);
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--color-text);
+          text-decoration: none;
+          background: none;
+          border: none;
+          padding: 10px 0;
+          cursor: pointer;
+          text-align: left;
+          width: 100%;
+        }
+        .mobile-control-item span {
+          transition: color 0.25s ease;
+        }
+        .mobile-control-item:hover span {
+          color: #A30626;
+        }
+        .mobile-lang-selector {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 0;
+          font-family: var(--font-primary, 'Inter', sans-serif);
+        }
+        .lang-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--color-text-muted, #6B7280);
+          letter-spacing: 0.05em;
+        }
+        .mobile-lang-btn {
+          background: none;
+          border: none;
+          font-size: 13px;
+          font-weight: 400;
+          color: var(--color-text-muted, #6B7280);
+          cursor: pointer;
+          padding: 2px 6px;
+        }
+        .mobile-lang-btn.active {
+          font-weight: 700;
+          color: var(--color-text, #111111);
+        }
+        .lang-sep {
+          color: var(--color-border, #E5E7EB);
+        }
+
+        .mobile-drawer-divider {
+          height: 1px;
+          background: var(--color-border, #E5E7EB);
+          margin: 24px 0;
+        }
+        .mobile-drawer-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .mobile-compte-link {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-family: var(--font-primary, 'Inter', sans-serif);
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--color-text-muted, #6B7280);
+          text-decoration: none;
+          transition: color 0.25s ease;
+        }
+        .mobile-compte-link:hover { color: var(--color-text); }
+        .mobile-subscribe-btn {
+          display: block;
+          background: #A30626;
+          color: #FFFFFF;
+          text-align: center;
+          padding: 16px 24px;
+          font-family: var(--font-primary, 'Inter', sans-serif);
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none;
+          border-radius: 2px;
+          transition: background 0.25s ease;
+        }
+        .mobile-subscribe-btn:hover { background: #8c0520; }
+
+        /* ── Breakpoint: hide desktop nav, show hamburger ── */
+        @media (max-width: 1024px) {
+          .main-nav        { display: none !important; }
+          .btn-subscribe   { display: none !important; }
+          .account-link    { display: none !important; }
+          .hamburger-btn   { display: flex !important; }
+          /* Hide other desktop icons from header bar */
+          .header-actions > .btn-icon { display: none !important; }
+        }
         @media (min-width: 1025px) {
           .hamburger-btn   { display: none !important; }
           .mobile-drawer   { display: none !important; }
           .mobile-backdrop { display: none !important; }
         }
       `}</style>
-      </div>
     </header>
     </>
   );
