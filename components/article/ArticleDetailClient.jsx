@@ -188,6 +188,11 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
             </div>
           )}
 
+          {/* ── TTS Banner — Lecture vocale native (TOUJOURS DISPONIBLE) ─────────────────────────── */}
+          <div style={{ marginBottom: "32px" }}>
+            <ArticleTtsBanner article={article} primaryColor={primaryColor} />
+          </div>
+
           {/* UNLOCKED FULL ARTICLE */}
           {isAllowed ? (
             <div style={{
@@ -265,9 +270,6 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                   </div>
                 </div>
               )}
-
-              {/* ── TTS Banner — Lecture vocale native ─────────────────────────── */}
-              <ArticleTtsBanner article={article} primaryColor={primaryColor} />
 
             </div>
           ) : (

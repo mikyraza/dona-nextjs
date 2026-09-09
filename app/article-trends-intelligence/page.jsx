@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
+import ArticleTtsBanner from '@/components/article/ArticleTtsBanner';
 
 export const metadata = {
   title: "La Trajectoire de l’Effet Dunning-Kruger dans le Management Moderne | DONA Magazine",
@@ -137,39 +138,14 @@ export default function Page() {
                 {/* Left Reading Column (2/3) */}
                 <section className="article-reading-zone">
                     
-                    {/* Text-To-Speech Player Integrated */}
-                    <div className="article-audio-player">
-                        <div className="audio-player-left">
-                            <button className="audio-play-btn" id="tts-audio-play">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="play-svg">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="pause-svg" style={{display: "none"}}>
-                                    <rect x="6" y="4" width="4" height="16"></rect>
-                                    <rect x="14" y="4" width="4" height="16"></rect>
-                                </svg>
-                                <span>ÉCOUTER L'ARTICLE</span>
-                            </button>
-                            <span className="audio-duration-info">Synthèse vocale • 14:25</span>
-                        </div>
-                        <div className="audio-player-right">
-                            <div className="audio-voice-select">
-                                <label htmlFor="voice-selection">Voix :</label>
-                                <select id="voice-selection">
-                                    <option value="fr-FR-Nora">Nora (Premium)</option>
-                                    <option value="fr-FR-Bernard">Bernard (IA)</option>
-                                </select>
-                            </div>
-                            <div className="audio-speed-select">
-                                <label htmlFor="speed-selection">Vitesse :</label>
-                                <select id="speed-selection">
-                                    <option value="1">1.0x</option>
-                                    <option value="1.2">1.2x</option>
-                                    <option value="1.5">1.5x</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    {/* ── TTS Banner — Lecture vocale native ─────────────────────────── */}
+                    <ArticleTtsBanner 
+                      article={{
+                        title: "La Trajectoire de l’Effet Dunning-Kruger dans le Management Moderne",
+                        desc: "Comment la surestimation des compétences techniques redéfinit la hiérarchie en entreprise et impacte les processus décisionnels complexes."
+                      }} 
+                      primaryColor="#a31835" 
+                    />
 
                     {/* Article Paragraphs */}
                     <p><span className="drop-cap">L</span>'effet Dunning-Kruger, ce biais cognitif selon lequel les moins qualifiés dans un domaine surestiment systématiquement leur compétence, n’est plus cantonné aux cercles académiques de la psychologie sociale. Dans les arènes mouvantes des organisations contemporaines, il est devenu une force architecturale invisible, sculptant les lignes de commandement et influençant le destin de pans entiers de l’économie de l’innovation. À mesure que les architectures techniques se complexifient, la distance entre la réalité du travail technique et sa perception managériale s’accroît dramatiquement.</p>

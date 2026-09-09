@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import SaveArticleButton from '@/components/article/SaveArticleButton';
+import ArticleTtsBanner from '@/components/article/ArticleTtsBanner';
 import {
   DEFAULT_ARTICLES,
   normalizeArticle,
@@ -171,6 +172,11 @@ export default function TodayArticleClient({ initialArticle = null, articleSlug 
               <img src={article.image} alt={article.title} width="1200" height="514" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           )}
+
+          {/* ── TTS Banner — Lecture vocale native ─────────────────────────── */}
+          <div style={{ marginBottom: "32px" }}>
+            <ArticleTtsBanner article={article} primaryColor={primaryColor} />
+          </div>
 
           {/* Article Content */}
           <div className="article-body" style={{ fontFamily: "var(--font-primary)", fontSize: "16px", lineHeight: "1.8", color: "var(--color-text)" }}>
