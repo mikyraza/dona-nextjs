@@ -61,12 +61,12 @@ ul {
    -------------------------------------------------------------------------- */
 .site-header {
     border-bottom: 1px solid var(--color-border);
-    padding: 24px 0;
+    padding: 6px 0;
     background-color: var(--color-bg);
 }
 
 .header-spacer {
-    height: 113px; /* Matches default desktop header height */
+    height: 77px; /* Matches default desktop header height */
     width: 100%;
 }
 

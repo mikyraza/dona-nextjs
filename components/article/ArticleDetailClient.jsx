@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { getActiveUserSubscription, canAccessMagazine } from '@/lib/subscriptionPermissions';
 import SaveArticleButton from '@/components/article/SaveArticleButton';
-import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
+import ArticleAudioPlayer from '@/components/article/ArticleAudioPlayer';
+import ArticleTtsBanner from '@/components/article/ArticleTtsBanner';
 import { getMediaFormatInfo } from '@/lib/mediaFormatHelper';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
@@ -13,7 +14,6 @@ import Breadcrumbs from '@/components/common/Breadcrumbs';
 export default function ArticleDetailClient({ magazine, article, magazineSlug, articleSlug }) {
   const { t, currentLangObj } = useLanguage();
   const { data: session } = useSession();
-  const { loadTrack } = useAudioPlayer();
   const [activeSub, setActiveSub] = useState({ isGuest: true, plan: 'Essentiel' });
   const [mounted, setMounted] = useState(false);
 
@@ -71,19 +71,11 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
             
             {isAllowed ? (
               <>
-                <button 
-                  onClick={() => loadTrack({
-                    src: article.audioFile || '/assets/core/media/article-ambient.wav',
-                    title: article.title,
-                    source: magazine.title.toUpperCase(),
-                    duration: article.audioDuration || 240
-                  })}
-                  style={{ border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}
-                  aria-label={`Écouter l'article : ${article.title}`}
-                >
-                  <span className="material-symbols-outlined">volume_up</span>
-                  <span style={{ fontSize: "9px", fontWeight: "700" }}>{t('nav_ecouter')}</span>
-                </button>
+                <ArticleAudioPlayer
+                  article={article}
+                  magazine={magazine}
+                  primaryColor={primaryColor}
+                />
                 
                 <SaveArticleButton
                   articleId={article.id || articleSlug}
@@ -221,13 +213,30 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                 </div>
               )}
 
-              {/* Audio Player */}
+              {/* Audio Player — inline block for format=audio articles.
+                  Note: the sidebar ArticleAudioPlayer loads this into PersistentPlayer.
+                  We show a visual indicator here but avoid double-playing via <audio> tag.
+              */}
               {article.format === 'audio' && article.audioFile && (
-                <div style={{ background: "var(--color-bg-alt)", border: "1px solid var(--color-border)", borderRadius: "4px", padding: "16px 20px", marginBottom: "32px", display: "flex", alignItems: "center", gap: "16px" }}>
+                <div style={{
+                  background: "var(--color-bg-alt)",
+                  border: `1px solid ${primaryColor}33`,
+                  borderLeft: `4px solid ${primaryColor}`,
+                  borderRadius: "4px",
+                  padding: "16px 20px",
+                  marginBottom: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px"
+                }}>
                   <span className="material-symbols-outlined" style={{ fontSize: "28px", color: primaryColor }}>podcasts</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", color: "var(--color-text-muted)" }}>{t('Épisode Audio Exclusif')}</div>
-                    <audio controls src={article.audioFile} style={{ width: "100%", marginTop: "8px" }} />
+                    <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+                      {t('Épisode Audio Exclusif')}
+                    </div>
+                    <div style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>
+                      🎙 Utilisez le bouton <strong>ÉCOUTER</strong> dans la barre latérale pour lancer la lecture dans le lecteur audio persistant.
+                    </div>
                   </div>
                 </div>
               )}
@@ -256,6 +265,10 @@ export default function ArticleDetailClient({ magazine, article, magazineSlug, a
                   </div>
                 </div>
               )}
+
+              {/* ── TTS Banner — Lecture vocale native ─────────────────────────── */}
+              <ArticleTtsBanner article={article} primaryColor={primaryColor} />
+
             </div>
           ) : (
             /* LOCKED PAYWALL CARD */

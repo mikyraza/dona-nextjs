@@ -8,6 +8,7 @@ export function AudioPlayerProvider({ children }) {
   const audioRef = useRef(null);
 
   const [track, setTrack] = useState(null);
+  const [trackSeq, setTrackSeq] = useState(0); // sequence number to guard against stale audio responses
   // { src, title, source, duration, isLive }
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -30,11 +31,18 @@ export function AudioPlayerProvider({ children }) {
         const vol = parseInt(saved, 10);
         if (!isNaN(vol) && vol >= 0 && vol <= 100) {
           setVolumeState(vol);
-          if (audioRef.current) audioRef.current.volume = vol / 100;
         }
       }
     } catch (e) { /* ignore */ }
   }, []);
+
+  // Apply volume to audio element whenever it appears or changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100;
+      audioRef.current.muted = isMuted || volume === 0;
+    }
+  }, [volume, isMuted, isVisible]);
 
   // Internal: play a single track object
   const _playTrack = useCallback((newTrack) => {
@@ -44,27 +52,46 @@ export function AudioPlayerProvider({ children }) {
     setCurrentTime(0);
     setAudioError(null);
 
-    if (audioRef.current && newTrack.src) {
-      audioRef.current.src = newTrack.src;
-      audioRef.current.volume = volume / 100;
-      audioRef.current.load();
-      audioRef.current.play().then(() => {
+    // Wait one frame so the <audio> element mounts (PersistentPlayer is gated on isVisible/track)
+    requestAnimationFrame(() => {
+      const audio = audioRef.current;
+      if (!audio) {
+        // Still no audio element — fall back to simulated playback
         setIsPlaying(true);
-      }).catch(() => {
-        // autoplay blocked
-        setIsPlaying(false);
-      });
-    } else {
-      // No real audio src — simulate UI playing state
-      setIsPlaying(true);
-      setDuration(newTrack.duration || 2655);
-    }
-  }, [volume]);
+        setDuration(newTrack.duration || 2655);
+        return;
+      }
+      // Always (re)apply current volume and unmute state
+      audio.volume = volume / 100;
+      audio.muted = isMuted || volume === 0;
+
+      if (newTrack.src) {
+        audio.src = newTrack.src;
+        audio.load();
+        const playPromise = audio.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise.then(() => {
+            setIsPlaying(true);
+          }).catch((err) => {
+            console.warn('[DONA Audio] Autoplay blocked or failed:', err?.message || err);
+            setIsPlaying(false);
+          });
+        } else {
+          setIsPlaying(true);
+        }
+      } else {
+        // No real audio src — simulate UI playing state
+        setIsPlaying(true);
+        setDuration(newTrack.duration || 2655);
+      }
+    });
+  }, [volume, isMuted]);
 
   // Load & auto-play a new single track (keeps backward compat)
   const loadTrack = useCallback((newTrack) => {
     setPlaylist([]);
     setCurrentIndex(-1);
+    setTrackSeq((s) => s + 1); // increment sequence to invalidate any in-flight audio responses
     _playTrack(newTrack);
   }, [_playTrack]);
 
@@ -73,6 +100,7 @@ export function AudioPlayerProvider({ children }) {
     if (!tracks || tracks.length === 0) return;
     setPlaylist(tracks);
     setCurrentIndex(startIndex);
+    setTrackSeq((s) => s + 1);
     _playTrack(tracks[startIndex]);
   }, [_playTrack]);
 
@@ -110,11 +138,19 @@ export function AudioPlayerProvider({ children }) {
     if (audioRef.current && audioRef.current.src && audioRef.current.src !== window.location.href) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play().catch(() => {});
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch((err) => {
+          console.warn('[DONA Audio] Playback failed:', err?.message || err);
+          setIsPlaying(false);
+        });
       }
+    } else {
+      // Simulated track — toggle simulated state
+      setIsPlaying((p) => !p);
     }
-    setIsPlaying((p) => !p);
   }, [track, isPlaying]);
 
   const toggleMute = useCallback(() => {
@@ -165,17 +201,18 @@ export function AudioPlayerProvider({ children }) {
   }, []);
 
   // Audio element event handlers
-  const handleTimeUpdate = useCallback(() => {
-    if (!audioRef.current) return;
+  const handleTimeUpdate = useCallback((seq) => {
+    if (!audioRef.current || seq !== trackSeq) return; // guard against stale updates
     const cur = audioRef.current.currentTime;
     const dur = audioRef.current.duration || 0;
     setCurrentTime(cur);
     setDuration(dur);
     setProgress(dur ? (cur / dur) * 100 : 0);
-  }, []);
+  }, [trackSeq]);
 
   // Auto-chain to next track on end (N°28)
-  const handleEnded = useCallback(() => {
+  const handleEnded = useCallback((seq) => {
+    if (seq !== trackSeq) return;
     if (playlist.length > 0 && currentIndex < playlist.length - 1) {
       // Auto-play next track
       const nextIdx = currentIndex + 1;
@@ -185,7 +222,7 @@ export function AudioPlayerProvider({ children }) {
       setIsPlaying(false);
       setProgress(100);
     }
-  }, [playlist, currentIndex, _playTrack]);
+  }, [playlist, currentIndex, trackSeq, _playTrack]);
 
   // Simulated progress for demo tracks without real src
   useEffect(() => {
@@ -193,12 +230,13 @@ export function AudioPlayerProvider({ children }) {
     // If audio element has a real source loaded, don't simulate
     if (audioRef.current && audioRef.current.src && audioRef.current.src !== '' && audioRef.current.src !== window.location.href) return;
     const dur = track.duration || 2655;
+    const seq = trackSeq;
     const interval = setInterval(() => {
       setCurrentTime((t) => {
         const next = t + 1;
         if (next >= dur) {
           clearInterval(interval);
-          handleEnded();
+          handleEnded(seq);
           return dur;
         }
         setProgress((next / dur) * 100);
@@ -206,7 +244,7 @@ export function AudioPlayerProvider({ children }) {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [track, isPlaying, handleEnded]);
+  }, [track, isPlaying, handleEnded, trackSeq]);
 
   const value = {
     track,
@@ -233,6 +271,7 @@ export function AudioPlayerProvider({ children }) {
     audioRef,
     handleTimeUpdate,
     handleEnded,
+    trackSeq,
   };
 
   return (

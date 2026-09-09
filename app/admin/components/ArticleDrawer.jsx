@@ -1128,7 +1128,7 @@ export default function ArticleDrawer({ isOpen, onClose, onSave, article }) {
             setVideoUrl(url);
             setVideoFileName(url.split('/').pop());
           } else if (mediaModalTarget === 'audio') {
-            setAudioFileName(url.split('/').pop());
+            setAudioFileName(url);
           } else if (mediaModalTarget === 'editor') {
             if (editorRef.current) {
               editorRef.current.focus();

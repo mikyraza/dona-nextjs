@@ -36,6 +36,7 @@ export default function PersistentPlayer() {
     audioRef,
     handleTimeUpdate,
     handleEnded,
+    trackSeq,
   } = useAudioPlayer();
 
   const progressBarRef = useRef(null);
@@ -133,8 +134,8 @@ export default function PersistentPlayer() {
       {/* Hidden real audio element – persists in DOM */}
       <audio
         ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={handleEnded}
+        onTimeUpdate={() => handleTimeUpdate(trackSeq)}
+        onEnded={() => handleEnded(trackSeq)}
         onError={handleError}
         preload="metadata"
         style={{ display: 'none' }}
