@@ -88,7 +88,7 @@ export default function AllArticlesPage() {
     } catch (e) {}
 
     // 2. Primary source of truth: Relational Database (/api/today)
-    fetch('/api/today')
+    fetch('/api/today', { cache: 'no-store' })
       .then(res => res.json())
       .then(dbConfig => {
         if (dbConfig) {
@@ -268,7 +268,7 @@ export default function AllArticlesPage() {
                   </td>
                   <td style={{ padding: "14px 20px", fontWeight: "600", color: "var(--color-text)" }}>
                     <Link href={getArticleLink(article)} style={{ color: "inherit", textDecoration: "none" }}>
-                      {article.title}
+                      {t(article.title)}
                     </Link>
                   </td>
                   <td style={{ padding: "14px 20px", textAlign: "right", whiteSpace: "nowrap" }}>
@@ -319,12 +319,12 @@ export default function AllArticlesPage() {
                         )}
                         <div className="article-content">
                           <div className="article-meta">
-                            {article.time && <span className="time">{article.time}</span>}
+                            {article.time && <span className="time">{t(article.time)}</span>}
                             {article.isNew && <span className="badge-new">{t('today_badge_new') || "NOUVEAU"}</span>}
                             {article.isUrgent && <span className="badge-urgent">{t('today_badge_urgent') || "URGENT"}</span>}
                           </div>
-                          <h3>{article.title}</h3>
-                          <p>{article.desc}</p>
+                          <h3>{t(article.title)}</h3>
+                          <p>{t(article.desc)}</p>
                           <div style={{ marginTop: "auto", paddingTop: "12px", color: "#8B002A", fontSize: "11px", fontWeight: "700" }}>
                             {t('today_read_news') || "LIRE L'ACTUALITÉ"} &rarr;
                           </div>
@@ -358,13 +358,13 @@ export default function AllArticlesPage() {
                       )}
                       <div className="article-content">
                         <div className="article-meta">
-                          {article.category && <span className="category-tag">{article.category}</span>}
-                          {article.time && <span className="time">{article.time}</span>}
+                          {article.category && <span className="category-tag">{t(article.category)}</span>}
+                          {article.time && <span className="time">{t(article.time)}</span>}
                           {article.isNew && <span className="badge-new">{t('today_badge_new') || "NOUVEAU"}</span>}
                           {article.isUrgent && <span className="badge-urgent">{t('today_badge_urgent') || "URGENT"}</span>}
                         </div>
-                        <h3>{article.title}</h3>
-                        <p>{article.desc}</p>
+                        <h3>{t(article.title)}</h3>
+                        <p>{t(article.desc)}</p>
                         <div style={{ marginTop: "auto", paddingTop: "12px", color: "#8B002A", fontSize: "11px", fontWeight: "700" }}>
                           {t('today_read_news') || "LIRE L'ACTUALITÉ"} &rarr;
                         </div>
@@ -397,12 +397,12 @@ export default function AllArticlesPage() {
                       )}
                       <div className="article-content">
                         <div className="article-meta">
-                          {article.time && <span className="time">{article.time}</span>}
+                          {article.time && <span className="time">{t(article.time)}</span>}
                           {article.isNew && <span className="badge-new">{t('today_badge_new') || "NOUVEAU"}</span>}
                           {article.isUrgent && <span className="badge-urgent">{t('today_badge_urgent') || "URGENT"}</span>}
                         </div>
-                        <h3>{article.title}</h3>
-                        <p>{article.desc}</p>
+                        <h3>{t(article.title)}</h3>
+                        <p>{t(article.desc)}</p>
                         <div style={{ marginTop: "auto", paddingTop: "12px", color: "#8B002A", fontSize: "11px", fontWeight: "700" }}>
                           {t('today_read_news') || "LIRE L'ACTUALITÉ"} &rarr;
                         </div>

@@ -52,9 +52,9 @@ export async function GET() {
 
     mergedList.sort((a, b) => (parseInt(a.id, 10) || 0) - (parseInt(b.id, 10) || 0));
 
-    return NextResponse.json(mergedList);
+    return NextResponse.json(mergedList, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' } });
   } catch (err) {
     console.error("GET /api/magazines error:", err);
-    return NextResponse.json(defaultMagazines);
+    return NextResponse.json(defaultMagazines, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' } });
   }
 }

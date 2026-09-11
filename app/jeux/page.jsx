@@ -118,7 +118,7 @@ export default function JeuxPage() {
   const [dynamicConfig, setDynamicConfig] = useState(null);
 
   React.useEffect(() => {
-    fetch('/api/admin/jeux')
+    fetch('/api/admin/jeux', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data && data.heroRiddle) setDynamicConfig(data);

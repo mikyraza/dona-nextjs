@@ -15,13 +15,14 @@ const ReactPlayer = dynamic(() => import('react-player').catch(() => () => null)
 const CATEGORIES = ['Tout', 'Économie', 'Culture', 'Masterclass', 'Événement', 'Documentaire'];
 
 // ─── Utility: format a date ──────────────────────────────────────────────────
-function formatDate(iso) {
+function formatDate(iso, langCode = 'FR') {
   if (!iso) return '';
-  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return new Date(iso).toLocaleDateString(langCode === 'EN' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 // ─── VideoCard component ─────────────────────────────────────────────────────
 function VideoCard({ video, featured = false, onPlay, onLockedClick }) {
+  const { lang } = useLanguage();
   const videoRef = useRef(null);
 
   const handleMouseEnter = () => {
@@ -125,7 +126,7 @@ function VideoCard({ video, featured = false, onPlay, onLockedClick }) {
         <h3 className="vh-card__title">{video.title}</h3>
         {video.subtitle && <p className="vh-card__sub">{video.subtitle}</p>}
         <div className="vh-card__meta">
-          {video.publishedAt && <span>{formatDate(video.publishedAt)}</span>}
+          {video.publishedAt && <span>{formatDate(video.publishedAt, lang)}</span>}
         </div>
       </div>
     </div>

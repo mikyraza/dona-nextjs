@@ -91,7 +91,7 @@ export default function Page() {
   const [activeFilter, setActiveFilter] = useState(initialConfig.filters[0].id);
 
   useEffect(() => {
-    fetch('/api/today')
+    fetch('/api/today', { cache: 'no-store' })
       .then(res => res.json())
       .then(dbConfig => {
         if (dbConfig && dbConfig.hero) {
@@ -249,8 +249,8 @@ export default function Page() {
                           )}
                       </div>
                       <div className="urgent-text">
-                          <h2 className="urgent-title">{displayUrgent.title}</h2>
-                          <p className="urgent-desc">{displayUrgent.desc}</p>
+                          <h2 className="urgent-title">{t(displayUrgent.title)}</h2>
+                          <p className="urgent-desc">{t(displayUrgent.desc)}</p>
                       </div>
                   </Link>
                 )}
@@ -263,12 +263,12 @@ export default function Page() {
                           {displayTimeline.map((news) => (
                             <Link href={`/today/${news.id || ''}`} key={news.id} className={`timeline-item ${news.isNew ? 'is-new' : ''}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
                                 <div className="timeline-time">
-                                    {news.time}
+                                    {t(news.time)}
                                     {news.isNew && <span className="badge-new">{t('today_badge_new')}</span>}
                                 </div>
                                 <div className="timeline-content">
-                                    <h4 className="timeline-title">{news.title}</h4>
-                                    <p className="timeline-desc">{news.desc}</p>
+                                    <h4 className="timeline-title">{t(news.title)}</h4>
+                                    <p className="timeline-desc">{t(news.desc)}</p>
                                 </div>
                             </Link>
                           ))}
@@ -383,13 +383,13 @@ export default function Page() {
               <div className="france-grid">
                   {filteredFrance.map((article) => (
                     <Link href={`/today/${article.id || ''}`} key={article.id} className="france-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column' }}>
-                        <img src={article.image} alt={article.title} width="600" height="750" />
+                        <img src={article.image} alt={t(article.title)} width="600" height="750" />
                         <div className="france-meta">
-                            <span className="meta-cat">{article.category}</span>
-                            <span className="meta-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> {article.time}</span>
+                            <span className="meta-cat">{t(article.category)}</span>
+                            <span className="meta-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> {t(article.time)}</span>
                         </div>
-                        <h3 className="france-title">{article.title}</h3>
-                        <p className="france-desc">{article.desc}</p>
+                        <h3 className="france-title">{t(article.title)}</h3>
+                        <p className="france-desc">{t(article.desc)}</p>
                     </Link>
                   ))}
               </div>

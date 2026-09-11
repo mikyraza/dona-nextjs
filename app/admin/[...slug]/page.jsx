@@ -611,17 +611,17 @@ export default function AdminCatchAllPage({ params }) {
     { 
       key: "button_subscribe", 
       description: "Bouton d'abonnement principal",
-      FR: "S'abonner", EN: "Subscribe", SW: "", ES: "", PT: "", DE: "", IT: "", AR: "" 
+      FR: "S'abonner", EN: "Subscribe", SW: "Kujiandikisha", ES: "Suscribirse", PT: "Inscrever-se", DE: "Abonnieren", IT: "Iscriviti", AR: "اشترك" 
     },
     { 
       key: "members_only_badge", 
       description: "Badge réservé aux abonnés",
-      FR: "Membres uniquement", EN: "Members only", SW: "", ES: "", PT: "", DE: "", IT: "", AR: "" 
+      FR: "Membres uniquement", EN: "Members only", SW: "Wanachama tu", ES: "Solo miembros", PT: "Apenas membros", DE: "Nur für Mitglieder", IT: "Solo membri", AR: "الأعضاء فقط" 
     },
     { 
       key: "footer_copyright", 
       description: "Texte de copyright en pied de page",
-      FR: "Tous droits réservés", EN: "All rights reserved", SW: "", ES: "", PT: "", DE: "", IT: "", AR: "" 
+      FR: "Tous droits réservés", EN: "All rights reserved", SW: "Haki zote zimehifadhiwa", ES: "Todos los derechos reservados", PT: "Todos os direitos reservados", DE: "Alle Rechte vorbehalten", IT: "Tutti i diritti riservati", AR: "جميع الحقوق محفوظة" 
     }
   ]);
 

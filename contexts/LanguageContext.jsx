@@ -167,8 +167,12 @@ export function LanguageProvider({ children }) {
   }, [lang, mounted]);
 
   const changeLanguage = (newLangCode) => {
+    if (newLangCode === lang) return;
     if (TRANSLATIONS[newLangCode] || ['FR', 'EN', 'SW', 'ES', 'PT', 'DE', 'IT', 'AR'].includes(newLangCode)) {
-      setLang(newLangCode);
+      try {
+        localStorage.setItem('dona_language', newLangCode);
+      } catch(e) {}
+      window.location.reload();
     }
   };
 

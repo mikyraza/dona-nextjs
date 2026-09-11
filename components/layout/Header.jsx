@@ -531,8 +531,8 @@ export default function Header() {
                   <Link href="/magazines/magazine-02-power-lab" onClick={closeAllMenus}><span className="bullet">■</span> 02. Power Lab</Link>
                 </h3>
                 <ul className="megamenu-links">
-                  <li><Link href="/magazines/magazine-02-power-lab#articles" onClick={closeAllMenus}>Magazines d'exercices</Link></li>
-                  <li><Link href="/magazines/magazine-02-power-lab#articles" onClick={closeAllMenus}>La chambre forte</Link></li>
+                  <li><Link href="/magazines/magazine-02-power-lab#articles" onClick={closeAllMenus}>{t("Magazines d'exercices")}</Link></li>
+                  <li><Link href="/magazines/magazine-02-power-lab#articles" onClick={closeAllMenus}>{t("La chambre forte")}</Link></li>
                 </ul>
               </div>
               <div className="megamenu-group">
@@ -810,7 +810,7 @@ export default function Header() {
             <div className="club-col-middle">
               {/* Section 1: Offers */}
               <div className="club-section">
-                <h4 className="club-section-title">OFFRES / ABONNEMENT</h4>
+                <h4 className="club-section-title">{t("OFFRES / ABONNEMENT")}</h4>
                 <div className="club-offers-list">
                   {/* Premium Offer */}
                   <div className="club-offer-item">
@@ -821,9 +821,9 @@ export default function Header() {
                       </svg>
                     </div>
                     <div className="offer-details">
-                      <h5 className="offer-title">Abonnement Annuel Premium</h5>
-                      <p className="offer-desc">L'expérience totale : print, digital & événements privés.</p>
-                      <Link href="/abonnement" className="offer-link" onClick={closeAllMenus}>EN SAVOIR PLUS <span className="arrow">→</span></Link>
+                      <h5 className="offer-title">{t("Abonnement Annuel Premium")}</h5>
+                      <p className="offer-desc">{t("L'expérience totale : print, digital & événements privés.")}</p>
+                      <Link href="/abonnement" className="offer-link" onClick={closeAllMenus}>{t("EN SAVOIR PLUS")} <span className="arrow">→</span></Link>
                     </div>
                   </div>
                   {/* Digital Only Offer */}
@@ -835,9 +835,9 @@ export default function Header() {
                       </svg>
                     </div>
                     <div className="offer-details">
-                      <h5 className="offer-title">Digital Only</h5>
-                      <p className="offer-desc">Accès illimité aux archives et aux contenus Studio.</p>
-                      <Link href="/abonnement" className="offer-link link-secondary" onClick={closeAllMenus}>DÉTAILS DE L'OFFRE <span className="arrow">→</span></Link>
+                      <h5 className="offer-title">{t("Digital Only")}</h5>
+                      <p className="offer-desc">{t("Accès illimité aux archives et aux contenus Studio.")}</p>
+                      <Link href="/abonnement" className="offer-link link-secondary" onClick={closeAllMenus}>{t("DÉTAILS DE L'OFFRE")} <span className="arrow">→</span></Link>
                     </div>
                   </div>
                 </div>
@@ -845,7 +845,7 @@ export default function Header() {
 
               {/* Section 2: Member Space */}
               <div className="club-section space-section">
-                <h4 className="club-section-title">ESPACE MEMBRE</h4>
+                <h4 className="club-section-title">{t("ESPACE MEMBRE")}</h4>
                 <ul className="club-member-grid">
                   <li><Link href="/member-profile" className="member-grid-link" onClick={closeAllMenus}>{t('my_dashboard')}</Link></li>
                   <li><Link href="/espace-lecture" className="member-grid-link" onClick={closeAllMenus}>{t('my_favorites')}</Link></li>
@@ -989,8 +989,8 @@ export default function Header() {
                   </div>
                   <span className="club-card-title">DONA CLUB</span>
                 </div>
-                <p className="club-card-desc">Accédez à l'intégralité de nos archives audio et contenus exclusifs en rejoignant le Club.</p>
-                <Link href="/abonnement" className="btn-club-card" onClick={closeAllMenus}>DEVENIR MEMBRE</Link>
+                <p className="club-card-desc">{t("Accédez à l'intégralité de nos archives audio et contenus exclusifs en rejoignant le Club.")}</p>
+                <Link href="/abonnement" className="btn-club-card" onClick={closeAllMenus}>{t("DEVENIR MEMBRE")}</Link>
               </div>
             </div>
           </div>

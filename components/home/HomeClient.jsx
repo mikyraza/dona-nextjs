@@ -63,8 +63,8 @@ export default function HomeClient({ magazines, mainFeature, side1, side2 }) {
                     mag.icon || <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"></circle></svg>
                   )}
                 </div>
-                <h3 className="mag-title">{mag.title}</h3>
-                <p className="mag-desc">{mag.desc}</p>
+                <h3 className="mag-title">{t(mag.title)}</h3>
+                <p className="mag-desc">{t(mag.desc)}</p>
               </div>
               <div className="mag-card-img">
                 <img src={mag.img} alt={mag.title} width="300" height="400" />
@@ -85,13 +85,13 @@ export default function HomeClient({ magazines, mainFeature, side1, side2 }) {
               <article className="alaune-main">
                 <Link href={`/magazines/${getMagSlugForCat(mainFeature.category)}/articles/${getArticleSlug(mainFeature)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div className="alaune-main-img">
-                    <span className="badge badge-red">{mainFeature.category?.toUpperCase() || 'INTELLIGENCE'}</span>
+                    <span className="badge badge-red">{t(mainFeature.category?.toUpperCase() || 'INTELLIGENCE')}</span>
                     <img src={mainFeature.coverImage || "/assets/core/img/home_alaune_main_1782125698619.png"} alt={mainFeature.title} width="800" height="500" />
                   </div>
-                  <h3 className="alaune-main-title">{mainFeature.title}</h3>
-                  <p className="alaune-main-desc">{mainFeature.desc}</p>
+                  <h3 className="alaune-main-title">{t(mainFeature.title)}</h3>
+                  <p className="alaune-main-desc">{t(mainFeature.desc)}</p>
                   <div className="alaune-meta">
-                    {t('home_alaune_by')} {mainFeature.author?.toUpperCase() || 'ÉLÉNA MORETTI'} • {mainFeature.updated || t('home_alaune_recent')}
+                    {t('home_alaune_by')} {t(mainFeature.author?.toUpperCase() || 'ÉLÉNA MORETTI')} • {t(mainFeature.updated) || t('home_alaune_recent')}
                   </div>
                 </Link>
               </article>
@@ -104,9 +104,9 @@ export default function HomeClient({ magazines, mainFeature, side1, side2 }) {
                   <Link href={`/magazines/${getMagSlugForCat(side1.category)}/articles/${getArticleSlug(side1)}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: '16px' }}>
                     <img src={side1.coverImage || "/assets/core/img/home_alaune_side1_1782125709654.png"} alt={side1.title} className="alaune-side-img" width="120" height="120" />
                     <div className="alaune-side-content">
-                      <span className="alaune-side-cat">{side1.category?.toUpperCase() || 'HÉRITAGE'}</span>
-                      <h4 className="alaune-side-title">{side1.title}</h4>
-                      <p className="alaune-side-desc">{side1.desc}</p>
+                      <span className="alaune-side-cat">{t(side1.category?.toUpperCase() || 'HÉRITAGE')}</span>
+                      <h4 className="alaune-side-title">{t(side1.title)}</h4>
+                      <p className="alaune-side-desc">{t(side1.desc)}</p>
                     </div>
                   </Link>
                 </article>
@@ -117,9 +117,9 @@ export default function HomeClient({ magazines, mainFeature, side1, side2 }) {
                   <Link href={`/magazines/${getMagSlugForCat(side2.category)}/articles/${getArticleSlug(side2)}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: '16px' }}>
                     <img src={side2.coverImage || "/assets/core/img/home_alaune_side2_1782125722981.png"} alt={side2.title} className="alaune-side-img" width="120" height="120" />
                     <div className="alaune-side-content">
-                      <span className="alaune-side-cat">{side2.category?.toUpperCase() || 'AGENDA'}</span>
-                      <h4 className="alaune-side-title">{side2.title}</h4>
-                      <p className="alaune-side-desc">{side2.desc}</p>
+                      <span className="alaune-side-cat">{t(side2.category?.toUpperCase() || 'AGENDA')}</span>
+                      <h4 className="alaune-side-title">{t(side2.title)}</h4>
+                      <p className="alaune-side-desc">{t(side2.desc)}</p>
                     </div>
                   </Link>
                 </article>

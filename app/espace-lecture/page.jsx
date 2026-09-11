@@ -167,7 +167,7 @@ export default function Page() {
     }
 
     // Fetch dynamic content list from API
-    fetch('/api/espace-lecture')
+    fetch('/api/espace-lecture', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {

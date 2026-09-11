@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { NextResponse } from 'next/server';
 import { dbGetArticles, dbGetMagazines, dbGetVideos, dbGetDossiers, dbGetMembers } from '@/lib/db';
 import { magazines as initialMagazines } from '@/app/magazines/data';

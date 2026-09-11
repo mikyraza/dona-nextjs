@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { NextResponse } from 'next/server';
 import { dbGetMagazines, dbGetArticles } from '@/lib/db';
 
@@ -107,9 +109,9 @@ export async function GET() {
       });
     });
 
-    return NextResponse.json(items);
+    return NextResponse.json(items, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' } });
   } catch (error) {
     console.error("Error generating espace-lecture response:", error);
-    return NextResponse.json([]);
+    return NextResponse.json([], { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' } });
   }
 }

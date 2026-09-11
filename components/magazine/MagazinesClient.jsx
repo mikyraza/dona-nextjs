@@ -104,11 +104,11 @@ export default function MagazinesClient({ magazines }) {
                     mag.icon || <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"></circle></svg>
                   )}
                 </div>
-                <h3 className="mag-title">{mag.title}</h3>
-                <p className="mag-desc">{mag.desc}</p>
+                <h3 className="mag-title">{t(mag.title)}</h3>
+                <p className="mag-desc">{t(mag.desc)}</p>
               </div>
               <div className="mag-card-img">
-                <img src={mag.img} alt={mag.title} width="300" height="400" />
+                <img src={mag.img} alt={t(mag.title)} width="300" height="400" />
               </div>
             </Link>
           ))}
